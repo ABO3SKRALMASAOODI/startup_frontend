@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #000;
+  color: #fff;
+  scroll-behavior: smooth;
+}
+
+/* Optional glow effect */
+@keyframes pulseLine {
+  0% { box-shadow: 0 0 6px #ff1a1a; }
+  50% { box-shadow: 0 0 20px #ff1a1a; }
+  100% { box-shadow: 0 0 6px #ff1a1a; }
+}
+
+.animate-pulse {
+  animation: pulseLine 2s infinite;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ff1a1a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000;
+}
+/* Chat message content styles */
+.message-content pre {
+  background: #111;
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-top: 10px;
+  font-family: monospace;
+}
+
+.message-content code {
+  background: #111;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+}
