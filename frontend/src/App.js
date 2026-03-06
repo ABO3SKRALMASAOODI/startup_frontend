@@ -4,7 +4,6 @@ import SignIn from "./pages/SignIn";
 import Legal from "./pages/legal";
 import VerifyCode from "./pages/VerifyCode";
 import Register from "./pages/Register";
-import Chat from "./pages/Chat";
 import EnterPassword from "./pages/EnterPassword";
 import ChangePassword from "./pages/ChangePassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -39,7 +38,6 @@ function App() {
       <Route path="/legal" element={<Legal />} />
       <Route path="/paddle-checkout" element={<PaddleCheckoutPage />} />
       <Route path="/subscribe" element={<SubscribePage />} />
-      <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
       <Route path="/tigdar" element={<Agent />} />
       <Route path="/studio" element={<PrivateRoute><Studio /></PrivateRoute>} />
 
