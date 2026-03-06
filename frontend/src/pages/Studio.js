@@ -98,6 +98,7 @@ function BotAvatar() {
   useEffect(() => {
     if (!rive) return;
     const t = setTimeout(() => setMouseX(0.5), 200);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => clearTimeout(t);
   }, [rive]);
 
@@ -562,6 +563,7 @@ function BuildingView({ progress, isRendering }) {
 
     if (!isAnimatingRef.current) {
       playNextInQueue();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
     }
   }, [progress]);
 
