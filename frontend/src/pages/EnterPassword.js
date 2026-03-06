@@ -19,7 +19,7 @@ function EnterPassword() {
     const emailFromURL = params.get("email");
     if (emailFromURL) setEmail(emailFromURL);
     else navigate("/login");
-  }, [location, navigate]);
+  }, [location, navigate, params]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

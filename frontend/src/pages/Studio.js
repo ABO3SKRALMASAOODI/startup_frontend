@@ -846,7 +846,6 @@ function SidebarCreditsBadge({ balance, onGetCredits }) {
   const pct = Math.max(0, Math.min(100, (balance / maxCredits) * 100));
   const isLow = balance <= 5;
   const isMedium = balance <= 15;
-  const barColor = isLow ? "#e53935" : isMedium ? "#f0a500" : "#4caf50";
   const textColor = isLow ? "#e53935" : isMedium ? "#f0a500" : "#fff";
 
   return (

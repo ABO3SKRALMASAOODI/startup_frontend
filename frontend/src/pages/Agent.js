@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useRive } from "rive-react";
-import StickyNavbar from "../components/StickyNavbar";
-import RobotBubble from "../components/RobotBubble";
 import { useEffect, useState } from "react";
 
 function TypingText({ text = "", speed = 50, loop = true }) {
