@@ -7,11 +7,11 @@ export default function PaddleCheckoutPage() {
     script.async = true;
     script.onload = () => {
       // Correct order: set environment first
-      window.Paddle.Environment.set('production');
+      window.Paddle.Environment.set('sandbox');
 
 
       window.Paddle.Initialize({
-        token: 'live_dcf6d3e20a0df8006f9462d419f'  // Your Paddle Sandbox client token
+        token: 'test_dcf6d3e20a0df8006f9462d419f'  // Sandbox client token
       });
 
       const urlParams = new URLSearchParams(window.location.search);
