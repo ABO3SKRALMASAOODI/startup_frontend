@@ -19,6 +19,13 @@ def create_app():
     # ✅ Explicitly allow your frontend domain
     CORS(app, origins="*", allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"])
 
+    @app.after_request
+    def add_cors_headers(response):
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
+        return response
+
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "supersecretkey")
     app.config['DATABASE_URL'] = os.getenv("DATABASE_URL")
 
