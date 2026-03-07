@@ -21,7 +21,7 @@ export default function PaddleCheckoutPage() {
         window.Paddle.Checkout.open({
           transactionId: txn,
           settings: {
-            successUrl: 'https://thehustlerbot.com/chat'  // Redirect to chat after successful payment
+            successUrl: 'https://thehustlerbot.com/studio'  // Redirect to chat after successful payment
           }
         });
       }
