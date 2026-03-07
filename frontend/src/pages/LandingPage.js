@@ -472,7 +472,7 @@ function LandingPage() {
           <BubbleBot style={{ width: "100%", height: "100%" }} />
         </div>
         <TypingText
-          text={isLoggedIn ? `Welcome back, ${userName}! Open the Dashboard` : "Describe your app and I'll build it!"}
+          text={isLoggedIn ? "Welcome back! Open the Dashboard" : "Describe your app and I'll build it!"}
           speed={50}
         />
       </div>
