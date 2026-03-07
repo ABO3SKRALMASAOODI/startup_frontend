@@ -88,9 +88,17 @@ function VerifyCode() {
       {/* Header */}
       <div style={{
         padding: "1rem", background: "#000", borderBottom: "1px solid #222",
-        display: "flex", justifyContent: "center", alignItems: "center"
+        display: "flex", alignItems: "center", position: "relative"
       }}>
-        <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#fff" }}>The Hustler Bot</h2>
+        <button
+          onClick={() => navigate(isResetMode ? "/login" : "/register")}
+          style={{ background: "transparent", border: "1px solid #333", color: "#aaa", borderRadius: "8px", padding: "6px 14px", fontSize: "0.85rem", cursor: "pointer" }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = "#8b0000"}
+          onMouseLeave={e => e.currentTarget.style.borderColor = "#333"}
+        >
+          ← Back
+        </button>
+        <h2 style={{ margin: 0, fontSize: "1.5rem", color: "#fff", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>The Hustler Bot</h2>
       </div>
 
       {/* Form */}
