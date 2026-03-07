@@ -51,7 +51,7 @@ function TemplateCard({ template, index, onUse }) {
   };
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: index * 0.1 }}
+      initial={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: index * 0.1 }}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={handleClick}
       style={{ position: "relative", borderRadius: "16px", overflow: "hidden", cursor: cloning ? "wait" : "pointer", border: hovered ? "1px solid rgba(220,0,0,0.6)" : "1px solid rgba(40,40,40,0.8)", background: "#0a0a0a", transition: "all 0.3s ease", boxShadow: hovered ? "0 0 40px rgba(180,0,0,0.3),0 8px 32px rgba(0,0,0,0.6)" : "0 2px 16px rgba(0,0,0,0.4)", transform: hovered ? "translateY(-4px)" : "translateY(0)" }}
     >
@@ -63,7 +63,7 @@ function TemplateCard({ template, index, onUse }) {
           <span style={{ marginLeft: "8px", flex: 1, height: "14px", background: "rgba(255,255,255,0.05)", borderRadius: "4px" }} />
         </div>
         <div style={{ position: "absolute", top: "28px", left: 0, width: "200%", height: "424px", transform: "scale(0.5)", transformOrigin: "top left", pointerEvents: "none" }}>
-          <iframe src={previewUrl} title={template.title} style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} sandbox="allow-scripts allow-same-origin" loading="lazy" />
+          <iframe src={previewUrl} title={template.title} style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} sandbox="allow-scripts allow-same-origin" loading="eager" />
         </div>
         <div style={{ position: "absolute", inset: 0, zIndex: 3, background: hovered ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s ease" }}>
           {hovered && (
@@ -427,7 +427,7 @@ function LandingPage() {
           <div className="relative max-w-6xl mx-auto">
             <div className="absolute left-1/2 top-0 h-full w-[3px] bg-gradient-to-b from-red-600 via-transparent to-black animate-pulse z-0 transform -translate-x-1/2" />
             {roadmapSteps.map((item, index) => (
-              <motion.div key={index} initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: index * 0.2 }}
+              <motion.div key={index} initial={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: index * 0.2 }}
                 className={`relative flex flex-col md:flex-row ${index % 2 === 0 ? "" : "md:flex-row-reverse"} items-center justify-between gap-10 mb-24 z-10`}>
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 flex flex-col items-center z-10">
                   <div className="w-6 h-6 bg-red-600 rounded-full shadow-[0_0_20px_#ff1a1a]" />
@@ -445,7 +445,7 @@ function LandingPage() {
         {/* ── BOTTOM CTA ── */}
         <section className="relative py-36 bg-gradient-to-b from-black via-[#110000] to-black overflow-hidden z-20 px-4">
           <motion.div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[200%] h-full bg-gradient-radial from-red-800/30 to-transparent blur-2xl opacity-60 pointer-events-none" initial={{ scale: 0.7, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} transition={{ duration: 1.5 }} />
-          <motion.h2 initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}
+          <motion.h2 initial={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}
             className="text-4xl md:text-5xl font-bold text-white text-center z-10 relative mb-4" style={{ textShadow: "0 0 30px rgba(255,26,26,0.3)" }}>
             Your next app is one sentence away.
           </motion.h2>
