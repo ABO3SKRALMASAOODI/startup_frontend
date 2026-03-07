@@ -31,6 +31,7 @@ function EnterPassword() {
       const token = response.data.token;
       localStorage.setItem("token", token);
       localStorage.setItem("user_email", email);
+      localStorage.setItem("user_plan", response.data.plan || "free");
 
       // Restore name from localStorage if already set (returning user)
       // No name modal on login — that only fires after first registration
