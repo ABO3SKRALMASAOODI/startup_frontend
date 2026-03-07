@@ -1170,6 +1170,8 @@ export default function Studio() {
   const [error,        setError]        = useState("");
   const [previewKey,   setPreviewKey]   = useState(0);
   const [credits,      setCredits]      = useState(null);
+  const [userPlan,     setUserPlan]     = useState(localStorage.getItem("user_plan") || "free");
+  const [userPlan,     setUserPlan]     = useState(localStorage.getItem("user_plan") || "free");
   const [panelView,      setPanelView]      = useState("preview");
   const [progress,       setProgress]       = useState([]);
   const [thinkingText,   setThinkingText]   = useState("");
@@ -1216,6 +1218,7 @@ export default function Studio() {
 
   useEffect(() => {
     getCredits().then(d => setCredits(d.balance)).catch(() => {});
+    setUserPlan(localStorage.getItem("user_plan") || "free");
   }, []);
 
   const hasInitializedRef = useRef(false);
@@ -1821,6 +1824,31 @@ export default function Studio() {
           )}
 
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, marginLeft: "auto" }}>
+            {userPlan === "free" && (
+              <button
+                onClick={handleNavigateToSubscribe}
+                style={{
+                  padding: "6px 16px",
+                  background: "linear-gradient(135deg, #cc0000, #8b0000)",
+                  border: "none", borderRadius: "8px",
+                  color: "#fff", fontSize: "0.76rem", fontWeight: 600,
+                  cursor: "pointer", letterSpacing: "0.03em",
+                  boxShadow: "0 0 14px rgba(180,0,0,0.35)",
+                  transition: "box-shadow 0.2s, transform 0.15s",
+                  whiteSpace: "nowrap",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.boxShadow = "0 0 24px rgba(200,0,0,0.55)";
+                  e.currentTarget.style.transform = "scale(1.03)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.boxShadow = "0 0 14px rgba(180,0,0,0.35)";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                Get Credits
+              </button>
+            )}
 
             {panelView === "preview" && previewUrl && !previewError && (
               <a href={previewUrl} target="_blank" rel="noreferrer" style={{ color: "#8b0000", fontSize: "0.75rem", textDecoration: "none", fontWeight: "bold" }}>
