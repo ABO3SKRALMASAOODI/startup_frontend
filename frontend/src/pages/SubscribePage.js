@@ -52,7 +52,15 @@ const PLANS = [
 export default function SubscribePage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(null);
-  const currentPlan = localStorage.getItem("user_plan") || "free";
+  const [currentPlan, setCurrentPlan] = useState(localStorage.getItem("user_plan") || "free");
+
+  useEffect(() => {
+    API.get("/auth/status/subscription").then(res => {
+      const plan = res.data.plan || "free";
+      setCurrentPlan(plan);
+      localStorage.setItem("user_plan", plan);
+    }).catch(() => {});
+  }, []);
 
   const handleSubscribe = async (planId) => {
     if (planId === "free") return;
