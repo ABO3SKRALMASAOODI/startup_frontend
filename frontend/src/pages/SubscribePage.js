@@ -3,56 +3,32 @@ import API from "../api/api";
 import { useNavigate } from "react-router-dom";
 
 const PLANS = [
-  {
-    id: "free",
-    name: "Free",
-    price: 0,
-    monthly: 0,
-    daily: 20,
-    features: ["20 credits / day", "Live preview", "Basic app generation"],
-    badge: null,
-    color: "#333",
-    glow: "rgba(100,100,100,0.3)",
-  },
-  {
-    id: "plus",
-    name: "Plus",
-    price: 20,
-    monthly: 1000,
-    daily: 20,
-    features: ["1,000 credits / month", "20 daily credits", "Live preview", "Download code", "All app types"],
-    badge: "Popular",
-    color: "#8b0000",
-    glow: "rgba(180,0,0,0.4)",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: 50,
-    monthly: 2400,
-    daily: 20,
-    features: ["2,400 credits / month", "20 daily credits", "Everything in Plus", "Priority builds", "Faster responses"],
-    badge: "Best Value",
-    color: "#cc0000",
-    glow: "rgba(220,0,0,0.5)",
-  },
-  {
-    id: "ultra",
-    name: "Ultra",
-    price: 100,
-    monthly: 5000,
-    daily: 20,
-    features: ["5,000 credits / month", "20 daily credits", "Everything in Pro", "Priority support", "Early access to features"],
-    badge: "Power User",
-    color: "#ff2020",
-    glow: "rgba(255,30,30,0.55)",
-  },
+  { id: "free", name: "Free", price: 0, monthly: 0, daily: 20, features: ["20 credits / day", "Live preview", "Basic app generation"], badge: null, color: "#333", glow: "rgba(100,100,100,0.3)" },
+  { id: "plus", name: "Plus", price: 20, monthly: 1000, daily: 20, features: ["1,000 credits / month", "20 daily credits", "Live preview", "Download code", "All app types"], badge: "Popular", color: "#8b0000", glow: "rgba(180,0,0,0.4)" },
+  { id: "pro", name: "Pro", price: 50, monthly: 2400, daily: 20, features: ["2,400 credits / month", "20 daily credits", "Everything in Plus", "Priority builds", "Faster responses"], badge: "Best Value", color: "#cc0000", glow: "rgba(220,0,0,0.5)" },
+  { id: "ultra", name: "Ultra", price: 100, monthly: 5000, daily: 20, features: ["5,000 credits / month", "20 daily credits", "Everything in Pro", "Priority support", "Early access to features"], badge: "Power User", color: "#ff2020", glow: "rgba(255,30,30,0.55)" },
 ];
+
+function Modal({ message, onConfirm, onCancel }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+      <div style={{ background: "#111", border: "1px solid #333", borderRadius: "16px", padding: "2rem", maxWidth: "380px", width: "90%", textAlign: "center" }}>
+        <p style={{ color: "#fff", fontSize: "1rem", marginBottom: "1.5rem", lineHeight: 1.6 }}>{message}</p>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button onClick={onCancel} style={{ flex: 1, padding: "11px", background: "#222", border: "1px solid #333", borderRadius: "10px", color: "#aaa", cursor: "pointer", fontSize: "0.95rem" }}>Go Back</button>
+          <button onClick={onConfirm} style={{ flex: 1, padding: "11px", background: "linear-gradient(135deg,#cc0000,#8b0000)", border: "none", borderRadius: "10px", color: "#fff", cursor: "pointer", fontSize: "0.95rem", fontWeight: 700 }}>Confirm</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function SubscribePage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(null);
   const [currentPlan, setCurrentPlan] = useState(localStorage.getItem("user_plan") || "free");
+  const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     API.get("/auth/status/subscription").then(res => {
@@ -62,105 +38,93 @@ export default function SubscribePage() {
     }).catch(() => {});
   }, []);
 
+  const showToast = (msg, color = "#4caf50") => {
+    setToast({ msg, color });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   const handleSubscribe = async (planId) => {
     if (planId === "free") return;
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Please log in first.");
     setLoading(planId);
     try {
       const res = await API.post("/paddle/create-checkout-session", { plan: planId });
-      if (res.data.checkout_url) {
-        window.location.href = res.data.checkout_url;
-      } else {
-        alert("Failed to get checkout link.");
-      }
+      if (res.data.checkout_url) window.location.href = res.data.checkout_url;
+      else showToast("Failed to get checkout link.", "#ff4444");
     } catch (err) {
-      console.error(err);
-      alert("Failed to start checkout.");
-    } finally {
-      setLoading(null);
-    }
+      showToast("Failed to start checkout.", "#ff4444");
+    } finally { setLoading(null); }
   };
 
-  const handleChangePlan = async (planId) => {
-    if (!window.confirm(`Switch to ${planId} plan at your next billing cycle?`)) return;
+  const doChangePlan = async (planId) => {
     setLoading(planId);
     try {
       const res = await API.post("/paddle/change-plan", { plan: planId });
-      alert(res.data.message);
+      showToast(res.data.message);
     } catch (err) {
-      alert(err?.response?.data?.error || "Failed to change plan.");
-    } finally {
-      setLoading(null);
-    }
+      showToast(err?.response?.data?.error || "Failed to change plan.", "#ff4444");
+    } finally { setLoading(null); }
   };
 
-  const handleCancel = async () => {
-    if (!window.confirm("Cancel your subscription? You'll keep access until end of billing period.")) return;
+  const doCancel = async () => {
     setLoading("cancel");
     try {
       const res = await API.post("/paddle/cancel-subscription");
-      alert(res.data.message);
+      showToast(res.data.message);
+      setCurrentPlan("free");
+      localStorage.setItem("user_plan", "free");
     } catch (err) {
-      alert(err?.response?.data?.error || "Failed to cancel.");
-    } finally {
-      setLoading(null);
-    }
+      showToast(err?.response?.data?.error || "Failed to cancel.", "#ff4444");
+    } finally { setLoading(null); }
+  };
+
+  const handleChangePlan = (planId) => {
+    setModal({ message: `Switch to ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan at your next billing cycle?`, onConfirm: () => { setModal(null); doChangePlan(planId); } });
+  };
+
+  const handleCancel = () => {
+    setModal({ message: "Cancel your subscription? You'll keep access until the end of your billing period.", onConfirm: () => { setModal(null); doCancel(); } });
   };
 
   const isSubscribed = currentPlan !== "free";
+  const currentIdx = PLANS.findIndex(p => p.id === currentPlan);
 
   return (
     <div style={S.page}>
-      {/* Header */}
+      {modal && <Modal message={modal.message} onConfirm={modal.onConfirm} onCancel={() => setModal(null)} />}
+      {toast && (
+        <div style={{ position: "fixed", top: "20px", left: "50%", transform: "translateX(-50%)", background: toast.color, color: "#fff", padding: "12px 24px", borderRadius: "10px", zIndex: 999, fontWeight: 600, fontSize: "0.9rem", whiteSpace: "nowrap" }}>
+          {toast.msg}
+        </div>
+      )}
+
       <div style={S.header}>
-        <button onClick={() => navigate("/studio")} style={S.backBtn}
-          onMouseEnter={e => e.currentTarget.style.borderColor = "#8b0000"}
-          onMouseLeave={e => e.currentTarget.style.borderColor = "#333"}>
-          ← Back
-        </button>
+        <button onClick={() => navigate("/studio")} style={S.backBtn} onMouseEnter={e => e.currentTarget.style.borderColor = "#8b0000"} onMouseLeave={e => e.currentTarget.style.borderColor = "#333"}>← Back</button>
         <h2 style={S.headerTitle}>The Hustler Bot</h2>
         <div style={{ width: "70px" }} />
       </div>
 
-      {/* Title */}
       <div style={{ textAlign: "center", padding: "3rem 1rem 1.5rem" }}>
-        <h1 style={{ fontSize: "2.5rem", fontWeight: 800, color: "#fff", marginBottom: "0.5rem" }}>
-          Choose Your Plan
-        </h1>
-        <p style={{ color: "#666", fontSize: "1rem" }}>
-          Upgrade, downgrade, or cancel anytime. Changes take effect next billing cycle.
-        </p>
+        <h1 style={{ fontSize: "2.5rem", fontWeight: 800, color: "#fff", marginBottom: "0.5rem" }}>Choose Your Plan</h1>
+        <p style={{ color: "#666", fontSize: "1rem" }}>Upgrade, downgrade, or cancel anytime. Changes take effect next billing cycle.</p>
       </div>
 
-      {/* Plans grid */}
       <div style={S.grid}>
         {PLANS.map((plan) => {
           const isCurrent = currentPlan === plan.id;
-          const isHigher = PLANS.findIndex(p => p.id === plan.id) > PLANS.findIndex(p => p.id === currentPlan);
-          const isLower = PLANS.findIndex(p => p.id === plan.id) < PLANS.findIndex(p => p.id === currentPlan) && plan.id !== "free";
+          const planIdx = PLANS.findIndex(p => p.id === plan.id);
+          const isHigher = planIdx > currentIdx;
 
           return (
-            <div key={plan.id} style={{
-              ...S.card,
-              border: isCurrent ? `1.5px solid ${plan.color}` : "1px solid #1a1a1a",
-              boxShadow: isCurrent ? `0 0 40px ${plan.glow}` : "0 2px 20px rgba(0,0,0,0.4)",
-            }}>
-              {plan.badge && (
-                <div style={{ ...S.badge, background: `linear-gradient(135deg, ${plan.color}, #4a0000)` }}>
-                  {plan.badge}
-                </div>
+            <div key={plan.id} style={{ ...S.card, border: isCurrent ? `1.5px solid ${plan.color}` : "1px solid #1a1a1a", boxShadow: isCurrent ? `0 0 40px ${plan.glow}` : "0 2px 20px rgba(0,0,0,0.4)" }}>
+              {plan.badge && !isCurrent && (
+                <div style={{ ...S.badge, background: `linear-gradient(135deg, ${plan.color}, #4a0000)` }}>{plan.badge}</div>
               )}
               {isCurrent && (
-                <div style={{ ...S.badge, background: "#1a1a1a", color: "#aaa", border: "1px solid #333" }}>
-                  Current Plan
-                </div>
+                <div style={{ ...S.badge, background: "#1a1a1a", color: "#aaa", border: "1px solid #444" }}>Current Plan</div>
               )}
 
-              <h2 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#fff", margin: "0.5rem 0 0.25rem" }}>
-                {plan.name}
-              </h2>
-              <div style={{ fontSize: "2.2rem", fontWeight: 900, color: plan.price === 0 ? "#666" : "#fff", marginBottom: "0.25rem" }}>
+              <h2 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#fff", margin: "0.5rem 0 0.25rem" }}>{plan.name}</h2>
+              <div style={{ fontSize: "2.2rem", fontWeight: 900, color: plan.price === 0 ? "#555" : "#fff", marginBottom: "0.25rem" }}>
                 {plan.price === 0 ? "Free" : `$${plan.price}`}
                 {plan.price > 0 && <span style={{ fontSize: "1rem", color: "#666", fontWeight: 400 }}> / mo</span>}
               </div>
@@ -177,31 +141,26 @@ export default function SubscribePage() {
                 ))}
               </ul>
 
-              {/* CTA button */}
               {isCurrent ? (
-                plan.id !== "free" && (
-                  <button onClick={handleCancel} style={{ ...S.btn, background: "transparent", border: "1px solid #333", color: "#666" }}
+                plan.id !== "free" ? (
+                  <button onClick={handleCancel} disabled={loading === "cancel"} style={{ ...S.btn, background: "transparent", border: "1px solid #333", color: "#666" }}
                     onMouseEnter={e => e.currentTarget.style.borderColor = "#8b0000"}
                     onMouseLeave={e => e.currentTarget.style.borderColor = "#333"}>
                     {loading === "cancel" ? "Cancelling..." : "Cancel Plan"}
                   </button>
+                ) : (
+                  <button style={{ ...S.btn, background: "transparent", border: "1px solid #1a1a1a", color: "#444", cursor: "default" }}>Your default</button>
                 )
               ) : plan.id === "free" ? (
-                <button style={{ ...S.btn, background: "transparent", border: "1px solid #1a1a1a", color: "#444", cursor: "default" }}>
-                  Your default
-                </button>
+                <button style={{ ...S.btn, background: "transparent", border: "1px solid #1a1a1a", color: "#444", cursor: "default" }}>Your default</button>
               ) : isSubscribed ? (
-                <button onClick={() => handleChangePlan(plan.id)}
-                  style={{ ...S.btn, background: `linear-gradient(135deg, ${plan.color}, #4a0000)`, boxShadow: `0 0 20px ${plan.glow}` }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-                  onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+                <button onClick={() => handleChangePlan(plan.id)} disabled={!!loading}
+                  style={{ ...S.btn, background: `linear-gradient(135deg, ${plan.color}, #4a0000)`, boxShadow: `0 0 20px ${plan.glow}` }}>
                   {loading === plan.id ? "Processing..." : isHigher ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`}
                 </button>
               ) : (
-                <button onClick={() => handleSubscribe(plan.id)}
-                  style={{ ...S.btn, background: `linear-gradient(135deg, ${plan.color}, #4a0000)`, boxShadow: `0 0 20px ${plan.glow}` }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-                  onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+                <button onClick={() => handleSubscribe(plan.id)} disabled={!!loading}
+                  style={{ ...S.btn, background: `linear-gradient(135deg, ${plan.color}, #4a0000)`, boxShadow: `0 0 20px ${plan.glow}` }}>
                   {loading === plan.id ? "Loading..." : `Get ${plan.name}`}
                 </button>
               )}
@@ -210,10 +169,8 @@ export default function SubscribePage() {
         })}
       </div>
 
-      {/* Logout */}
       <div style={{ textAlign: "center", padding: "2rem" }}>
-        <button onClick={() => { localStorage.clear(); navigate("/"); }}
-          style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: "0.85rem" }}>
+        <button onClick={() => { localStorage.clear(); navigate("/"); }} style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: "0.85rem" }}>
           Log Out
         </button>
       </div>
