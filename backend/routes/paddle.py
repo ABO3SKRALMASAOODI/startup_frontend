@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify
-from flask_cors import cross_origin
 import requests
 import os
 import jwt
@@ -10,16 +9,8 @@ print("PADDLE_API_KEY from environment:", os.environ.get('PADDLE_API_KEY'))
 print("PADDLE_MODE from environment:", os.environ.get('PADDLE_MODE'))
 
 # Create Checkout Session
-@paddle_bp.route('/paddle/create-checkout-session', methods=['POST', 'OPTIONS'])
-@cross_origin(origins='*', allow_headers=['Content-Type', 'Authorization'], methods=['POST', 'OPTIONS'])
+@paddle_bp.route('/paddle/create-checkout-session', methods=['POST'])
 def create_checkout_session():
-    if request.method == 'OPTIONS':
-        from flask import Response
-        r = Response()
-        r.headers['Access-Control-Allow-Origin'] = '*'
-        r.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-        r.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-        return r, 200
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return jsonify({"error": "Missing token"}), 401
