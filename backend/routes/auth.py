@@ -226,6 +226,7 @@ def login():
 
     token = jwt.encode({
         'sub': str(user['id']),
+        'email': user['email'],
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
     }, current_app.config['SECRET_KEY'], algorithm='HS256')
     return jsonify({'token': token}), 200
