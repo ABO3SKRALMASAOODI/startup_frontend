@@ -39,6 +39,7 @@ def create_checkout_session():
         return jsonify({"error": "Missing token"}), 401
 
     plan = request.json.get('plan', 'plus')
+    print(f'🎯 Plan requested: {plan}, body: {request.json}')
     if plan not in PLANS:
         return jsonify({"error": "Invalid plan"}), 400
 
