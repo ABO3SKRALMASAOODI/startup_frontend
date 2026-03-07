@@ -1498,6 +1498,15 @@ export default function Studio() {
 
   const handleHome = () => navigate("/home");
 
+  const handleStop = async () => {
+    if (!currentJobId) return;
+    stopPolling();
+    setState("failed");
+    setProgress([]);
+    setThinkingText("");
+    try { await API.post(`/auth/job/${currentJobId}/cancel`); } catch {}
+  };
+
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -1719,27 +1728,44 @@ export default function Studio() {
                 verticalAlign: "middle",
               }}
             />
-            <button
-              onClick={handleSend}
-              disabled={isRunning || !prompt.trim()}
-              style={{
-                width: "34px", height: "34px",
-                borderRadius: "10px",
-                border: "none",
-                background: isRunning || !prompt.trim()
-                  ? "#1a1a1a"
-                  : "linear-gradient(135deg, #cc0000, #8b0000)",
-                color: isRunning || !prompt.trim() ? "#333" : "#fff",
-                fontSize: "0.95rem",
-                cursor: isRunning || !prompt.trim() ? "default" : "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-                boxShadow: isRunning || !prompt.trim() ? "none" : "0 0 12px rgba(180,0,0,0.4)",
-                transition: "all 0.2s",
-              }}
-            >
-              ➤
-            </button>
+            {isRunning ? (
+              <button
+                onClick={handleStop}
+                title="Stop generation"
+                style={{
+                  width: "34px", height: "34px",
+                  borderRadius: "10px", border: "none",
+                  background: "linear-gradient(135deg, #cc0000, #8b0000)",
+                  color: "#fff", fontSize: "0.75rem",
+                  cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                  boxShadow: "0 0 12px rgba(180,0,0,0.5)",
+                  transition: "all 0.2s",
+                }}
+              >
+                ■
+              </button>
+            ) : (
+              <button
+                onClick={handleSend}
+                disabled={!prompt.trim()}
+                style={{
+                  width: "34px", height: "34px",
+                  borderRadius: "10px", border: "none",
+                  background: !prompt.trim() ? "#1a1a1a" : "linear-gradient(135deg, #cc0000, #8b0000)",
+                  color: !prompt.trim() ? "#333" : "#fff",
+                  fontSize: "0.95rem",
+                  cursor: !prompt.trim() ? "default" : "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                  boxShadow: !prompt.trim() ? "none" : "0 0 12px rgba(180,0,0,0.4)",
+                  transition: "all 0.2s",
+                }}
+              >
+                ➤
+              </button>
+            )}
           </div>
           <p style={{ fontSize: "0.65rem", color: "#222", textAlign: "center", marginTop: "6px", letterSpacing: "0.04em" }}>
             Enter to send · Shift+Enter for new line
@@ -1795,29 +1821,7 @@ export default function Studio() {
           )}
 
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, marginLeft: "auto" }}>
-            <button
-              onClick={handleNavigateToSubscribe}
-              style={{
-                padding: "6px 16px",
-                background: "linear-gradient(135deg, #cc0000, #8b0000)",
-                border: "none", borderRadius: "8px",
-                color: "#fff", fontSize: "0.76rem", fontWeight: 600,
-                cursor: "pointer", letterSpacing: "0.03em",
-                boxShadow: "0 0 14px rgba(180,0,0,0.35)",
-                transition: "box-shadow 0.2s, transform 0.15s",
-                whiteSpace: "nowrap",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.boxShadow = "0 0 24px rgba(200,0,0,0.55)";
-                e.currentTarget.style.transform = "scale(1.03)";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.boxShadow = "0 0 14px rgba(180,0,0,0.35)";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              Get Credits
-            </button>
+
             {panelView === "preview" && previewUrl && !previewError && (
               <a href={previewUrl} target="_blank" rel="noreferrer" style={{ color: "#8b0000", fontSize: "0.75rem", textDecoration: "none", fontWeight: "bold" }}>
                 ↗ Open
