@@ -1171,7 +1171,6 @@ export default function Studio() {
   const [previewKey,   setPreviewKey]   = useState(0);
   const [credits,      setCredits]      = useState(null);
   const [userPlan,     setUserPlan]     = useState(localStorage.getItem("user_plan") || "free");
-  const [userPlan,     setUserPlan]     = useState(localStorage.getItem("user_plan") || "free");
   const [panelView,      setPanelView]      = useState("preview");
   const [progress,       setProgress]       = useState([]);
   const [thinkingText,   setThinkingText]   = useState("");
