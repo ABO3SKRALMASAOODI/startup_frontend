@@ -43,7 +43,7 @@ const TEMPLATES = [
 function TemplateCard({ template, index, onUse }) {
   const [hovered, setHovered] = useState(false);
   const [cloning, setCloning] = useState(false);
-  const previewUrl = `${API.defaults.baseURL?.replace('/auth', '') || ''}/auth/preview/${template.job_id}/`;
+  const previewUrl = `https://entrepreneur-bot-backend.onrender.com/auth/preview/${template.job_id}/`;
   const handleClick = async () => {
     if (cloning) return;
     setCloning(true);
