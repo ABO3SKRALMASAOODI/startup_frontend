@@ -19,6 +19,16 @@ def create_app():
     # ✅ Explicitly allow your frontend domain
     CORS(app, origins="*", allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"])
 
+    @app.before_request
+    def handle_options():
+        from flask import request, Response
+        if request.method == "OPTIONS":
+            r = Response()
+            r.headers["Access-Control-Allow-Origin"] = "*"
+            r.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            r.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
+            return r
+
     @app.after_request
     def add_cors_headers(response):
         response.headers["Access-Control-Allow-Origin"] = "*"
