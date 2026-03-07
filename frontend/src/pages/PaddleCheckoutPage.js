@@ -11,7 +11,7 @@ export default function PaddleCheckoutPage() {
 
 
       window.Paddle.Initialize({
-        token: 'test_dcf6d3e20a0df8006f9462d419f'  // Sandbox client token
+        token: 'test_525dbb28620d16a4cd9f286338b'
       });
 
       const urlParams = new URLSearchParams(window.location.search);
