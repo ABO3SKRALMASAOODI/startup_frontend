@@ -22,6 +22,7 @@ def create_app():
          r"/api/*": {"origins": "*"},
          r"/auth/*": {"origins": "*"},
          r"/chat/*": {"origins": "*"},
+         r"/paddle/*": {"origins": "*"},
      },
      supports_credentials=False,
      allow_headers=["Content-Type", "Authorization"],
