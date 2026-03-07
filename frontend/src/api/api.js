@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://entrepreneur-bot-backend.onrender.com",
+  baseURL: "/api-backend",
 });
 
 API.interceptors.request.use((config) => {
