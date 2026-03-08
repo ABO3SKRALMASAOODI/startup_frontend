@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { marked } from "marked";
 import { useRive } from "rive-react";
 import API from "../api/api";
+import NameModal from "../components/NameModal";
 
 // ── Inject global styles (animations, scrollbar, markdown) ───────────────────
 const GLOBAL_STYLES = `
@@ -1061,6 +1062,7 @@ function SidebarDrawer({ open, onClose, userEmail, credits, projects, currentJob
 }
 
 // ─── Logout Confirmation Modal ────────────────────────────────────────────────
+// Problem 7: Replaced door emoji with power icon
 
 function LogoutModal({ open, onConfirm, onCancel }) {
   if (!open) return null;
@@ -1084,8 +1086,9 @@ function LogoutModal({ open, onConfirm, onCancel }) {
           border: "1px solid rgba(140,0,0,0.3)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "1.3rem",
+          color: "#cc0000",
         }}>
-          🚪
+          ⏻
         </div>
         <h3 style={{ margin: "0 0 8px", fontSize: "1.05rem", color: "#fff", fontWeight: 700 }}>
           Log out?
@@ -1135,14 +1138,9 @@ const DS = {
 };
 
 // ─── FIX 1: Safe preview URL ─────────────────────────────────────────────────
-// Backend now returns absolute URLs like http://127.0.0.1:5000/auth/preview/...
-// so React Router cannot intercept them. This function is kept as a safety net
-// for any legacy relative or http://127.0.0.1:<random-port> URLs in the DB.
 function _getSafePreviewUrl(url, jobId) {
   if (!url && !jobId) return null;
-  // Legacy dead random-port URL — these no longer exist but handle just in case
   if (url && /^http:\/\/127\.0\.0\.1:\d+$/.test(url)) {
-    // Can't fix without knowing the host, just return null and let status poll fix it
     return null;
   }
   if (url) return url;
@@ -1175,8 +1173,12 @@ export default function Studio() {
   const [progress,       setProgress]       = useState([]);
   const [thinkingText,   setThinkingText]   = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  // FIX 2: track when the iframe fails to load
   const [previewError,  setPreviewError]  = useState(false);
+
+  // Problem 6: NameModal now lives here instead of LandingPage
+  const [showNameModal, setShowNameModal] = useState(
+    localStorage.getItem("show_name_modal") === "1"
+  );
 
   const isRunning   = state === "running";
   const isRendering = state === "completed" && !previewUrl && currentJobId;
@@ -1211,8 +1213,13 @@ export default function Studio() {
       .catch(() => {});
   }, []);
 
+  // Problem 9: Only auto-scroll when NEW messages arrive, not on every re-render
+  const prevMsgCountRef = useRef(0);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > prevMsgCountRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevMsgCountRef.current = messages.length;
   }, [messages]);
 
   useEffect(() => {
@@ -1252,7 +1259,7 @@ export default function Studio() {
           setCurrentJobId(project.job_id);
           const safeUrl = _getSafePreviewUrl(project.preview_url, project.job_id);
           setPreviewUrl(safeUrl);
-          setPreviewError(false); // FIX 3a
+          setPreviewError(false);
           setState(project.state || "completed");
           if (safeUrl) setPreviewKey(k => k + 1);
           try {
@@ -1266,7 +1273,7 @@ export default function Studio() {
             if (data.preview_url) {
               const url = _getSafePreviewUrl(data.preview_url, project.job_id);
               setPreviewUrl(url);
-              setPreviewError(false); // FIX 3b
+              setPreviewError(false);
               setPreviewKey(k => k + 1);
             }
           } catch { setMessages([]); }
@@ -1300,7 +1307,7 @@ export default function Studio() {
           setState(data.state || "completed");
           if (data.preview_url) {
             setPreviewUrl(data.preview_url);
-            setPreviewError(false); // FIX 3c
+            setPreviewError(false);
             setPreviewKey(k => k + 1);
           }
           const serverMessages = (data.messages || []).map(m => ({
@@ -1353,7 +1360,7 @@ export default function Studio() {
 
         if (data.preview_url) {
           setPreviewUrl(data.preview_url);
-          setPreviewError(false); // FIX 3d
+          setPreviewError(false);
           if (data.code_changed) {
             setPreviewKey(k => k + 1);
           }
@@ -1441,7 +1448,7 @@ export default function Studio() {
   const handleNewProject = () => {
     stopPolling();
     setCurrentJobId(null); setMessages([]); setPreviewUrl(null);
-    setPreviewError(false); // FIX 3e
+    setPreviewError(false);
     setState("idle"); setPrompt(""); setError("");
     setTimeout(() => inputRef.current?.focus(), 100);
   };
@@ -1451,7 +1458,7 @@ export default function Studio() {
     setChatLoading(true);
     setCurrentJobId(project.job_id);
     setError("");
-    setPreviewError(false); // FIX 3f
+    setPreviewError(false);
     setMessages([]);
 
     const safePreviewUrl = _getSafePreviewUrl(project.preview_url, project.job_id);
@@ -1472,7 +1479,7 @@ export default function Studio() {
       if (data.preview_url) {
         const url = _getSafePreviewUrl(data.preview_url, project.job_id);
         setPreviewUrl(url);
-        setPreviewError(false); // FIX 3g
+        setPreviewError(false);
         setPreviewKey(k => k + 1);
       }
     } catch {
@@ -1516,6 +1523,18 @@ export default function Studio() {
   return (
     <div style={S.layout}>
       <GlobalStyles />
+
+      {/* Problem 6: NameModal appears here immediately after first signup */}
+      {showNameModal && (
+        <NameModal
+          onDone={(name) => {
+            localStorage.setItem("user_name", name);
+            localStorage.removeItem("show_name_modal");
+            setShowNameModal(false);
+          }}
+        />
+      )}
+
       <LogoutModal
         open={showLogoutModal}
         onConfirm={confirmLogout}
@@ -1651,40 +1670,61 @@ export default function Studio() {
             );
           })}
 
-          {(isRunning || isRendering) && (
-            <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
-              <BotAvatar />
-              <div style={{
-                maxWidth: "78%",
-                display: "flex", flexDirection: "column",
-                alignItems: "flex-start",
-              }}>
-                <div style={{
-                  padding: "10px 16px",
-                  borderRadius: "16px 16px 16px 4px",
-                  background: "#0f0f0f",
-                  border: "1px solid rgba(140,0,0,0.25)",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
-                }}>
-                  <TypingDots />
-                  <span style={{
-                    fontSize: "0.72rem",
-                    color: "#8b0000",
-                    display: "block",
-                    marginTop: "4px",
-                    letterSpacing: "0.06em",
-                    textShadow: "0 0 8px rgba(140,0,0,0.3)",
-                  }}>
-                    {displayPhase}
-                  </span>
+          {/* Problem 9: After agent responds, show slim progress bar instead of full typing bubble */}
+          {(isRunning || isRendering) && (() => {
+            const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+            const agentAlreadyReplied = lastMsg && lastMsg.role === "assistant";
+            const isBuildingOnly = agentAlreadyReplied && (isRendering || buildPhase === "compiling" || buildPhase === "building");
 
-                  {thinkingText && !isRendering && (
-                    <ThinkingLine text={thinkingText} />
-                  )}
+            if (isBuildingOnly) {
+              return (
+                <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
+                  <div style={{ width: "34px", flexShrink: 0 }} />
+                  <div style={{
+                    padding: "8px 16px", borderRadius: "12px",
+                    background: "#0f0f0f", border: "1px solid rgba(140,0,0,0.2)",
+                    width: "240px",
+                  }}>
+                    <span style={{ fontSize: "0.68rem", color: "#666", display: "block", marginBottom: "6px" }}>
+                      {isRendering ? "Rendering preview..." : buildPhase === "compiling" ? "Compiling..." : "Building..."}
+                    </span>
+                    <div style={{ height: "4px", background: "#1a1a1a", borderRadius: "2px", overflow: "hidden" }}>
+                      <div style={{
+                        height: "100%", width: "100%",
+                        background: "linear-gradient(90deg, transparent, #cc0000, transparent)",
+                        backgroundSize: "200% 100%",
+                        animation: "shimmer 2s linear infinite",
+                        borderRadius: "2px",
+                      }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
+                <BotAvatar />
+                <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                  <div style={{
+                    padding: "10px 16px", borderRadius: "16px 16px 16px 4px",
+                    background: "#0f0f0f", border: "1px solid rgba(140,0,0,0.25)",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
+                  }}>
+                    <TypingDots />
+                    <span style={{
+                      fontSize: "0.72rem", color: "#8b0000", display: "block",
+                      marginTop: "4px", letterSpacing: "0.06em",
+                      textShadow: "0 0 8px rgba(140,0,0,0.3)",
+                    }}>
+                      {displayPhase}
+                    </span>
+                    {thinkingText && <ThinkingLine text={thinkingText} />}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           <div ref={bottomRef} />
         </div>
@@ -1868,7 +1908,6 @@ export default function Studio() {
                 </div>
               )
             ) : (
-              // FIX 4: iframe with error detection and reload UI
               previewError ? (
                 <div style={{
                   flex: 1,

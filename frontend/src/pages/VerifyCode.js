@@ -8,6 +8,7 @@ function VerifyCode() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
+  const [msgType, setMsgType] = useState("info"); // "success" | "error" | "info" | "warning"
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const inputRef = useRef(null);
@@ -40,31 +41,93 @@ function VerifyCode() {
       const endpoint = isResetMode ? "/auth/verify-reset-code" : "/verify/verify-code";
       await API.post(endpoint, { email, code });
 
-      setMessage("✅ Code verified");
+      if (isResetMode) {
+        setMessage("Code verified");
+        setMsgType("success");
+        setTimeout(() => navigate("/reset-password"), 1000);
+      } else {
+        // Problem 2: Auto-login after successful email verification
+        setMessage("Email verified — logging you in...");
+        setMsgType("success");
 
-      setTimeout(() => {
-        if (isResetMode) {
-          navigate("/reset-password");
+        // Get the password from the registration flow (we'll store it temporarily)
+        const tempPassword = sessionStorage.getItem("pending_password");
+        
+        if (tempPassword) {
+          try {
+            const loginRes = await API.post("/auth/login", { email, password: tempPassword });
+            const token = loginRes.data.token;
+            localStorage.setItem("token", token);
+            localStorage.setItem("user_email", email);
+            localStorage.setItem("user_plan", loginRes.data.plan || "free");
+            localStorage.removeItem("verify_email");
+            sessionStorage.removeItem("pending_password");
+
+            // Trigger name modal on landing
+            localStorage.setItem("show_name_modal", "1");
+
+            // Check for redirect params saved during auto-register flow
+            const savedRedirect = sessionStorage.getItem("post_verify_redirect");
+            const savedPrompt = sessionStorage.getItem("post_verify_prompt");
+            const savedTemplate = sessionStorage.getItem("post_verify_template");
+            sessionStorage.removeItem("post_verify_redirect");
+            sessionStorage.removeItem("post_verify_prompt");
+            sessionStorage.removeItem("post_verify_template");
+
+            // Handle template clone
+            if (savedTemplate) {
+              try {
+                const res = await API.post("/auth/template/clone", { template_id: savedTemplate });
+                navigate(`/studio?cloned=${res.data.job_id}`);
+                return;
+              } catch {
+                // Fall through to normal redirect
+              }
+            }
+
+            // Handle prompt redirect
+            if (savedRedirect === "studio" && savedPrompt) {
+              navigate(`/studio?prompt=${savedPrompt}`);
+              return;
+            }
+
+            // Default: go to studio with name modal flag
+            setTimeout(() => navigate("/studio"), 500);
+          } catch {
+            // Auto-login failed, fallback to manual login
+            setMessage("Verified! Please log in.");
+            setMsgType("success");
+            localStorage.removeItem("verify_email");
+            localStorage.setItem("show_name_modal", "1");
+            setTimeout(() => navigate("/login"), 1500);
+          }
         } else {
+          // No stored password — fallback to manual login
+          setMessage("Verified! Redirecting to login...");
+          setMsgType("success");
           localStorage.removeItem("verify_email");
-          // ── Trigger the name modal on the landing page ──
           localStorage.setItem("show_name_modal", "1");
-          navigate("/");
+          setTimeout(() => navigate("/login"), 1500);
         }
-      }, 1000);
+      }
     } catch (err) {
       const error = err.response?.data?.error;
 
       if (error === "Code has expired") {
-        setMessage("❌ This code has expired. You can request a new one below.");
-      } else if (error === "Invalid code") {
-        setMessage("❌ The code you entered is incorrect.");
-      } else if (error === "No code found for this email") {
-        setMessage("❌ No code found. Please try registering again.");
+        setMessage("This code has expired. You can request a new one below.");
+        setMsgType("error");
+      } else if (error === "Invalid code" || error === "Incorrect code") {
+        setMessage("The code you entered is incorrect.");
+        setMsgType("error");
+      } else if (error === "No code found for this email" || error === "No code found") {
+        setMessage("No code found. Please try registering again.");
+        setMsgType("error");
       } else if (error === "You have reached the maximum of 5 codes today") {
-        setMessage("⚠️ You've hit the daily limit for code requests. Try again tomorrow.");
+        setMessage("You've hit the daily limit for code requests. Try again tomorrow.");
+        setMsgType("warning");
       } else {
-        setMessage("❌ Verification failed. Please try again.");
+        setMessage("Verification failed. Please try again.");
+        setMsgType("error");
       }
     } finally {
       setLoading(false);
@@ -75,13 +138,22 @@ function VerifyCode() {
     setMessage("");
     setCooldown(30);
     try {
-      await API.post("/verify/send-code", { email });
-      setMessage("📨 A new code has been sent to your email.");
+      if (isResetMode) {
+        // Problem 3: Resend code in reset mode uses the reset endpoint
+        await API.post("/auth/send-reset-code", { email });
+      } else {
+        await API.post("/verify/send-code", { email });
+      }
+      setMessage("A new code has been sent to your email.");
+      setMsgType("success");
     } catch (err) {
-      setMessage("❌ Failed to resend code. Try again shortly.");
+      setMessage("Failed to resend code. Try again shortly.");
+      setMsgType("error");
       setCooldown(0);
     }
   };
+
+  const msgColor = msgType === "success" ? "#4caf50" : msgType === "error" ? "#ff4444" : msgType === "warning" ? "#f0a500" : "#aaa";
 
   return (
     <div style={{ height: "100vh", backgroundColor: "#000", color: "#fff", fontFamily: "Segoe UI, sans-serif" }}>
@@ -125,17 +197,16 @@ function VerifyCode() {
           </button>
         </form>
 
-        {message && <p style={{ marginTop: "1rem", color: "#ccc", fontSize: "0.95rem" }}>{message}</p>}
+        {message && <p style={{ marginTop: "1rem", fontSize: "0.95rem", color: msgColor }}>{message}</p>}
 
-        {!isResetMode && (
-          <button
-            onClick={handleResendCode}
-            disabled={cooldown > 0}
-            style={{ ...btnStyle, marginTop: "1rem", backgroundColor: "#444", opacity: cooldown > 0 ? 0.6 : 1 }}
-          >
-            {cooldown > 0 ? `Resend available in ${cooldown}s` : "Resend Code"}
-          </button>
-        )}
+        {/* Problem 3: Show resend button in BOTH modes */}
+        <button
+          onClick={handleResendCode}
+          disabled={cooldown > 0}
+          style={{ ...btnStyle, marginTop: "1rem", backgroundColor: "#444", opacity: cooldown > 0 ? 0.6 : 1 }}
+        >
+          {cooldown > 0 ? `Resend available in ${cooldown}s` : "Resend Code"}
+        </button>
       </div>
     </div>
   );

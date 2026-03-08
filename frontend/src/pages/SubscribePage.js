@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import API from "../api/api";
 import { useNavigate } from "react-router-dom";
+import API from "../api/api";
 
 const PLANS = [
   { id: "free", name: "Free", price: 0, monthly: 0, daily: 20, features: ["20 credits / day", "Live preview", "Basic app generation"], badge: null, color: "#333", glow: "rgba(100,100,100,0.3)" },
@@ -50,7 +50,7 @@ export default function SubscribePage() {
       const res = await API.post("/paddle/create-checkout-session", { plan: planId });
       if (res.data.checkout_url) window.location.href = res.data.checkout_url;
       else showToast("Failed to get checkout link.", "#ff4444");
-    } catch (err) {
+    } catch {
       showToast("Failed to start checkout.", "#ff4444");
     } finally { setLoading(null); }
   };
@@ -169,11 +169,8 @@ export default function SubscribePage() {
         })}
       </div>
 
-      <div style={{ textAlign: "center", padding: "2rem" }}>
-        <button onClick={() => { localStorage.clear(); navigate("/"); }} style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: "0.85rem" }}>
-          Log Out
-        </button>
-      </div>
+      {/* Problem 5 fix: logout button removed from subscription page */}
+      <div style={{ height: "3rem" }} />
     </div>
   );
 }

@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useRive } from "rive-react";
 import StickyNavbar from "../components/StickyNavbar";
-import NameModal from "../components/NameModal";
 import { useEffect, useState, useRef } from "react";
 import API from "../api/api";
 
@@ -118,7 +117,6 @@ function BottomPromptBox({ onSend }) {
           animation: focused ? "none" : "glowPulse 2.5s ease-in-out infinite",
         }}
       >
-        {/* Label strip */}
         <div style={{ padding: "12px 22px 0", display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,80,80,0.7)", fontWeight: 600 }}>
             Ready to build
@@ -129,7 +127,6 @@ function BottomPromptBox({ onSend }) {
           </span>
         </div>
 
-        {/* Glowing pre-filled textarea */}
         <textarea
           ref={ref}
           value={prompt}
@@ -139,56 +136,29 @@ function BottomPromptBox({ onSend }) {
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(prompt); } }}
           rows={2}
           style={{
-            width: "100%",
-            background: "transparent",
-            border: "none",
-            outline: "none",
+            width: "100%", background: "transparent", border: "none", outline: "none",
             color: focused ? "#ffffff" : "rgba(255,180,180,0.9)",
-            fontSize: "1.08rem",
-            padding: "10px 22px 12px",
-            resize: "none",
-            fontFamily: "Segoe UI, sans-serif",
-            lineHeight: 1.6,
-            minHeight: "68px",
-            maxHeight: "160px",
-            caretColor: "#ff3333",
-            textShadow: focused
-              ? "0 0 18px rgba(255,80,80,0.6), 0 0 40px rgba(255,30,30,0.3)"
-              : "0 0 12px rgba(255,60,60,0.4)",
+            fontSize: "1.08rem", padding: "10px 22px 12px", resize: "none",
+            fontFamily: "Segoe UI, sans-serif", lineHeight: 1.6,
+            minHeight: "68px", maxHeight: "160px", caretColor: "#ff3333",
+            textShadow: focused ? "0 0 18px rgba(255,80,80,0.6), 0 0 40px rgba(255,30,30,0.3)" : "0 0 12px rgba(255,60,60,0.4)",
             transition: "text-shadow 0.3s ease, color 0.3s ease",
           }}
         />
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 14px 16px" }}>
-          <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.75rem" }}>
-            Enter to build · Shift+Enter for new line
-          </span>
-          <button
-            onClick={() => onSend(prompt)}
-            disabled={!prompt.trim()}
+          <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.75rem" }}>Enter to build · Shift+Enter for new line</span>
+          <button onClick={() => onSend(prompt)} disabled={!prompt.trim()}
             style={{
-              background: prompt.trim()
-                ? "linear-gradient(135deg, #ff2020 0%, #cc0000 40%, #8b0000 100%)"
-                : "rgba(40,40,40,0.8)",
+              background: prompt.trim() ? "linear-gradient(135deg, #ff2020 0%, #cc0000 40%, #8b0000 100%)" : "rgba(40,40,40,0.8)",
               color: prompt.trim() ? "#fff" : "rgba(255,255,255,0.25)",
               border: "none", borderRadius: "12px", padding: "12px 32px",
-              fontSize: "1rem", fontWeight: 700,
-              cursor: prompt.trim() ? "pointer" : "default",
+              fontSize: "1rem", fontWeight: 700, cursor: prompt.trim() ? "pointer" : "default",
               letterSpacing: "0.03em", transition: "all 0.25s ease",
-              boxShadow: prompt.trim()
-                ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)"
-                : "none",
+              boxShadow: prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none",
             }}
-            onMouseEnter={e => {
-              if (prompt.trim()) {
-                e.currentTarget.style.boxShadow = "0 0 40px rgba(255,40,40,0.9), 0 0 80px rgba(220,0,0,0.5)";
-                e.currentTarget.style.transform = "scale(1.04) translateY(-1px)";
-              }
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.boxShadow = prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none";
-              e.currentTarget.style.transform = "scale(1)";
-            }}
+            onMouseEnter={e => { if (prompt.trim()) { e.currentTarget.style.boxShadow = "0 0 40px rgba(255,40,40,0.9), 0 0 80px rgba(220,0,0,0.5)"; e.currentTarget.style.transform = "scale(1.04) translateY(-1px)"; } }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none"; e.currentTarget.style.transform = "scale(1)"; }}
           >
             Build it
           </button>
@@ -218,19 +188,15 @@ function LandingPage() {
   const token      = localStorage.getItem("token");
   const isLoggedIn = !!token;
 
-  // Name: read from localStorage, fallback to email handle
   const getRawName = () => {
     const stored = localStorage.getItem("user_name");
     if (stored) return stored;
     const email = localStorage.getItem("user_email") || "";
     return email.split("@")[0] || "";
   };
-  const [userName, setUserName] = useState(getRawName());
+  const [userName] = useState(getRawName());
 
-  // Show name modal only when flag is set (set by Verify page after registration)
-  const [showNameModal, setShowNameModal] = useState(
-    isLoggedIn && localStorage.getItem("show_name_modal") === "1"
-  );
+  // NameModal REMOVED from here — it now lives in Studio.js (Problem 6)
 
   const { rive: heroRive,   RiveComponent: HeroBot   } = useRive({ src: "/hustler-robot.riv",      autoplay: true, stateMachines: ["State Machine 1"] });
   const { rive: bubbleRive, RiveComponent: BubbleBot } = useRive({ src: "/hustler-bubble-bot.riv", autoplay: true, stateMachines: ["State Machine 1"] });
@@ -293,28 +259,12 @@ function LandingPage() {
     { title: "Download & Deploy",         desc: "Export your code as a clean React project. Deploy to Vercel, Netlify, or anywhere in minutes." },
   ];
 
-  // Badge text:
-  // logged-in  → "Welcome back · {name}"
-  // guest      → "Welcome"
-  const badgeText = isLoggedIn
-    ? `Welcome back · ${userName}`
-    : "Welcome";
+  const badgeText = isLoggedIn ? `Welcome back · ${userName}` : "Welcome";
 
   return (
     <>
       <StickyNavbar userName={userName} />
 
-      {/* Name modal — only fires once after registration */}
-      {showNameModal && (
-        <NameModal
-          onDone={(name) => {
-            setUserName(name);
-            setShowNameModal(false);
-          }}
-        />
-      )}
-
-      {/* paddingTop offsets the fixed navbar */}
       <div style={{ paddingTop: "72px" }} className="bg-black text-white font-sans overflow-x-hidden">
         <style>{`
           @keyframes badgePulse { 0%,100%{opacity:1;box-shadow:0 0 6px #ff3333,0 0 12px #ff3333} 50%{opacity:0.6;box-shadow:0 0 3px #ff3333} }
@@ -327,49 +277,24 @@ function LandingPage() {
 
         {/* ── HERO ── */}
         <section className="relative min-h-screen flex flex-col justify-center items-center px-6 overflow-hidden">
-          <motion.div
-            className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-red-900/30 via-transparent to-black pointer-events-none z-0"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }}
-          />
-
-          <motion.div
-            className="z-10 text-center w-full max-w-3xl"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            style={{ marginTop: isLoggedIn ? "0" : "-40px" }}
-          >
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(139,0,0,0.35)", border: "1px solid rgba(220,0,0,0.5)", borderRadius: "100px", padding: "6px 16px 6px 10px", marginBottom: "28px", backdropFilter: "blur(12px)", boxShadow: "0 0 20px rgba(180,0,0,0.3),inset 0 0 12px rgba(180,0,0,0.1)" }}
-            >
+          <motion.div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-red-900/30 via-transparent to-black pointer-events-none z-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }} />
+          <motion.div className="z-10 text-center w-full max-w-3xl" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} style={{ marginTop: isLoggedIn ? "0" : "-40px" }}>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(139,0,0,0.35)", border: "1px solid rgba(220,0,0,0.5)", borderRadius: "100px", padding: "6px 16px 6px 10px", marginBottom: "28px", backdropFilter: "blur(12px)", boxShadow: "0 0 20px rgba(180,0,0,0.3),inset 0 0 12px rgba(180,0,0,0.1)" }}>
               <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#ff3333", display: "inline-block", boxShadow: "0 0 6px #ff3333,0 0 12px #ff3333", animation: "badgePulse 1.5s ease-in-out infinite" }} />
-              <span style={{ fontSize: "0.82rem", color: "rgba(255,200,200,0.95)", letterSpacing: "0.04em" }}>
-                {badgeText}
-              </span>
+              <span style={{ fontSize: "0.82rem", color: "rgba(255,200,200,0.95)", letterSpacing: "0.04em" }}>{badgeText}</span>
             </motion.div>
 
-            <h1 className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4" style={{ textShadow: "0 0 40px rgba(255,26,26,0.4),0 0 80px rgba(255,26,26,0.15)" }}>
-              The Hustler Bot
-            </h1>
+            <h1 className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4" style={{ textShadow: "0 0 40px rgba(255,26,26,0.4),0 0 80px rgba(255,26,26,0.15)" }}>The Hustler Bot</h1>
             <p className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto">Build any app. Just describe it.</p>
-            <p className="text-base text-gray-500 mb-10 max-w-lg mx-auto">
-              Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.
-            </p>
+            <p className="text-base text-gray-500 mb-10 max-w-lg mx-auto">Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.</p>
 
-            {/* Hero prompt box */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.8 }} style={{ width: "100%", marginBottom: "16px" }}>
               <div className="prompt-wrap" style={{ background: "rgba(8,2,2,0.92)", border: "1px solid rgba(120,0,0,0.5)", borderRadius: "20px", backdropFilter: "blur(20px)", boxShadow: "0 4px 40px rgba(100,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.04)", overflow: "hidden" }}>
-                <textarea
-                  ref={textareaRef}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
+                <textarea ref={textareaRef} value={prompt} onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder="Describe the app you want to build..."
-                  rows={2}
-                  style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: "1.05rem", padding: "20px 22px 12px", resize: "none", fontFamily: "Segoe UI, sans-serif", lineHeight: 1.6, minHeight: "72px", maxHeight: "160px", caretColor: "#ff3333" }}
-                />
+                  placeholder="Describe the app you want to build..." rows={2}
+                  style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: "1.05rem", padding: "20px 22px 12px", resize: "none", fontFamily: "Segoe UI, sans-serif", lineHeight: 1.6, minHeight: "72px", maxHeight: "160px", caretColor: "#ff3333" }} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px 14px" }}>
                   <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.75rem" }}>Enter to build · Shift+Enter for new line</span>
                   <button className="send-btn" onClick={() => handleSend()} disabled={!prompt.trim()}
@@ -380,7 +305,6 @@ function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Example prompts */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px" }}>
               {examplePrompts.map((p, i) => (
                 <button key={i} className="example-btn" onClick={() => { setPrompt(p); textareaRef.current?.focus(); }}
@@ -390,15 +314,12 @@ function LandingPage() {
               ))}
             </motion.div>
 
-            {/* Open Dashboard — logged-in only */}
             {isLoggedIn && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} style={{ marginTop: "24px" }}>
-                <button
-                  onClick={() => navigate("/studio")}
+                <button onClick={() => navigate("/studio")}
                   style={{ background: "linear-gradient(135deg,#cc0000,#8b0000)", border: "none", borderRadius: "14px", padding: "14px 36px", fontSize: "1rem", fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)", transition: "all 0.2s ease", letterSpacing: "0.02em" }}
                   onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 40px rgba(220,0,0,0.8),0 0 80px rgba(200,0,0,0.4)"; e.currentTarget.style.transform = "scale(1.03)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)"; e.currentTarget.style.transform = "scale(1)"; }}
-                >
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)"; e.currentTarget.style.transform = "scale(1)"; }}>
                   Open Dashboard
                 </button>
               </motion.div>
@@ -459,7 +380,7 @@ function LandingPage() {
         </section>
       </div>
 
-      {/* ── FLOATING BUBBLE (bottom-right) ── */}
+      {/* ── FLOATING BUBBLE ── */}
       <div
         className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#111] border border-red-700 rounded-full px-4 py-2 shadow-[0_0_25px_#ff1a1a] hover:scale-105 transition cursor-pointer"
         onClick={() => {
@@ -471,10 +392,7 @@ function LandingPage() {
         <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
           <BubbleBot style={{ width: "100%", height: "100%" }} />
         </div>
-        <TypingText
-          text={isLoggedIn ? "Welcome back! Open the Dashboard" : "Describe your app and I'll build it!"}
-          speed={50}
-        />
+        <TypingText text={isLoggedIn ? "Welcome back! Open the Dashboard" : "Describe your app and I'll build it!"} speed={50} />
       </div>
     </>
   );

@@ -5,6 +5,7 @@ import API from "../api/api";
 function EnterPassword() {
   const [password, setPassword] = useState("");
   const [message, setMessage]   = useState("");
+  const [msgType, setMsgType]   = useState("info"); // "success" | "error" | "info"
   const [email, setEmail]       = useState("");
   const [loading, setLoading]   = useState(false);
   const navigate  = useNavigate();
@@ -33,13 +34,11 @@ function EnterPassword() {
       localStorage.setItem("user_email", email);
       localStorage.setItem("user_plan", response.data.plan || "free");
 
-      // Restore name from localStorage if already set (returning user)
-      // No name modal on login — that only fires after first registration
-
       // Template clone flow
       if (template) {
         try {
           setMessage("Cloning template...");
+          setMsgType("info");
           const res = await API.post("/auth/template/clone", { template_id: template });
           navigate(`/studio?cloned=${res.data.job_id}`);
           return;
@@ -55,11 +54,42 @@ function EnterPassword() {
 
       navigate("/studio");
     } catch (error) {
-      setMessage(error.response?.data?.error || "Login failed");
+      const status = error.response?.status;
+      const errMsg = error.response?.data?.error || "Login failed";
+
+      // Problem 1: If user not found (404), auto-register them
+      if (status === 404) {
+        try {
+          setMessage("No account found — creating one for you...");
+          setMsgType("info");
+          await API.post("/auth/register", { email, password });
+          localStorage.setItem("verify_email", email);
+          // Preserve redirect params for after verification
+          if (redirect) sessionStorage.setItem("post_verify_redirect", redirect);
+          if (prompt) sessionStorage.setItem("post_verify_prompt", prompt);
+          if (template) sessionStorage.setItem("post_verify_template", template);
+          navigate("/verify");
+          return;
+        } catch (regErr) {
+          const regMsg = regErr.response?.data?.error || "Registration failed";
+          if (regMsg === "User already exists") {
+            setMessage("Account exists but password is incorrect");
+            setMsgType("error");
+          } else {
+            setMessage(regMsg);
+            setMsgType("error");
+          }
+        }
+      } else {
+        setMessage(errMsg);
+        setMsgType("error");
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const msgColor = msgType === "success" ? "#4caf50" : msgType === "error" ? "#ff4444" : "#aaa";
 
   return (
     <div style={pageStyle}>
@@ -112,7 +142,7 @@ function EnterPassword() {
           </button>
         </form>
 
-        {message && <p style={messageStyle}>{message}</p>}
+        {message && <p style={{ marginTop: "1rem", fontSize: "0.95rem", textAlign: "center", color: msgColor }}>{message}</p>}
 
         <p style={{ textAlign: "center", marginTop: "1.5rem", fontSize: "0.9rem" }}>
           <Link to="/change-password" style={linkStyle}>Forgot or Change Password?</Link>
@@ -129,7 +159,6 @@ const boxStyle     = { maxWidth: "400px", margin: "2rem auto", padding: "2rem", 
 const infoBannerStyle = { background: "#1a0000", border: "1px solid #3a0000", borderRadius: "10px", padding: "10px 14px", marginBottom: "1.5rem", fontSize: "0.85rem", color: "#ffaaaa" };
 const inputStyle   = { width: "100%", padding: "12px", marginBottom: "14px", borderRadius: "8px", border: "1px solid #444", backgroundColor: "#222", color: "#fff", fontSize: "1rem", boxSizing: "border-box" };
 const btnStyle     = { width: "100%", padding: "12px", backgroundColor: "#8b0000", color: "#fff", border: "none", borderRadius: "10px", fontSize: "1rem", cursor: "pointer" };
-const messageStyle = { marginTop: "1rem", color: "#ccc", fontSize: "0.95rem", textAlign: "center" };
 const linkStyle    = { color: "#f55", textDecoration: "underline", cursor: "pointer" };
 
 export default EnterPassword;

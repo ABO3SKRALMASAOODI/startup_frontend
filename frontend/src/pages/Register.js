@@ -6,6 +6,7 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [msgType, setMsgType] = useState("info"); // "success" | "error" | "info"
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get("redirect") || null;
@@ -18,12 +19,22 @@ function Register() {
     try {
       await API.post("/auth/register", { email, password });
       localStorage.setItem("verify_email", email);
-      setMessage("✅ Verification code sent to your email.");
+      // Store password temporarily for auto-login after verification (Problem 2)
+      sessionStorage.setItem("pending_password", password);
+      // Preserve redirect params
+      if (redirect) sessionStorage.setItem("post_verify_redirect", redirect);
+      if (prompt) sessionStorage.setItem("post_verify_prompt", prompt);
+      if (template) sessionStorage.setItem("post_verify_template", template);
+      setMessage("Verification code sent to your email.");
+      setMsgType("success");
       navigate("/verify");
     } catch (err) {
       setMessage(err.response?.data?.error || "Registration failed");
+      setMsgType("error");
     }
   };
+
+  const msgColor = msgType === "success" ? "#4caf50" : msgType === "error" ? "#ff4444" : "#aaa";
 
   return (
     <div style={{ height: "100vh", backgroundColor: "#000", color: "#fff", fontFamily: "Segoe UI, sans-serif" }}>
@@ -62,7 +73,7 @@ function Register() {
           <button type="submit" style={btnStyle}>Register</button>
         </form>
 
-        {message && <p style={{ marginTop: "1rem", color: "#ccc", fontSize: "0.95rem" }}>{message}</p>}
+        {message && <p style={{ marginTop: "1rem", fontSize: "0.95rem", color: msgColor }}>{message}</p>}
 
         <p style={{ textAlign: "center", marginTop: "1.5rem", fontSize: "0.9rem" }}>
           Already have an account?{" "}
