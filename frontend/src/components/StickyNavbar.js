@@ -92,21 +92,47 @@ const StickyNavbar = ({ userName }) => {
           </Link>
 
           {isLoggedIn ? (
-            <button
-              onClick={() => navigate("/studio")}
-              style={{
-                background: "linear-gradient(135deg,#cc0000,#8b0000)",
-                border: "none", borderRadius: "10px",
-                padding: "8px 20px", color: "#fff",
-                fontSize: "0.9rem", fontWeight: 600, cursor: "pointer",
-                boxShadow: "0 0 14px rgba(180,0,0,0.4)",
-                transition: "box-shadow 0.2s ease",
-              }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 24px rgba(200,0,0,0.65)"}
-              onMouseLeave={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(180,0,0,0.4)"}
-            >
-              Dashboard
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button
+                onClick={() => navigate("/studio")}
+                style={{
+                  background: "linear-gradient(135deg,#cc0000,#8b0000)",
+                  border: "none", borderRadius: "10px",
+                  padding: "8px 20px", color: "#fff",
+                  fontSize: "0.9rem", fontWeight: 600, cursor: "pointer",
+                  boxShadow: "0 0 14px rgba(180,0,0,0.4)",
+                  transition: "box-shadow 0.2s ease",
+                }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 24px rgba(200,0,0,0.65)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(180,0,0,0.4)"}
+              >
+                Dashboard
+              </button>
+
+              {userEmail === "thehustlerbot@gmail.com" && (
+                <button
+                  onClick={() => navigate("/admin")}
+                  style={{
+                    background: "rgba(220,0,0,0.08)",
+                    border: "1px solid rgba(220,0,0,0.25)",
+                    borderRadius: "10px", padding: "8px 14px",
+                    color: "rgba(220,0,0,0.7)", fontSize: "0.82rem",
+                    fontWeight: 600, cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = "rgba(220,0,0,0.18)";
+                    e.currentTarget.style.color = "#fff";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = "rgba(220,0,0,0.08)";
+                    e.currentTarget.style.color = "rgba(220,0,0,0.7)";
+                  }}
+                >
+                  ⚙ Admin
+                </button>
+              )}
+            </div>
           ) : (
             <>
               <Link to="/register" className="text-white hover:text-red-500 transition">
