@@ -353,14 +353,14 @@ function LandingPage() {
             )}
           </motion.div>
 
-          {/* ── Robot — sits behind content, head always visible above prompt ── */}
+          {/* ── Robot — head behind title, body behind prompt box ── */}
           <div style={{
             position: "absolute",
-            bottom: 0,
+            top: "50%",
             left: "50%",
-            transform: "translateX(-50%)",
-            width: "620px",
-            height: "620px",
+            transform: "translate(-50%, -18%)",
+            width: "700px",
+            height: "700px",
             zIndex: 1,
             opacity: 0.9,
             pointerEvents: "none",
