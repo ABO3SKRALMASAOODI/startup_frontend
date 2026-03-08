@@ -222,7 +222,9 @@ function LandingPage() {
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 160) + "px";
     }
   }, [prompt]);
-
+  useEffect(() => {
+    API.post("/admin/track", { page: "/" }).catch(() => {});
+  }, []);
   const handleSend = (text) => {
     const t = (typeof text === "string" ? text : prompt).trim();
     if (!t) return;
@@ -315,15 +317,76 @@ function LandingPage() {
             </motion.div>
 
             {isLoggedIn && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} style={{ marginTop: "24px" }}>
-                <button onClick={() => navigate("/studio")}
-                  style={{ background: "linear-gradient(135deg,#cc0000,#8b0000)", border: "none", borderRadius: "14px", padding: "14px 36px", fontSize: "1rem", fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)", transition: "all 0.2s ease", letterSpacing: "0.02em" }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 40px rgba(220,0,0,0.8),0 0 80px rgba(200,0,0,0.4)"; e.currentTarget.style.transform = "scale(1.03)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)"; e.currentTarget.style.transform = "scale(1)"; }}>
-                  Open Dashboard
-                </button>
-              </motion.div>
-            )}
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 1 }}
+    style={{
+      marginTop: "24px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "10px",
+    }}
+  >
+    <button
+      onClick={() => navigate("/studio")}
+      style={{
+        background: "linear-gradient(135deg,#cc0000,#8b0000)",
+        border: "none",
+        borderRadius: "14px",
+        padding: "14px 36px",
+        fontSize: "1rem",
+        fontWeight: 700,
+        color: "#fff",
+        cursor: "pointer",
+        boxShadow: "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)",
+        transition: "all 0.2s ease",
+        letterSpacing: "0.02em",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow =
+          "0 0 40px rgba(220,0,0,0.8),0 0 80px rgba(200,0,0,0.4)";
+        e.currentTarget.style.transform = "scale(1.03)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow =
+          "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)";
+        e.currentTarget.style.transform = "scale(1)";
+      }}
+    >
+      Open Dashboard
+    </button>
+
+    {localStorage.getItem("user_email") === "thehustlerbot@gmail.com" && (
+      <button
+        onClick={() => navigate("/admin")}
+        style={{
+          background: "rgba(220,0,0,0.08)",
+          border: "1px solid rgba(220,0,0,0.25)",
+          borderRadius: "10px",
+          padding: "8px 22px",
+          fontSize: "0.78rem",
+          fontWeight: 600,
+          color: "rgba(220,0,0,0.6)",
+          cursor: "pointer",
+          letterSpacing: "0.06em",
+          transition: "all 0.2s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(220,0,0,0.15)";
+          e.currentTarget.style.color = "#fff";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(220,0,0,0.08)";
+          e.currentTarget.style.color = "rgba(220,0,0,0.6)";
+        }}
+      >
+        ⚙ Admin
+      </button>
+    )}
+  </motion.div>
+)}
           </motion.div>
 
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-10 w-[700px] h-[700px] z-0 opacity-90 pointer-events-none">

@@ -14,6 +14,7 @@ import PaddleCheckoutPage from "./pages/PaddleCheckoutPage";
 import SubscribePage from "./pages/SubscribePage";
 import Agent from "./pages/Agent";
 import Studio from "./pages/Studio";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -22,7 +23,6 @@ function PrivateRoute({ children }) {
 
 function App() {
   const token = localStorage.getItem("token");
-
   return (
     <Routes>
       <Route path="/" element={token ? <Navigate to="/studio" /> : <LandingPage />} />
@@ -40,7 +40,7 @@ function App() {
       <Route path="/subscribe" element={<SubscribePage />} />
       <Route path="/tigdar" element={<Agent />} />
       <Route path="/studio" element={<PrivateRoute><Studio /></PrivateRoute>} />
-
+      <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
     </Routes>
   );
 }
