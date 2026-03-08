@@ -358,7 +358,7 @@ function LandingPage() {
             position: "absolute",
             top: "50%",
             left: "50%",
-            transform: "translate(-50%, -85%)",
+            transform: "translate(-50%, -48%)",
             width: "700px",
             height: "700px",
             zIndex: 1,
