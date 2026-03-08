@@ -196,8 +196,6 @@ function LandingPage() {
   };
   const [userName] = useState(getRawName());
 
-  // NameModal REMOVED from here — it now lives in Studio.js (Problem 6)
-
   const { rive: heroRive,   RiveComponent: HeroBot   } = useRive({ src: "/hustler-robot.riv",      autoplay: true, stateMachines: ["State Machine 1"] });
   const { rive: bubbleRive, RiveComponent: BubbleBot } = useRive({ src: "/hustler-bubble-bot.riv", autoplay: true, stateMachines: ["State Machine 1"] });
 
@@ -222,9 +220,11 @@ function LandingPage() {
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 160) + "px";
     }
   }, [prompt]);
+
   useEffect(() => {
     API.post("/admin/track", { page: "/" }).catch(() => {});
   }, []);
+
   const handleSend = (text) => {
     const t = (typeof text === "string" ? text : prompt).trim();
     if (!t) return;
@@ -278,9 +278,17 @@ function LandingPage() {
         `}</style>
 
         {/* ── HERO ── */}
-        <section className="relative min-h-screen flex flex-col justify-center items-center px-6 overflow-hidden">
+        <section
+          className="relative flex flex-col justify-center items-center px-6 overflow-hidden"
+          style={{ minHeight: "100vh", paddingBottom: "300px", paddingTop: "60px" }}
+        >
           <motion.div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-red-900/30 via-transparent to-black pointer-events-none z-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }} />
-          <motion.div className="z-10 text-center w-full max-w-3xl" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} style={{ marginTop: isLoggedIn ? "0" : "-40px" }}>
+
+          {/* Content */}
+          <motion.div
+            className="z-10 text-center w-full max-w-3xl"
+            initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}
+          >
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
               style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(139,0,0,0.35)", border: "1px solid rgba(220,0,0,0.5)", borderRadius: "100px", padding: "6px 16px 6px 10px", marginBottom: "28px", backdropFilter: "blur(12px)", boxShadow: "0 0 20px rgba(180,0,0,0.3),inset 0 0 12px rgba(180,0,0,0.1)" }}>
               <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#ff3333", display: "inline-block", boxShadow: "0 0 6px #ff3333,0 0 12px #ff3333", animation: "badgePulse 1.5s ease-in-out infinite" }} />
@@ -317,79 +325,46 @@ function LandingPage() {
             </motion.div>
 
             {isLoggedIn && (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 1 }}
-    style={{
-      marginTop: "24px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "10px",
-    }}
-  >
-    <button
-      onClick={() => navigate("/studio")}
-      style={{
-        background: "linear-gradient(135deg,#cc0000,#8b0000)",
-        border: "none",
-        borderRadius: "14px",
-        padding: "14px 36px",
-        fontSize: "1rem",
-        fontWeight: 700,
-        color: "#fff",
-        cursor: "pointer",
-        boxShadow: "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)",
-        transition: "all 0.2s ease",
-        letterSpacing: "0.02em",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow =
-          "0 0 40px rgba(220,0,0,0.8),0 0 80px rgba(200,0,0,0.4)";
-        e.currentTarget.style.transform = "scale(1.03)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow =
-          "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)";
-        e.currentTarget.style.transform = "scale(1)";
-      }}
-    >
-      Open Dashboard
-    </button>
-
-    {localStorage.getItem("user_email") === "thehustlerbot@gmail.com" && (
-      <button
-        onClick={() => navigate("/admin")}
-        style={{
-          background: "rgba(220,0,0,0.08)",
-          border: "1px solid rgba(220,0,0,0.25)",
-          borderRadius: "10px",
-          padding: "8px 22px",
-          fontSize: "0.78rem",
-          fontWeight: 600,
-          color: "rgba(220,0,0,0.6)",
-          cursor: "pointer",
-          letterSpacing: "0.06em",
-          transition: "all 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(220,0,0,0.15)";
-          e.currentTarget.style.color = "#fff";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(220,0,0,0.08)";
-          e.currentTarget.style.color = "rgba(220,0,0,0.6)";
-        }}
-      >
-        ⚙ Admin
-      </button>
-    )}
-  </motion.div>
-)}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1 }}
+                style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}
+              >
+                <button
+                  onClick={() => navigate("/studio")}
+                  style={{ background: "linear-gradient(135deg,#cc0000,#8b0000)", border: "none", borderRadius: "14px", padding: "14px 36px", fontSize: "1rem", fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)", transition: "all 0.2s ease", letterSpacing: "0.02em" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 0 40px rgba(220,0,0,0.8),0 0 80px rgba(200,0,0,0.4)"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)"; e.currentTarget.style.transform = "scale(1)"; }}
+                >
+                  Open Dashboard
+                </button>
+                {localStorage.getItem("user_email") === "thehustlerbot@gmail.com" && (
+                  <button
+                    onClick={() => navigate("/admin")}
+                    style={{ background: "rgba(220,0,0,0.08)", border: "1px solid rgba(220,0,0,0.25)", borderRadius: "10px", padding: "8px 22px", fontSize: "0.78rem", fontWeight: 600, color: "rgba(220,0,0,0.6)", cursor: "pointer", letterSpacing: "0.06em", transition: "all 0.2s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,0,0,0.15)"; e.currentTarget.style.color = "#fff"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(220,0,0,0.08)"; e.currentTarget.style.color = "rgba(220,0,0,0.6)"; }}
+                  >
+                    ⚙ Admin
+                  </button>
+                )}
+              </motion.div>
+            )}
           </motion.div>
 
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-10 w-[700px] h-[700px] z-0 opacity-90 pointer-events-none">
+          {/* ── Robot — sits behind content, head always visible above prompt ── */}
+          <div style={{
+            position: "absolute",
+            bottom: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "620px",
+            height: "620px",
+            zIndex: 1,
+            opacity: 0.9,
+            pointerEvents: "none",
+          }}>
             <HeroBot style={{ width: "100%", height: "100%" }} />
           </div>
         </section>
