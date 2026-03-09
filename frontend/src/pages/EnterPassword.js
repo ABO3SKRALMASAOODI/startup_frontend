@@ -5,7 +5,7 @@ import API from "../api/api";
 function EnterPassword() {
   const [password, setPassword] = useState("");
   const [message, setMessage]   = useState("");
-  const [msgType, setMsgType]   = useState("info"); // "success" | "error" | "info"
+  const [msgType, setMsgType]   = useState("info");
   const [email, setEmail]       = useState("");
   const [loading, setLoading]   = useState(false);
   const navigate  = useNavigate();
@@ -57,14 +57,16 @@ function EnterPassword() {
       const status = error.response?.status;
       const errMsg = error.response?.data?.error || "Login failed";
 
-      // Problem 1: If user not found (404), auto-register them
       if (status === 404) {
         try {
           setMessage("No account found — creating one for you...");
           setMsgType("info");
           await API.post("/auth/register", { email, password });
           localStorage.setItem("verify_email", email);
-          // Preserve redirect params for after verification
+
+          // ── FIX Issue 1: Store password so VerifyCode can auto-login after verification ──
+          sessionStorage.setItem("pending_password", password);
+
           if (redirect) sessionStorage.setItem("post_verify_redirect", redirect);
           if (prompt) sessionStorage.setItem("post_verify_prompt", prompt);
           if (template) sessionStorage.setItem("post_verify_template", template);
@@ -93,7 +95,6 @@ function EnterPassword() {
 
   return (
     <div style={pageStyle}>
-      {/* Header */}
       <div style={headerStyle}>
         <button
           onClick={() => navigate("/login")}
