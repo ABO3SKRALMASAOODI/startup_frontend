@@ -72,7 +72,7 @@ function GlobalStyles() {
 function useIsMobile() {
   const check = () => ({
     isMobilePortrait:  window.innerWidth <= 768 && window.innerHeight > window.innerWidth,
-    isMobileLandscape: window.innerWidth <= 900 && window.innerHeight <= 500,
+    isMobileLandscape: window.innerWidth <= 926 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight,
   });
   const [state, setState] = React.useState(check);
   useEffect(() => {
@@ -2112,7 +2112,7 @@ const S = {
   previewPanel: { flex: 1, display: "flex", flexDirection: "column", backgroundColor: "#050505", overflow: "hidden" },
   topBar:       { padding: "0.6rem 0.75rem", background: "#000", borderBottom: "1px solid #0f0f0f", display: "flex", alignItems: "center", gap: "8px", boxShadow: "0 1px 0 rgba(140,0,0,0.15)" },
   previewTopBar:{ padding: "0.5rem 1rem", background: "#0a0a0a", borderBottom: "1px solid #111", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexShrink: 0 },
-  chatWindow:   { flexGrow: 1, overflowY: "auto", padding: "1.2rem 1rem", display: "flex", flexDirection: "column", gap: "1rem" },
+  chatWindow:   { flexGrow: 1, overflowY: "auto", overflowX: "hidden", padding: "1.2rem 1rem", display: "flex", flexDirection: "column", gap: "1rem" },
   bubble:       { padding: "10px 14px", borderRadius: "14px", maxWidth: "92%", wordBreak: "break-word" },
   inputRow:     { padding: "0.6rem", borderTop: "1px solid #111", display: "flex", gap: "8px", backgroundColor: "#000" },
   inputBox:     { flex: 1, backgroundColor: "#0d0d0d", color: "#fff", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "10px", fontSize: "0.87rem", resize: "none", fontFamily: "Inter, Segoe UI, sans-serif", outline: "none" },
