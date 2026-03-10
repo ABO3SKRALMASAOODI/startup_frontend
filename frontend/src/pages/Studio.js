@@ -21,7 +21,12 @@ const GLOBAL_STYLES = `
   .chat-window::-webkit-scrollbar-thumb { background: #1f1f1f; border-radius: 4px; }
   .chat-window::-webkit-scrollbar-thumb:hover { background: #8b0000; }
 
-  .message-content { word-break: break-word; overflow-wrap: break-word; overflow: hidden; max-width: 100%; } .message-content p  { margin: 0 0 0.5em; }
+  .message-content {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .message-content p  { margin: 0 0 0.5em; }
   .message-content ul { margin: 0.4em 0; padding-left: 1.4em; }
   .message-content li { margin-bottom: 0.25em; }
   .message-content code {
@@ -40,6 +45,8 @@ const GLOBAL_STYLES = `
     padding: 12px;
     overflow-x: auto;
     margin: 0.5em 0;
+    white-space: pre-wrap;
+    word-break: break-all;
   }
   .message-content pre code {
     background: none;
@@ -571,25 +578,20 @@ function ThinkingLine({ text }) {
 // ─── FIX Issue 4: Compute a real progress percentage from build phases ────────
 
 function computeProgressPercent(progress, buildPhase) {
-  // Scale: thinking=0-25%, writing=25-75%, building/compiling=75-100%
-  // "rendering" is just the final moment before preview loads → 100%
   if (buildPhase === "rendering") return 100;
   if (buildPhase === "compiling") return 85;
 
   if (buildPhase === "building" || buildPhase === "editing") {
     const filesWritten = progress.reduce((max, p) => Math.max(max, p.files_written || 0), 0);
-    // Use a generous estimate so bar fills up well before compile
     const estimatedTotal = Math.max(8, filesWritten + 2);
     const filePct = Math.min(1, filesWritten / estimatedTotal);
-    // Map into 25%-75% range
     return Math.round(25 + filePct * 50);
   }
 
   if (buildPhase === "thinking") {
     const thinkingEntries = progress.filter(p => p.action === "planning" || p.action === "thinking");
-    // Ramp up to 25% during thinking
     const pct = Math.min(25, thinkingEntries.length * 5);
-    return Math.max(5, pct); // Always show at least 5% so it doesn't look empty
+    return Math.max(5, pct);
   }
 
   return 0;
@@ -1262,7 +1264,6 @@ export default function Studio() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [previewError,  setPreviewError]  = useState(false);
 
-  // ── FIX Issue 3: Track whether the current turn changed code ──
   const [codeChanged,  setCodeChanged]  = useState(false);
 
   // NameModal
@@ -1272,7 +1273,6 @@ export default function Studio() {
 
   const isRunning   = state === "running";
 
-  // ── FIX Issue 3: Only show rendering state if code was actually changed ──
   const isRendering = state === "completed" && !previewUrl && currentJobId && codeChanged;
 
   const buildPhase = (() => {
@@ -1299,7 +1299,6 @@ export default function Studio() {
 
   const displayPhase = phaseLabel;
 
-  // ── FIX Issue 4: Compute real progress percentage ──
   const progressPercent = computeProgressPercent(progress, buildPhase);
 
   useEffect(() => {
@@ -1355,7 +1354,6 @@ export default function Studio() {
           setPreviewUrl(safeUrl);
           setPreviewError(false);
           setState(project.state || "completed");
-          // If project has a preview URL, code was changed at some point
           setCodeChanged(!!safeUrl);
           if (safeUrl) setPreviewKey(k => k + 1);
           try {
@@ -1402,7 +1400,7 @@ export default function Studio() {
           const data = await getJobStatus(clonedId);
           setCurrentJobId(clonedId);
           setState(data.state || "completed");
-          setCodeChanged(true); // Templates always have code
+          setCodeChanged(true);
           if (data.preview_url) {
             setPreviewUrl(data.preview_url);
             setPreviewError(false);
@@ -1438,7 +1436,6 @@ export default function Studio() {
         setMessages(serverMessages);
         setState(data.state);
 
-        // ── FIX Issue 3: Track code_changed from server ──
         if (data.code_changed !== undefined) {
           setCodeChanged(data.code_changed);
         }
@@ -1502,7 +1499,7 @@ export default function Studio() {
       setState("running");
       setProgress([]);
       setThinkingText("");
-      setCodeChanged(false); // Reset for new turn
+      setCodeChanged(false);
       setMessages([{ role: "user", content: text }]);
 
       const [jobId, smartTitle] = await Promise.all([
@@ -1538,7 +1535,7 @@ export default function Studio() {
         setState("running");
         setProgress([]);
         setThinkingText("");
-        setCodeChanged(false); // Reset for new turn
+        setCodeChanged(false);
         setMessages(prev => [...prev, { role: "user", content: text }]);
         await sendFollowUp(currentJobId, text);
         startPolling(currentJobId);
@@ -1570,7 +1567,7 @@ export default function Studio() {
     const safePreviewUrl = _getSafePreviewUrl(project.preview_url, project.job_id);
     setPreviewUrl(safePreviewUrl);
     setState(project.state || "completed");
-    setCodeChanged(!!safePreviewUrl); // If it has preview, code was changed
+    setCodeChanged(!!safePreviewUrl);
     if (safePreviewUrl) setPreviewKey(k => k + 1);
 
     try {
@@ -1615,7 +1612,6 @@ export default function Studio() {
 
   const handleHome = () => navigate("/home");
 
-  // ── FIX Issue 2: Properly cancel — tell backend to kill subprocess ──
   const handleStop = async () => {
     if (!currentJobId) return;
     stopPolling();
@@ -1625,7 +1621,6 @@ export default function Studio() {
     try {
       await API.post(`/auth/job/${currentJobId}/cancel`);
     } catch {}
-    // Refresh project list to reflect cancelled state
     fetchProjects().then(jobs => setProjects(jobs)).catch(() => {});
   };
 
@@ -1634,6 +1629,9 @@ export default function Studio() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (isMobilePortrait) return <><GlobalStyles /><RotateScreen /></>;
+
+  // ── Chat panel width: narrower on phone landscape, normal on desktop ──
+  const chatPanelFlex = isMobileLandscape ? "0 0 260px" : "0 0 400px";
 
   return (
     <div style={S.layout}>
@@ -1672,17 +1670,17 @@ export default function Studio() {
       {/* ── Chat panel ── */}
       <div style={{
         ...S.chatPanel,
-        flex: isMobileLandscape ? "0 0 260px" : "0 0 400px",
+        flex: chatPanelFlex,
       }}>
 
         <div style={S.topBar}>
           <button onClick={() => setSidebarOpen(true)} style={S.iconBtn} title="Menu">☰</button>
-          <div style={{ flex: 1, textAlign: "center" }}>
+          <div style={{ flex: 1, textAlign: "center", minWidth: 0 }}>
             <h2 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {currentJobId ? (projects.find(p => p.job_id === currentJobId)?.title || "Project") : "The Hustler Bot"}
             </h2>
           </div>
-          <div style={{ width: "34px" }} />
+          <div style={{ width: "34px", flexShrink: 0 }} />
         </div>
 
         <div className="chat-window" style={S.chatWindow}>
@@ -1730,6 +1728,7 @@ export default function Studio() {
                 flexDirection: msg.role === "user" ? "row-reverse" : "row",
                 alignItems: "flex-end",
                 gap: "8px",
+                minWidth: 0,
               }}
             >
               {msg.role === "assistant" && (
@@ -1739,10 +1738,12 @@ export default function Studio() {
               )}
 
               <div style={{
-                maxWidth: "78%", minWidth: 0, overflow: "hidden",
+                maxWidth: "78%",
+                minWidth: 0,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: msg.role === "user" ? "flex-end" : "flex-start",
+                overflow: "hidden",
               }}>
                 <span style={{
                   fontSize: "0.65rem",
@@ -1771,7 +1772,10 @@ export default function Studio() {
                   boxShadow: msg.role === "user"
                     ? "0 2px 16px rgba(180,0,0,0.25)"
                     : "0 2px 12px rgba(0,0,0,0.4)",
-                  wordBreak: "break-word", overflow: "hidden",
+                  wordBreak: "break-word",
+                  overflowWrap: "anywhere",
+                  minWidth: 0,
+                  maxWidth: "100%",
                 }}>
                   <div
                     style={{ color: "#ddd", fontSize: "0.86rem", lineHeight: 1.65 }}
@@ -1792,12 +1796,9 @@ export default function Studio() {
             const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
             const agentAlreadyReplied = lastMsg && lastMsg.role === "assistant";
 
-            // After agent replied: show progress bar only if code is being built
             if (agentAlreadyReplied) {
               const isBuildPhase = isRendering || buildPhase === "compiling" || buildPhase === "building";
-              // Don't show anything for text-only replies (no code changed, no build happening)
               if (!isBuildPhase && !codeChanged) return null;
-              // Show the red progress bar during build/compile/render
               if (isBuildPhase) {
                 return (
                   <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
@@ -1828,11 +1829,10 @@ export default function Studio() {
               return null;
             }
 
-            // Before agent replies: show typing dots + thinking text
             return (
               <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
                 <BotAvatar />
-                <div style={{ maxWidth: "78%", minWidth: 0, overflow: "hidden", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                <div style={{ maxWidth: "78%", minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start", overflow: "hidden" }}>
                   <div style={{
                     padding: "10px 16px", borderRadius: "16px 16px 16px 4px",
                     background: "#0f0f0f", border: "1px solid rgba(140,0,0,0.25)",
@@ -1856,7 +1856,7 @@ export default function Studio() {
           <div ref={bottomRef} />
         </div>
 
-        <div style={{ padding: "10px", borderTop: "1px solid #111", background: "#000" }}>
+        <div style={{ padding: "10px", borderTop: "1px solid #111", background: "#000", flexShrink: 0 }}>
           <div
             className="input-wrap"
             style={{
@@ -1984,7 +1984,7 @@ export default function Studio() {
           </div>
 
           {panelView === "preview" && (
-            <span style={{ color: "#333", fontSize: "0.72rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginLeft: "10px" }}>
+            <span style={{ color: "#333", fontSize: "0.72rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginLeft: "10px", minWidth: 0 }}>
               {previewUrl || "Preview will appear here"}
             </span>
           )}
@@ -2108,11 +2108,11 @@ export default function Studio() {
 
 const S = {
   layout:       { height: "100vh", width: "100vw", display: "flex", backgroundColor: "#000", color: "#eee", fontFamily: "Inter, Segoe UI, sans-serif", overflow: "hidden" },
-  chatPanel:    { flex: "0 0 400px", display: "flex", flexDirection: "column", borderRight: "1px solid #0f0f0f", overflow: "hidden", background: "#000" },
-  previewPanel: { flex: 1, display: "flex", flexDirection: "column", backgroundColor: "#050505", overflow: "hidden" },
-  topBar:       { padding: "0.6rem 0.75rem", background: "#000", borderBottom: "1px solid #0f0f0f", display: "flex", alignItems: "center", gap: "8px", boxShadow: "0 1px 0 rgba(140,0,0,0.15)" },
+  chatPanel:    { display: "flex", flexDirection: "column", borderRight: "1px solid #0f0f0f", overflow: "hidden", background: "#000" },
+  previewPanel: { flex: 1, display: "flex", flexDirection: "column", backgroundColor: "#050505", overflow: "hidden", minWidth: 0 },
+  topBar:       { padding: "0.6rem 0.75rem", background: "#000", borderBottom: "1px solid #0f0f0f", display: "flex", alignItems: "center", gap: "8px", boxShadow: "0 1px 0 rgba(140,0,0,0.15)", flexShrink: 0 },
   previewTopBar:{ padding: "0.5rem 1rem", background: "#0a0a0a", borderBottom: "1px solid #111", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexShrink: 0 },
-  chatWindow:   { flexGrow: 1, overflowY: "auto", overflowX: "hidden", padding: "1.2rem 1rem", display: "flex", flexDirection: "column", gap: "1rem" },
+  chatWindow:   { flexGrow: 1, overflowY: "auto", overflowX: "hidden", padding: "1.2rem 1rem", display: "flex", flexDirection: "column", gap: "1rem", minHeight: 0 },
   bubble:       { padding: "10px 14px", borderRadius: "14px", maxWidth: "92%", wordBreak: "break-word" },
   inputRow:     { padding: "0.6rem", borderTop: "1px solid #111", display: "flex", gap: "8px", backgroundColor: "#000" },
   inputBox:     { flex: 1, backgroundColor: "#0d0d0d", color: "#fff", border: "1px solid #1a1a1a", borderRadius: "10px", padding: "10px", fontSize: "0.87rem", resize: "none", fontFamily: "Inter, Segoe UI, sans-serif", outline: "none" },
@@ -2121,7 +2121,7 @@ const S = {
   iframe:       { flex: 1, width: "100%", border: "none", backgroundColor: "#fff", minHeight: 0 },
   previewEmpty: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" },
   emptyState:   { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "2rem" },
-  errorBar:     { padding: "0.5rem 1rem", color: "#ff8080", backgroundColor: "#100505", fontSize: "0.82rem", display: "flex", alignItems: "center", borderTop: "1px solid #2a0000" },
+  errorBar:     { padding: "0.5rem 1rem", color: "#ff8080", backgroundColor: "#100505", fontSize: "0.82rem", display: "flex", alignItems: "center", borderTop: "1px solid #2a0000", flexShrink: 0 },
   pulse:        { display: "inline-block", width: "7px", height: "7px", borderRadius: "50%", backgroundColor: "#8b0000", animation: "pulse 1.2s infinite" },
   spinner:      { width: "28px", height: "28px", border: "3px solid #1a1a1a", borderTop: "3px solid #8b0000", borderRadius: "50%", animation: "spin 1s linear infinite" },
   closeBtn:     { backgroundColor: "#1a1a1a", border: "none", borderRadius: "50%", width: "24px", height: "24px", color: "#fff", fontSize: "1rem", cursor: "pointer" },
