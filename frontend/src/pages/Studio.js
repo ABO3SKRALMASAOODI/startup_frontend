@@ -511,25 +511,25 @@ function ThinkingLine({ text }) {
 // ─── FIX Issue 4: Compute a real progress percentage from build phases ────────
 
 function computeProgressPercent(progress, buildPhase) {
-  // Phases: thinking=0-20%, writing=20-70%, building/compiling=70-90%, rendering=90-100%
-  if (buildPhase === "rendering") return 95;
-  if (buildPhase === "compiling") return 80;
+  // Scale: thinking=0-25%, writing=25-75%, building/compiling=75-100%
+  // "rendering" is just the final moment before preview loads → 100%
+  if (buildPhase === "rendering") return 100;
+  if (buildPhase === "compiling") return 85;
 
   if (buildPhase === "building" || buildPhase === "editing") {
-    // Count files written vs estimate total from progress
     const filesWritten = progress.reduce((max, p) => Math.max(max, p.files_written || 0), 0);
-    // Estimate: most projects write 5-15 files. Use 10 as reasonable midpoint.
-    const estimatedTotal = Math.max(10, filesWritten + 3);
+    // Use a generous estimate so bar fills up well before compile
+    const estimatedTotal = Math.max(8, filesWritten + 2);
     const filePct = Math.min(1, filesWritten / estimatedTotal);
-    // Map file progress into the 20%-70% range
-    return Math.round(20 + filePct * 50);
+    // Map into 25%-75% range
+    return Math.round(25 + filePct * 50);
   }
 
   if (buildPhase === "thinking") {
-    // Slowly fill from 0-20% based on how many thinking entries we have
     const thinkingEntries = progress.filter(p => p.action === "planning" || p.action === "thinking");
-    const pct = Math.min(20, thinkingEntries.length * 4);
-    return pct;
+    // Ramp up to 25% during thinking
+    const pct = Math.min(25, thinkingEntries.length * 5);
+    return Math.max(5, pct); // Always show at least 5% so it doesn't look empty
   }
 
   return 0;
@@ -560,7 +560,7 @@ function _syntaxColor(line) {
   return "#c9d1d9";
 }
 
-function BuildingView({ progress, isRendering, progressPercent }) {
+function BuildingView({ progress, isRendering }) {
   const [tipIndex, setTipIndex] = useState(0);
   const [displayedLines, setDisplayedLines] = useState([]);
   const [currentFile, setCurrentFile] = useState("");
@@ -817,7 +817,6 @@ function BuildingView({ progress, isRendering, progressPercent }) {
         </div>
       )}
 
-      {/* ── FIX Issue 4: Real progress bar instead of shimmer ── */}
       <div style={{
         flexShrink: 0,
         padding: "10px 16px 12px",
@@ -825,37 +824,14 @@ function BuildingView({ progress, isRendering, progressPercent }) {
         borderTop: "1px solid #161b22",
       }}>
         <div style={{
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-          marginBottom: "6px",
-        }}>
-          <span style={{
-            fontSize: "0.65rem", color: "#555",
-            fontFamily: "'JetBrains Mono', monospace",
-          }}>
-            {progressPercent < 20 ? "Planning..." :
-             progressPercent < 70 ? "Writing code..." :
-             progressPercent < 90 ? "Compiling..." :
-             "Rendering preview..."}
-          </span>
-          <span style={{
-            fontSize: "0.65rem", color: "#cc0000",
-            fontFamily: "'JetBrains Mono', monospace",
-            fontWeight: 600,
-          }}>
-            {progressPercent}%
-          </span>
-        </div>
-        <div style={{
-          height: "4px", background: "#161b22", borderRadius: "2px",
+          height: "2px", background: "#161b22", borderRadius: "2px",
           overflow: "hidden", marginBottom: "8px",
         }}>
           <div style={{
-            height: "100%",
-            width: `${progressPercent}%`,
-            background: "linear-gradient(90deg, #8b0000, #cc0000)",
-            borderRadius: "2px",
-            transition: "width 0.6s ease",
-            boxShadow: "0 0 8px rgba(200,0,0,0.4)",
+            height: "100%", width: "100%",
+            background: "linear-gradient(90deg, transparent, #cc0000, transparent)",
+            backgroundSize: "200% 100%",
+            animation: "shimmer 2s linear infinite",
           }} />
         </div>
         <p style={{
@@ -1745,42 +1721,48 @@ export default function Studio() {
             );
           })}
 
-          {/* ── FIX Issue 3 + 4 + 5: Improved loading indicators ── */}
+          {/* ── Loading indicators below messages ── */}
           {(isRunning || isRendering) && (() => {
             const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
             const agentAlreadyReplied = lastMsg && lastMsg.role === "assistant";
-            const isBuildingOnly = agentAlreadyReplied && (isRendering || buildPhase === "compiling" || buildPhase === "building");
 
-            if (isBuildingOnly) {
-              return (
-                <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
-                  {/* ── FIX Issue 5: Show BotAvatar instead of blank spacer ── */}
-                  <BotAvatar />
-                  <div style={{
-                    padding: "8px 16px", borderRadius: "12px",
-                    background: "#0f0f0f", border: "1px solid rgba(140,0,0,0.2)",
-                    width: "240px",
-                  }}>
-                    <span style={{ fontSize: "0.68rem", color: "#666", display: "block", marginBottom: "6px" }}>
-                      {isRendering ? "Rendering preview..." : buildPhase === "compiling" ? "Compiling..." : "Building..."}
-                      {" "}<span style={{ color: "#cc0000", fontWeight: 600 }}>{progressPercent}%</span>
-                    </span>
-                    {/* ── FIX Issue 4: Real progress bar ── */}
-                    <div style={{ height: "4px", background: "#1a1a1a", borderRadius: "2px", overflow: "hidden" }}>
-                      <div style={{
-                        height: "100%",
-                        width: `${progressPercent}%`,
-                        background: "linear-gradient(90deg, #8b0000, #cc0000)",
-                        borderRadius: "2px",
-                        transition: "width 0.6s ease",
-                        boxShadow: "0 0 8px rgba(200,0,0,0.4)",
-                      }} />
+            // After agent replied: show progress bar only if code is being built
+            if (agentAlreadyReplied) {
+              const isBuildPhase = isRendering || buildPhase === "compiling" || buildPhase === "building";
+              // Don't show anything for text-only replies (no code changed, no build happening)
+              if (!isBuildPhase && !codeChanged) return null;
+              // Show the red progress bar during build/compile/render
+              if (isBuildPhase) {
+                return (
+                  <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
+                    <BotAvatar />
+                    <div style={{
+                      padding: "10px 16px", borderRadius: "16px 16px 16px 4px",
+                      background: "#0f0f0f", border: "1px solid rgba(140,0,0,0.25)",
+                      width: "260px",
+                      boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
+                    }}>
+                      <span style={{ fontSize: "0.7rem", color: "#888", display: "block", marginBottom: "8px" }}>
+                        {isRendering ? "Rendering preview..." : buildPhase === "compiling" ? "Compiling..." : "Building..."}
+                      </span>
+                      <div style={{ height: "3px", background: "#1a1a1a", borderRadius: "3px", overflow: "hidden" }}>
+                        <div style={{
+                          height: "100%",
+                          width: `${progressPercent}%`,
+                          background: "linear-gradient(90deg, #8b0000, #cc0000, #ff1a1a)",
+                          borderRadius: "3px",
+                          transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                          boxShadow: "0 0 6px rgba(200,0,0,0.8), 0 0 12px rgba(180,0,0,0.4)",
+                        }} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
+                );
+              }
+              return null;
             }
 
+            // Before agent replies: show typing dots + thinking text
             return (
               <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
                 <BotAvatar />
@@ -1980,7 +1962,7 @@ export default function Studio() {
           <>
             {!previewUrl ? (
               (isRunning || isRendering) ? (
-                <BuildingView progress={progress} isRendering={isRendering} progressPercent={progressPercent} />
+                <BuildingView progress={progress} isRendering={isRendering} />
               ) : (
                 <div style={S.previewEmpty}>
                   <p style={{ color: "#2a2a2a", fontSize: "0.82rem" }}>Your app preview will appear here.</p>
