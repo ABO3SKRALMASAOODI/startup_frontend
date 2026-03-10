@@ -1739,7 +1739,7 @@ export default function Studio() {
               )}
 
               <div style={{
-                maxWidth: "78%",
+                maxWidth: "78%", overflow: "hidden", minWidth: 0,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: msg.role === "user" ? "flex-end" : "flex-start",
