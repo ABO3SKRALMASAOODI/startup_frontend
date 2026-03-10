@@ -68,6 +68,66 @@ function GlobalStyles() {
   return null;
 }
 
+// ── Mobile detection ─────────────────────────────────────────────────────────
+function useIsMobile() {
+  const check = () => ({
+    isMobilePortrait:  window.innerWidth <= 768 && window.innerHeight > window.innerWidth,
+    isMobileLandscape: window.innerWidth <= 900 && window.innerHeight <= 500,
+  });
+  const [state, setState] = React.useState(check);
+  useEffect(() => {
+    const handler = () => setState(check());
+    window.addEventListener("resize", handler);
+    window.addEventListener("orientationchange", handler);
+    return () => {
+      window.removeEventListener("resize", handler);
+      window.removeEventListener("orientationchange", handler);
+    };
+  }, []);
+  return state;
+}
+
+// ── Rotate screen prompt ─────────────────────────────────────────────────────
+function RotateScreen() {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 99999,
+      background: "#000",
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      gap: "24px",
+    }}>
+      <div style={{
+        fontSize: "3.5rem",
+        animation: "spin 2.5s ease-in-out infinite",
+        filter: "drop-shadow(0 0 12px rgba(200,0,0,0.7))",
+      }}>
+        ⟳
+      </div>
+      <div style={{ textAlign: "center", maxWidth: "260px", padding: "0 24px" }}>
+        <p style={{
+          color: "#fff", fontSize: "1.1rem", fontWeight: 700,
+          marginBottom: "10px", letterSpacing: "0.02em",
+        }}>
+          Rotate your phone
+        </p>
+        <p style={{ color: "#555", fontSize: "0.84rem", lineHeight: 1.65 }}>
+          The Hustler Bot is designed for landscape mode on mobile.
+        </p>
+      </div>
+      <div style={{
+        width: "48px", height: "2px",
+        background: "linear-gradient(90deg, #8b0000, #cc0000)",
+        borderRadius: "2px",
+        boxShadow: "0 0 10px rgba(200,0,0,0.5)",
+      }} />
+      <p style={{ color: "#2a2a2a", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+        The Hustler Bot
+      </p>
+    </div>
+  );
+}
+
 // ── Hustler Bot avatar ──
 function BotAvatar() {
   const { RiveComponent, rive } = useRive({
@@ -1177,6 +1237,7 @@ function _getSafePreviewUrl(url, jobId) {
 
 export default function Studio() {
   const navigate  = useNavigate();
+  const { isMobilePortrait, isMobileLandscape } = useIsMobile();
   const bottomRef = useRef(null);
   const pollRef   = useRef(null);
   const inputRef  = useRef(null);
@@ -1572,6 +1633,8 @@ export default function Studio() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  if (isMobilePortrait) return <><GlobalStyles /><RotateScreen /></>;
+
   return (
     <div style={S.layout}>
       <GlobalStyles />
@@ -1607,7 +1670,10 @@ export default function Studio() {
       />
 
       {/* ── Chat panel ── */}
-      <div style={S.chatPanel}>
+      <div style={{
+        ...S.chatPanel,
+        flex: isMobileLandscape ? "0 0 260px" : "0 0 400px",
+      }}>
 
         <div style={S.topBar}>
           <button onClick={() => setSidebarOpen(true)} style={S.iconBtn} title="Menu">☰</button>
