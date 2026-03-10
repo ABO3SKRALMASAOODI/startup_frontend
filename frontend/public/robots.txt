@@ -1,3 +1,13 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /studio
+Disallow: /verify
+Disallow: /enter-password
+Disallow: /reset-password
+Disallow: /change-password
+Disallow: /account
+Disallow: /admin
+Disallow: /subscribe
+Disallow: /checkout
+Disallow: /agent
+
+Sitemap: https://thehustlerbot.com/sitemap.xml
