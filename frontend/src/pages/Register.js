@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import API from "../api/api";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { GoogleLoginButton, OrDivider } from "../components/GoogleAuth";
 
 function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [msgType, setMsgType] = useState("info"); // "success" | "error" | "info"
+  const [msgType, setMsgType] = useState("info");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get("redirect") || null;
@@ -19,9 +20,7 @@ function Register() {
     try {
       await API.post("/auth/register", { email, password });
       localStorage.setItem("verify_email", email);
-      // Store password temporarily for auto-login after verification (Problem 2)
       sessionStorage.setItem("pending_password", password);
-      // Preserve redirect params
       if (redirect) sessionStorage.setItem("post_verify_redirect", redirect);
       if (prompt) sessionStorage.setItem("post_verify_prompt", prompt);
       if (template) sessionStorage.setItem("post_verify_template", template);
@@ -66,6 +65,9 @@ function Register() {
             <strong style={{ color: "#ff6666" }}>Template ready to clone after signup</strong>
           </div>
         )}
+
+        <GoogleLoginButton label="Sign up with Google" />
+        <OrDivider />
 
         <form onSubmit={handleRegister}>
           <input type="email" placeholder="Email" value={email} required onChange={e => setEmail(e.target.value)} style={inputStyle} />

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { GoogleLoginButton, GoogleAuthHandler, OrDivider } from "../components/GoogleAuth";
 
 function SignIn() {
   const [email, setEmail] = useState("");
@@ -25,6 +26,9 @@ function SignIn() {
 
   return (
     <div style={{ height: "100vh", backgroundColor: "#000", color: "#fff", fontFamily: "Segoe UI, sans-serif" }}>
+      {/* Handles token from Google OAuth redirect */}
+      <GoogleAuthHandler />
+
       {/* Header */}
       <div style={{ padding: "1rem", background: "#000", borderBottom: "1px solid #222", display: "flex", alignItems: "center", position: "relative" }}>
         <button
@@ -56,6 +60,9 @@ function SignIn() {
             <strong style={{ color: "#ff6666" }}>Template ready to clone after login</strong>
           </div>
         )}
+
+        <GoogleLoginButton label="Continue with Google" />
+        <OrDivider />
 
         <form onSubmit={handleNext}>
           <input type="email" placeholder="Email" value={email} required onChange={e => setEmail(e.target.value)} style={inputStyle} />
