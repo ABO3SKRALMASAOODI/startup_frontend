@@ -1832,7 +1832,7 @@ export default function Studio() {
             return (
               <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
                 <BotAvatar />
-                <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                <div style={{ maxWidth: "78%", minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                   <div style={{
                     padding: "10px 16px", borderRadius: "16px 16px 16px 4px",
                     background: "#0f0f0f", border: "1px solid rgba(140,0,0,0.25)",
