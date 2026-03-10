@@ -21,7 +21,7 @@ const GLOBAL_STYLES = `
   .chat-window::-webkit-scrollbar-thumb { background: #1f1f1f; border-radius: 4px; }
   .chat-window::-webkit-scrollbar-thumb:hover { background: #8b0000; }
 
-  .message-content p  { margin: 0 0 0.5em; }
+  .message-content { word-break: break-word; overflow-wrap: break-word; } .message-content p  { margin: 0 0 0.5em; }
   .message-content ul { margin: 0.4em 0; padding-left: 1.4em; }
   .message-content li { margin-bottom: 0.25em; }
   .message-content code {
@@ -1739,7 +1739,7 @@ export default function Studio() {
               )}
 
               <div style={{
-                maxWidth: "78%", overflow: "hidden", minWidth: 0,
+                maxWidth: "78%", minWidth: 0,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: msg.role === "user" ? "flex-end" : "flex-start",
