@@ -21,7 +21,7 @@ const GLOBAL_STYLES = `
   .chat-window::-webkit-scrollbar-thumb { background: #1f1f1f; border-radius: 4px; }
   .chat-window::-webkit-scrollbar-thumb:hover { background: #8b0000; }
 
-  .message-content { word-break: break-word; overflow-wrap: break-word; } .message-content p  { margin: 0 0 0.5em; }
+  .message-content { word-break: break-word; overflow-wrap: break-word; overflow: hidden; max-width: 100%; } .message-content p  { margin: 0 0 0.5em; }
   .message-content ul { margin: 0.4em 0; padding-left: 1.4em; }
   .message-content li { margin-bottom: 0.25em; }
   .message-content code {
@@ -1739,7 +1739,7 @@ export default function Studio() {
               )}
 
               <div style={{
-                maxWidth: "78%", minWidth: 0,
+                maxWidth: "78%", minWidth: 0, overflow: "hidden",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: msg.role === "user" ? "flex-end" : "flex-start",
@@ -1771,7 +1771,7 @@ export default function Studio() {
                   boxShadow: msg.role === "user"
                     ? "0 2px 16px rgba(180,0,0,0.25)"
                     : "0 2px 12px rgba(0,0,0,0.4)",
-                  wordBreak: "break-word",
+                  wordBreak: "break-word", overflow: "hidden",
                 }}>
                   <div
                     style={{ color: "#ddd", fontSize: "0.86rem", lineHeight: 1.65 }}
@@ -1832,7 +1832,7 @@ export default function Studio() {
             return (
               <div className="msg-row" style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
                 <BotAvatar />
-                <div style={{ maxWidth: "78%", minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                <div style={{ maxWidth: "78%", minWidth: 0, overflow: "hidden", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                   <div style={{
                     padding: "10px 16px", borderRadius: "16px 16px 16px 4px",
                     background: "#0f0f0f", border: "1px solid rgba(140,0,0,0.25)",
