@@ -279,15 +279,15 @@ function LandingPage() {
             ══════════════════════════════════════════════════════
           */}
 
-          {/* ── SINGLE BEAM — flat uniform cone, no layers, no gradients ── */}
+          {/* ── SINGLE BEAM — flat uniform cone, stops at legs ── */}
           <div style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            bottom: `calc(100% - ${BEAM_STOP})`,
-            clipPath: "polygon(46% 0%, 54% 0%, 72% 100%, 28% 100%)",
-            background: "rgba(255, 252, 230, 0.22)",
+            bottom: `calc(100% - 72%)`,
+            clipPath: "polygon(47% 0%, 53% 0%, 68% 100%, 32% 100%)",
+            background: "rgba(255, 252, 230, 0.52)",
             pointerEvents: "none",
             zIndex: 0,
           }} />
