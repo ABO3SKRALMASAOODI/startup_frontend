@@ -1876,11 +1876,6 @@ export default function Studio() {
               transition: "all 0.2s",
             }}
           >
-            <ModelSelector
-              selectedModel={selectedModel}
-              onSelect={setSelectedModel}
-              plan={userPlan}
-            />
             <textarea
               ref={inputRef}
               value={prompt}
@@ -1953,9 +1948,18 @@ export default function Studio() {
               </button>
             )}
           </div>
-          <p style={{ fontSize: "0.65rem", color: "#222", textAlign: "center", marginTop: "6px", letterSpacing: "0.04em" }}>
-            Enter to send · Shift+Enter for new line
-          </p>
+
+          {/* ── Model selector + hint below the input box ── */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px", paddingLeft: "2px", paddingRight: "2px" }}>
+            <ModelSelector
+              selectedModel={selectedModel}
+              onSelect={setSelectedModel}
+              plan={userPlan}
+            />
+            <p style={{ fontSize: "0.65rem", color: "#222", margin: 0, letterSpacing: "0.04em" }}>
+              Enter to send · Shift+Enter for new line
+            </p>
+          </div>
         </div>
 
         {error && (
