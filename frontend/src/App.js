@@ -9,12 +9,13 @@ import ChangePassword from "./pages/ChangePassword";
 import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import LandingPage from "./pages/LandingPage";
-import FeaturesPage from "./pages/FeaturesPage";
 import PaddleCheckoutPage from "./pages/PaddleCheckoutPage";
 import SubscribePage from "./pages/SubscribePage";
-import Agent from "./pages/Agent";
 import Studio from "./pages/Studio";
 import AdminDashboard from "./pages/AdminDashboard";
+import TemplatesPage from "./pages/TemplatesPage";
+
+
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -34,13 +35,13 @@ function App() {
       <Route path="/change-password" element={<ChangePassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/account" element={<PrivateRoute><Account /></PrivateRoute>} />
-      <Route path="/features" element={<FeaturesPage />} />
       <Route path="/legal" element={<Legal />} />
       <Route path="/paddle-checkout" element={<PaddleCheckoutPage />} />
       <Route path="/subscribe" element={<SubscribePage />} />
-      <Route path="/tigdar" element={<Agent />} />
       <Route path="/studio" element={<PrivateRoute><Studio /></PrivateRoute>} />
       <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+      <Route path="/templates" element={<TemplatesPage />} />
+
     </Routes>
   );
 }
