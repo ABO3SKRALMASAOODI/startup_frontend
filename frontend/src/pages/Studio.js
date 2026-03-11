@@ -4,6 +4,7 @@ import { marked } from "marked";
 import { useRive } from "rive-react";
 import API from "../api/api";
 import NameModal from "../components/NameModal";
+import ModelSelector from "../components/ModelSelector";
 
 // ── Inject global styles (animations, scrollbar, markdown) ───────────────────
 const GLOBAL_STYLES = `
