@@ -273,11 +273,21 @@ function LandingPage() {
         <style>{`
           @keyframes badgePulse { 0%,100%{opacity:1;box-shadow:0 0 6px #ff3333,0 0 12px #ff3333} 50%{opacity:0.6;box-shadow:0 0 3px #ff3333} }
           @keyframes glowPulse  { 0%,100%{box-shadow:0 0 30px rgba(200,0,0,0.5),0 0 60px rgba(180,0,0,0.3)} 50%{box-shadow:0 0 50px rgba(220,0,0,0.8),0 0 100px rgba(200,0,0,0.5)} }
-          @keyframes titleWhiteGlow { 0%,100%{text-shadow:0 0 30px rgba(255,255,255,0.95),0 0 70px rgba(255,255,255,0.6),0 0 130px rgba(255,255,255,0.25)} 50%{text-shadow:0 0 50px rgba(255,255,255,1),0 0 100px rgba(255,255,255,0.8),0 0 180px rgba(255,255,255,0.35)} }
+          @keyframes heroBlockGlow {
+            0%,100% { filter: drop-shadow(0 0 35px rgba(255,255,255,0.5)) drop-shadow(0 0 80px rgba(255,255,255,0.2)) drop-shadow(0 0 150px rgba(255,200,200,0.1)); }
+            50%     { filter: drop-shadow(0 0 55px rgba(255,255,255,0.8)) drop-shadow(0 0 120px rgba(255,255,255,0.35)) drop-shadow(0 0 200px rgba(255,200,200,0.15)); }
+          }
+          .hero-glow-block { animation: heroBlockGlow 3s ease-in-out infinite; }
           .prompt-wrap { transition: box-shadow 0.3s ease, border-color 0.3s ease; }
           .prompt-wrap:focus-within { border-color:rgba(200,0,0,0.7)!important; box-shadow:0 0 0 1px rgba(180,0,0,0.25),0 0 60px rgba(180,0,0,0.2)!important; }
           .example-btn:hover { border-color:rgba(180,0,0,0.6)!important; color:#fff!important; background:rgba(60,0,0,0.4)!important; }
           .send-btn:hover:not(:disabled) { box-shadow:0 0 30px rgba(220,0,0,0.6)!important; transform:scale(1.02); }
+          @keyframes templateArrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+          .template-arrow { animation: templateArrowBounce 1.8s ease-in-out infinite; }
+          @keyframes templateShimmer {
+            0%   { background-position: -200% center; }
+            100% { background-position: 200% center; }
+          }
         `}</style>
 
         {/* ── HERO ── */}
@@ -297,16 +307,18 @@ function LandingPage() {
               <span style={{ fontSize: "0.82rem", color: "rgba(255,200,200,0.95)", letterSpacing: "0.04em" }}>{badgeText}</span>
             </motion.div>
 
-            {/* ── CHANGE 1: pure white glow title, no red tint ── */}
-            <h1
-              className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4"
-              style={{ animation: "titleWhiteGlow 3s ease-in-out infinite" }}
-            >
-              The Hustler Bot
-            </h1>
-
-            <p className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto">Build any app. Just describe it.</p>
-            <p className="text-base text-gray-500 mb-10 max-w-lg mx-auto">Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.</p>
+            {/* ── Hero text block — entire group glows together ── */}
+            <div className="hero-glow-block" style={{ marginBottom: "32px" }}>
+              <h1 className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4">
+                The Hustler Bot
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto">
+                Build any app. Just describe it.
+              </p>
+              <p className="text-base text-gray-400 max-w-lg mx-auto">
+                Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.
+              </p>
+            </div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.8 }} style={{ width: "100%", marginBottom: "16px" }}>
               <div className="prompt-wrap" style={{ background: "rgba(8,2,2,0.92)", border: "1px solid rgba(120,0,0,0.5)", borderRadius: "20px", backdropFilter: "blur(20px)", boxShadow: "0 4px 40px rgba(100,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.04)", overflow: "hidden" }}>
@@ -382,55 +394,71 @@ function LandingPage() {
               ))}
             </div>
 
-            {/* ── CHANGE 2: Row 2 — blurred with "Explore More Templates" overlay ── */}
+            {/* ── Row 2: blurred with elegant scroll-down indicator ── */}
             <div style={{ position: "relative" }}>
               {/* blurred, non-interactive cards */}
               <div
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
-                style={{ filter: "blur(4px)", opacity: 0.4, pointerEvents: "none", userSelect: "none" }}
+                style={{ filter: "blur(5px)", opacity: 0.35, pointerEvents: "none", userSelect: "none" }}
               >
                 {TEMPLATES.slice(3).map((t, i) => (
                   <TemplateCard key={t.job_id} template={t} index={i + 3} onUse={() => {}} disabled />
                 ))}
               </div>
 
-              {/* gradient + CTA overlay */}
+              {/* gradient fade + elegant CTA */}
               <div style={{
                 position: "absolute", inset: 0,
-                background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.92) 100%)",
+                background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.96) 100%)",
                 display: "flex", flexDirection: "column",
                 alignItems: "center", justifyContent: "flex-end",
                 paddingBottom: "2.5rem",
+                gap: "0",
               }}>
-                <p style={{
-                  fontSize: "0.8rem", letterSpacing: "0.08em",
-                  color: "rgba(255,255,255,0.3)", marginBottom: "16px",
-                  textTransform: "uppercase",
+                {/* Shimmer line */}
+                <div style={{
+                  width: "120px", height: "1px", marginBottom: "20px",
+                  background: "linear-gradient(90deg, transparent, rgba(200,0,0,0.6), rgba(255,80,80,0.9), rgba(200,0,0,0.6), transparent)",
+                  backgroundSize: "200% auto",
+                  animation: "templateShimmer 2.5s linear infinite",
+                }} />
+
+                {/* Count pill */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  background: "rgba(10,0,0,0.7)",
+                  border: "1px solid rgba(120,0,0,0.4)",
+                  borderRadius: "100px",
+                  padding: "5px 16px 5px 10px",
+                  marginBottom: "18px",
+                  backdropFilter: "blur(12px)",
                 }}>
-                  +12 more templates across 6 categories
-                </p>
-                <button
+                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ff3333", boxShadow: "0 0 6px #ff3333", flexShrink: 0 }} />
+                  <span style={{ fontSize: "0.75rem", color: "rgba(255,180,180,0.7)", letterSpacing: "0.06em" }}>
+                    12 more templates across 6 categories
+                  </span>
+                </div>
+
+                {/* Elegant text link with arrow */}
+                <div
                   onClick={() => navigate("/templates")}
-                  style={{
-                    background: "linear-gradient(135deg, #cc0000, #8b0000)",
-                    border: "none", borderRadius: "14px",
-                    padding: "14px 40px", fontSize: "1rem",
-                    fontWeight: 700, color: "#fff", cursor: "pointer",
-                    letterSpacing: "0.02em",
-                    boxShadow: "0 0 32px rgba(200,0,0,0.6), 0 0 64px rgba(180,0,0,0.25)",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.boxShadow = "0 0 48px rgba(220,0,0,0.85), 0 0 90px rgba(200,0,0,0.4)";
-                    e.currentTarget.style.transform = "scale(1.05) translateY(-2px)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.boxShadow = "0 0 32px rgba(200,0,0,0.6), 0 0 64px rgba(180,0,0,0.25)";
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", cursor: "pointer" }}
                 >
-                  Explore All Templates →
-                </button>
+                  <span style={{
+                    fontSize: "1.1rem", fontWeight: 700, letterSpacing: "0.04em",
+                    color: "rgba(255,255,255,0.85)",
+                    textShadow: "0 0 20px rgba(255,255,255,0.4)",
+                    transition: "all 0.2s ease",
+                    borderBottom: "1px solid rgba(255,255,255,0.15)",
+                    paddingBottom: "2px",
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.textShadow = "0 0 30px rgba(255,100,100,0.7)"; e.currentTarget.style.borderBottomColor = "rgba(255,80,80,0.5)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.85)"; e.currentTarget.style.textShadow = "0 0 20px rgba(255,255,255,0.4)"; e.currentTarget.style.borderBottomColor = "rgba(255,255,255,0.15)"; }}
+                  >
+                    Browse all templates
+                  </span>
+                  <span className="template-arrow" style={{ fontSize: "1.2rem", color: "rgba(220,60,60,0.8)" }}>↓</span>
+                </div>
               </div>
             </div>
           </div>
