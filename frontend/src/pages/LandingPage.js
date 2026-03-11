@@ -249,7 +249,6 @@ function LandingPage() {
         <style>{`
           @keyframes badgePulse { 0%,100%{opacity:1;box-shadow:0 0 6px #ff3333,0 0 12px #ff3333} 50%{opacity:0.6;box-shadow:0 0 3px #ff3333} }
           @keyframes glowPulse  { 0%,100%{box-shadow:0 0 30px rgba(200,0,0,0.5),0 0 60px rgba(180,0,0,0.3)} 50%{box-shadow:0 0 50px rgba(220,0,0,0.8),0 0 100px rgba(200,0,0,0.5)} }
-          @keyframes spotDust   { 0%,100%{opacity:0.6} 50%{opacity:1} }
           .prompt-wrap { transition: box-shadow 0.3s ease, border-color 0.3s ease; }
           .prompt-wrap:focus-within { border-color:rgba(200,0,0,0.7)!important; box-shadow:0 0 0 1px rgba(180,0,0,0.25),0 0 60px rgba(180,0,0,0.2)!important; }
           .example-btn:hover { border-color:rgba(180,0,0,0.6)!important; color:#fff!important; background:rgba(60,0,0,0.4)!important; }
@@ -267,150 +266,105 @@ function LandingPage() {
 
           {/*
             ══════════════════════════════════════════════════════
-            THEATRE SPOTLIGHT — correct physics, narrow→wide
+            THEATRE SPOTLIGHT
+            - Narrow at lamp (top), fans wide to robot feet only
+            - 5 layers all at the same strong brightness (inner needle opacity)
+            - Pure #000 black outside — no gradient banding on sides
+            - Hard stop at robot feet, nothing below
             ══════════════════════════════════════════════════════
-            The lamp is a tiny point at top-center.
-            Light fans OUT as it travels DOWN — narrow at source,
-            wide at the floor. Exactly like real stage lighting.
-
-            polygon() points: top-left, top-right, bottom-right, bottom-left
-            Top edge: near-center (tiny gap = lamp aperture)
-            Bottom edge: spreads wide across the floor
           */}
 
-          {/* ── LAYER 1: Outer beam body — soft, wide fan ── */}
+          {/* LAYER 1 — Outermost cone, same strong brightness as inner needle */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: "78%",
             clipPath: "polygon(44% 0%, 56% 0%, 82% 100%, 18% 100%)",
-            background: "linear-gradient(180deg, rgba(255,255,220,0.0) 0%, rgba(255,255,210,0.06) 15%, rgba(255,252,200,0.11) 40%, rgba(255,248,190,0.13) 65%, rgba(255,244,180,0.09) 85%, rgba(255,240,170,0.04) 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            background: "linear-gradient(180deg, rgba(255,255,248,0.00) 0%, rgba(255,255,248,0.30) 6%, rgba(255,255,248,0.30) 85%, rgba(255,255,248,0.18) 100%)",
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── LAYER 2: Mid beam — brighter interior cone ── */}
+          {/* LAYER 2 — Same cone, same brightness, stacked for density */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: "78%",
             clipPath: "polygon(46% 0%, 54% 0%, 74% 100%, 26% 100%)",
-            background: "linear-gradient(180deg, rgba(255,255,235,0.0) 0%, rgba(255,255,220,0.10) 12%, rgba(255,252,210,0.18) 38%, rgba(255,250,200,0.20) 60%, rgba(255,246,188,0.14) 82%, rgba(255,242,175,0.06) 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            background: "linear-gradient(180deg, rgba(255,255,250,0.00) 0%, rgba(255,255,250,0.30) 6%, rgba(255,255,250,0.30) 85%, rgba(255,255,250,0.18) 100%)",
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── LAYER 3: Hot inner core — the brightest ray ── */}
+          {/* LAYER 3 — Inner cone, same brightness */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: "78%",
             clipPath: "polygon(48% 0%, 52% 0%, 64% 100%, 36% 100%)",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.0) 0%, rgba(255,255,245,0.14) 10%, rgba(255,255,235,0.26) 35%, rgba(255,252,222,0.28) 58%, rgba(255,248,208,0.18) 80%, rgba(255,244,194,0.07) 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            background: "linear-gradient(180deg, rgba(255,255,252,0.00) 0%, rgba(255,255,252,0.30) 6%, rgba(255,255,252,0.30) 85%, rgba(255,255,252,0.18) 100%)",
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── LAYER 4: Needle — absolute center laser column ── */}
+          {/* LAYER 4 — Tighter cone, same brightness */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            clipPath: "polygon(49.2% 0%, 50.8% 0%, 57% 100%, 43% 100%)",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.20) 8%, rgba(255,255,248,0.32) 30%, rgba(255,255,240,0.30) 55%, rgba(255,252,228,0.16) 78%, rgba(255,248,215,0.05) 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: "78%",
+            clipPath: "polygon(49% 0%, 51% 0%, 59% 100%, 41% 100%)",
+            background: "linear-gradient(180deg, rgba(255,255,254,0.00) 0%, rgba(255,255,254,0.30) 6%, rgba(255,255,254,0.30) 85%, rgba(255,255,254,0.18) 100%)",
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── LAYER 5: Volumetric haze — atmospheric scatter inside cone ── */}
+          {/* LAYER 5 — Needle center, same brightness */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            clipPath: "polygon(44% 0%, 56% 0%, 82% 100%, 18% 100%)",
-            background: "radial-gradient(ellipse 55% 80% at 50% 30%, rgba(255,255,220,0.08) 0%, rgba(255,250,200,0.04) 50%, transparent 100%)",
-            animation: "spotDust 4s ease-in-out infinite",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: "78%",
+            clipPath: "polygon(49.5% 0%, 50.5% 0%, 55% 100%, 45% 100%)",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.30) 6%, rgba(255,255,255,0.30) 85%, rgba(255,255,255,0.18) 100%)",
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── LAYER 6: Lamp source glow — hot point at top-center ── */}
+          {/* LAMP SOURCE — blazing white-hot point at the fixture */}
           <div style={{
-            position: "absolute",
-            top: "-20px",
-            left: "50%",
+            position: "absolute", top: 0, left: "50%",
             transform: "translateX(-50%)",
-            width: "160px",
-            height: "90px",
-            background: "radial-gradient(ellipse 50% 60% at 50% 20%, rgba(255,255,240,0.55) 0%, rgba(255,252,220,0.25) 35%, rgba(255,248,200,0.08) 65%, transparent 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            width: "100px", height: "60px",
+            background: "radial-gradient(ellipse 50% 70% at 50% 10%, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.55) 25%, rgba(255,255,255,0.14) 55%, transparent 80%)",
+            pointerEvents: "none", zIndex: 2,
           }} />
 
-          {/* ── LAYER 7: Floor pool — bright ellipse where light hits the ground ── */}
+          {/* FLOOR POOL — bright ellipse right at robot feet */}
           <div style={{
-            position: "absolute",
-            bottom: "22%",
-            left: "50%",
+            position: "absolute", top: "72%", left: "50%",
             transform: "translateX(-50%)",
-            width: "520px",
-            height: "100px",
-            background: "radial-gradient(ellipse at center, rgba(255,254,230,0.28) 0%, rgba(255,252,218,0.16) 35%, rgba(255,248,205,0.07) 60%, transparent 100%)",
+            width: "500px", height: "88px",
+            background: "radial-gradient(ellipse at 50% 50%, rgba(255,255,252,0.48) 0%, rgba(255,255,250,0.26) 32%, rgba(255,255,248,0.09) 60%, transparent 82%)",
             borderRadius: "50%",
-            pointerEvents: "none",
-            zIndex: 0,
+            pointerEvents: "none", zIndex: 2,
           }} />
 
-          {/* ── LAYER 8: Hard left darkness — theatre black wing ── */}
+          {/* PURE BLACK LEFT — hard cut, no banding */}
           <div style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 10%, rgba(0,0,0,0.80) 20%, rgba(0,0,0,0.40) 32%, transparent 44%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to right, #000 0%, #000 43%, transparent 46%)",
+            pointerEvents: "none", zIndex: 3,
           }} />
 
-          {/* ── LAYER 9: Hard right darkness — theatre black wing ── */}
+          {/* PURE BLACK RIGHT — hard cut, no banding */}
           <div style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 10%, rgba(0,0,0,0.80) 20%, rgba(0,0,0,0.40) 32%, transparent 44%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to left, #000 0%, #000 43%, transparent 46%)",
+            pointerEvents: "none", zIndex: 3,
           }} />
 
-          {/* ── LAYER 10: Top vignette — darkens ceiling outside beam ── */}
+          {/* PURE BLACK BOTTOM — stops light exactly at feet (78%) */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "35%",
-            background: "linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, transparent 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", top: "76%", left: 0, right: 0, bottom: 0,
+            background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.85) 20%, #000 50%)",
+            pointerEvents: "none", zIndex: 3,
           }} />
 
-          {/* ── LAYER 11: Bottom fade — floor fades back to black ── */}
+          {/* PURE BLACK TOP — ceiling above lamp */}
           <div style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: "30%",
-            background: "linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 40%, transparent 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: "2%",
+            background: "#000",
+            pointerEvents: "none", zIndex: 3,
           }} />
 
           <motion.div
