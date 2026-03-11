@@ -105,48 +105,21 @@ function BottomPromptBox({ onSend }) {
 
   return (
     <div style={{ width: "100%", maxWidth: "680px", margin: "0 auto" }}>
-      <div
-        style={{
-          background: "rgba(8,2,2,0.95)",
-          border: focused ? "1.5px solid rgba(255,40,40,0.8)" : "1.5px solid rgba(200,0,0,0.6)",
-          borderRadius: "20px",
-          backdropFilter: "blur(20px)",
-          overflow: "hidden",
-          boxShadow: focused
-            ? "0 0 50px rgba(220,0,0,0.7), 0 0 100px rgba(180,0,0,0.35), inset 0 0 30px rgba(180,0,0,0.08)"
-            : "0 0 30px rgba(200,0,0,0.5), 0 0 60px rgba(180,0,0,0.25), inset 0 0 20px rgba(150,0,0,0.05)",
-          transition: "box-shadow 0.3s ease, border-color 0.3s ease",
-          animation: focused ? "none" : "glowPulse 2.5s ease-in-out infinite",
-        }}
-      >
+      <div style={{ background: "rgba(8,2,2,0.95)", border: focused ? "1.5px solid rgba(255,40,40,0.8)" : "1.5px solid rgba(200,0,0,0.6)", borderRadius: "20px", backdropFilter: "blur(20px)", overflow: "hidden", boxShadow: focused ? "0 0 50px rgba(220,0,0,0.7), 0 0 100px rgba(180,0,0,0.35), inset 0 0 30px rgba(180,0,0,0.08)" : "0 0 30px rgba(200,0,0,0.5), 0 0 60px rgba(180,0,0,0.25), inset 0 0 20px rgba(150,0,0,0.05)", transition: "box-shadow 0.3s ease, border-color 0.3s ease", animation: focused ? "none" : "glowPulse 2.5s ease-in-out infinite" }}>
         <div style={{ padding: "12px 22px 0", display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,80,80,0.7)", fontWeight: 600 }}>Ready to build</span>
           <span style={{ flex: 1, height: "1px", background: "linear-gradient(90deg, rgba(200,0,0,0.3), transparent)" }} />
           <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>edit or use as-is</span>
         </div>
-        <textarea ref={ref} value={prompt} onChange={(e) => setPrompt(e.target.value)}
-          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(prompt); } }}
-          rows={2}
-          style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: focused ? "#ffffff" : "rgba(255,180,180,0.9)", fontSize: "1.08rem", padding: "10px 22px 12px", resize: "none", fontFamily: "Segoe UI, sans-serif", lineHeight: 1.6, minHeight: "68px", maxHeight: "160px", caretColor: "#ff3333", textShadow: focused ? "0 0 18px rgba(255,80,80,0.6), 0 0 40px rgba(255,30,30,0.3)" : "0 0 12px rgba(255,60,60,0.4)", transition: "text-shadow 0.3s ease, color 0.3s ease" }}
-        />
+        <textarea ref={ref} value={prompt} onChange={(e) => setPrompt(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(prompt); } }} rows={2} style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: focused ? "#ffffff" : "rgba(255,180,180,0.9)", fontSize: "1.08rem", padding: "10px 22px 12px", resize: "none", fontFamily: "Segoe UI, sans-serif", lineHeight: 1.6, minHeight: "68px", maxHeight: "160px", caretColor: "#ff3333", textShadow: focused ? "0 0 18px rgba(255,80,80,0.6), 0 0 40px rgba(255,30,30,0.3)" : "0 0 12px rgba(255,60,60,0.4)", transition: "text-shadow 0.3s ease, color 0.3s ease" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 14px 16px" }}>
           <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.75rem" }}>Enter to build · Shift+Enter for new line</span>
-          <button onClick={() => onSend(prompt)} disabled={!prompt.trim()}
-            style={{ background: prompt.trim() ? "linear-gradient(135deg, #ff2020 0%, #cc0000 40%, #8b0000 100%)" : "rgba(40,40,40,0.8)", color: prompt.trim() ? "#fff" : "rgba(255,255,255,0.25)", border: "none", borderRadius: "12px", padding: "12px 32px", fontSize: "1rem", fontWeight: 700, cursor: prompt.trim() ? "pointer" : "default", letterSpacing: "0.03em", transition: "all 0.25s ease", boxShadow: prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none" }}
-            onMouseEnter={e => { if (prompt.trim()) { e.currentTarget.style.boxShadow = "0 0 40px rgba(255,40,40,0.9), 0 0 80px rgba(220,0,0,0.5)"; e.currentTarget.style.transform = "scale(1.04) translateY(-1px)"; } }}
-            onMouseLeave={e => { e.currentTarget.style.boxShadow = prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none"; e.currentTarget.style.transform = "scale(1)"; }}
-          >Build it</button>
+          <button onClick={() => onSend(prompt)} disabled={!prompt.trim()} style={{ background: prompt.trim() ? "linear-gradient(135deg, #ff2020 0%, #cc0000 40%, #8b0000 100%)" : "rgba(40,40,40,0.8)", color: prompt.trim() ? "#fff" : "rgba(255,255,255,0.25)", border: "none", borderRadius: "12px", padding: "12px 32px", fontSize: "1rem", fontWeight: 700, cursor: prompt.trim() ? "pointer" : "default", letterSpacing: "0.03em", transition: "all 0.25s ease", boxShadow: prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none" }} onMouseEnter={e => { if (prompt.trim()) { e.currentTarget.style.boxShadow = "0 0 40px rgba(255,40,40,0.9), 0 0 80px rgba(220,0,0,0.5)"; e.currentTarget.style.transform = "scale(1.04) translateY(-1px)"; } }} onMouseLeave={e => { e.currentTarget.style.boxShadow = prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none"; e.currentTarget.style.transform = "scale(1)"; }}>Build it</button>
         </div>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px", marginTop: "14px" }}>
         {examples.map((p, i) => (
-          <button key={i} onClick={() => setPrompt(p)}
-            style={{ background: "rgba(15,4,4,0.8)", border: "1px solid rgba(80,0,0,0.4)", borderRadius: "100px", padding: "6px 14px", color: "rgba(255,255,255,0.45)", fontSize: "0.78rem", cursor: "pointer", transition: "all 0.2s ease", backdropFilter: "blur(8px)" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(180,0,0,0.6)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(60,0,0,0.4)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(80,0,0,0.4)"; e.currentTarget.style.color = "rgba(255,255,255,0.45)"; e.currentTarget.style.background = "rgba(15,4,4,0.8)"; }}>
-            {p}
-          </button>
+          <button key={i} onClick={() => setPrompt(p)} style={{ background: "rgba(15,4,4,0.8)", border: "1px solid rgba(80,0,0,0.4)", borderRadius: "100px", padding: "6px 14px", color: "rgba(255,255,255,0.45)", fontSize: "0.78rem", cursor: "pointer", transition: "all 0.2s ease", backdropFilter: "blur(8px)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(180,0,0,0.6)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(60,0,0,0.4)"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(80,0,0,0.4)"; e.currentTarget.style.color = "rgba(255,255,255,0.45)"; e.currentTarget.style.background = "rgba(15,4,4,0.8)"; }}>{p}</button>
         ))}
       </div>
     </div>
@@ -247,9 +220,10 @@ function LandingPage() {
 
       <div style={{ paddingTop: "72px" }} className="bg-black text-white font-sans overflow-x-hidden">
         <style>{`
-          @keyframes badgePulse { 0%,100%{opacity:1;box-shadow:0 0 6px #ff3333,0 0 12px #ff3333} 50%{opacity:0.6;box-shadow:0 0 3px #ff3333} }
-          @keyframes glowPulse  { 0%,100%{box-shadow:0 0 30px rgba(200,0,0,0.5),0 0 60px rgba(180,0,0,0.3)} 50%{box-shadow:0 0 50px rgba(220,0,0,0.8),0 0 100px rgba(200,0,0,0.5)} }
-          @keyframes spotDust   { 0%,100%{opacity:0.6} 50%{opacity:1} }
+          @keyframes badgePulse  { 0%,100%{opacity:1;box-shadow:0 0 6px #ff3333,0 0 12px #ff3333} 50%{opacity:0.6;box-shadow:0 0 3px #ff3333} }
+          @keyframes glowPulse   { 0%,100%{box-shadow:0 0 30px rgba(200,0,0,0.5),0 0 60px rgba(180,0,0,0.3)} 50%{box-shadow:0 0 50px rgba(220,0,0,0.8),0 0 100px rgba(200,0,0,0.5)} }
+          @keyframes dustFloat   { 0%,100%{opacity:0.35;transform:translateY(0px) scaleX(1)} 50%{opacity:0.55;transform:translateY(-6px) scaleX(1.02)} }
+          @keyframes poolPulse   { 0%,100%{opacity:0.8;transform:translateX(-50%) scaleX(1)} 50%{opacity:1;transform:translateX(-50%) scaleX(1.04)} }
           .prompt-wrap { transition: box-shadow 0.3s ease, border-color 0.3s ease; }
           .prompt-wrap:focus-within { border-color:rgba(200,0,0,0.7)!important; box-shadow:0 0 0 1px rgba(180,0,0,0.25),0 0 60px rgba(180,0,0,0.2)!important; }
           .example-btn:hover { border-color:rgba(180,0,0,0.6)!important; color:#fff!important; background:rgba(60,0,0,0.4)!important; }
@@ -266,155 +240,259 @@ function LandingPage() {
         >
 
           {/*
-            ══════════════════════════════════════════════════════
-            THEATRE SPOTLIGHT — correct physics, narrow→wide
-            ══════════════════════════════════════════════════════
-            The lamp is a tiny point at top-center.
-            Light fans OUT as it travels DOWN — narrow at source,
-            wide at the floor. Exactly like real stage lighting.
+            ═══════════════════════════════════════════════════════════════
+            REALISTIC THEATRE SPOTLIGHT
+            ═══════════════════════════════════════════════════════════════
 
-            polygon() points: top-left, top-right, bottom-right, bottom-left
-            Top edge: near-center (tiny gap = lamp aperture)
-            Bottom edge: spreads wide across the floor
+            PRINCIPLE: Real stage light is mostly invisible.
+            You see it only where it HITS something — the robot, the floor.
+            The beam in air is barely visible, just a faint haze from dust.
+
+            COLOR: Cool/neutral white (not yellow). Real tungsten fresnels
+            are neutral-to-slightly-cool. Yellow looks fake.
+
+            STRUCTURE:
+              1. Total blackout canvas — everything starts at pitch black
+              2. The beam in air — very faint, barely-there cool white haze
+              3. Sharp beam edges — the defining straight lines
+              4. Floor pool — the BRIGHTEST element, where light accumulates
+              5. Lamp source — hot white point at top center
+              6. Side walls — absolute black, no bleed
+          ═══════════════════════════════════════════════════════════════
           */}
 
-          {/* ── LAYER 1: Outer beam body — soft, wide fan ── */}
+          {/* ── 0. BASE: Pitch black canvas — the dark theatre ── */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            clipPath: "polygon(44% 0%, 56% 0%, 82% 100%, 18% 100%)",
-            background: "linear-gradient(180deg, rgba(255,255,220,0.0) 0%, rgba(255,255,210,0.06) 15%, rgba(255,252,200,0.11) 40%, rgba(255,248,190,0.13) 65%, rgba(255,244,180,0.09) 85%, rgba(255,240,170,0.04) 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0,
+            background: "#000",
+            pointerEvents: "none", zIndex: 0,
           }} />
 
-          {/* ── LAYER 2: Mid beam — brighter interior cone ── */}
+          {/* ── 1. BEAM BODY: Faint cool-white haze — mostly air, barely visible ──
+               Real insight: the cone shape comes from what's NOT lit, not the beam.
+               The beam itself in clean air is nearly invisible.
+               clipPath: tiny at top (lamp), wide at bottom (floor)
+          ── */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            clipPath: "polygon(46% 0%, 54% 0%, 74% 100%, 26% 100%)",
-            background: "linear-gradient(180deg, rgba(255,255,235,0.0) 0%, rgba(255,255,220,0.10) 12%, rgba(255,252,210,0.18) 38%, rgba(255,250,200,0.20) 60%, rgba(255,246,188,0.14) 82%, rgba(255,242,175,0.06) 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0,
+            clipPath: "polygon(45.5% 0%, 54.5% 0%, 78% 100%, 22% 100%)",
+            background: `linear-gradient(
+              180deg,
+              rgba(220,230,255, 0.00)  0%,
+              rgba(220,230,255, 0.03)  8%,
+              rgba(215,228,255, 0.055) 25%,
+              rgba(210,225,255, 0.07)  50%,
+              rgba(205,222,252, 0.06)  72%,
+              rgba(200,218,250, 0.03)  90%,
+              rgba(195,215,248, 0.01) 100%
+            )`,
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── LAYER 3: Hot inner core — the brightest ray ── */}
+          {/* ── 2. BEAM INNER: Slightly brighter core, still very subtle ── */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            clipPath: "polygon(48% 0%, 52% 0%, 64% 100%, 36% 100%)",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.0) 0%, rgba(255,255,245,0.14) 10%, rgba(255,255,235,0.26) 35%, rgba(255,252,222,0.28) 58%, rgba(255,248,208,0.18) 80%, rgba(255,244,194,0.07) 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0,
+            clipPath: "polygon(47% 0%, 53% 0%, 68% 100%, 32% 100%)",
+            background: `linear-gradient(
+              180deg,
+              rgba(230,238,255, 0.00)  0%,
+              rgba(230,238,255, 0.05)  6%,
+              rgba(228,236,255, 0.09)  22%,
+              rgba(225,234,255, 0.11)  48%,
+              rgba(222,232,253, 0.09)  70%,
+              rgba(218,229,252, 0.04)  90%,
+              rgba(215,226,250, 0.01) 100%
+            )`,
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── LAYER 4: Needle — absolute center laser column ── */}
+          {/* ── 3. BEAM NEEDLE: The absolute center — faintest hint of bright ── */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            clipPath: "polygon(49.2% 0%, 50.8% 0%, 57% 100%, 43% 100%)",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.20) 8%, rgba(255,255,248,0.32) 30%, rgba(255,255,240,0.30) 55%, rgba(255,252,228,0.16) 78%, rgba(255,248,215,0.05) 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0,
+            clipPath: "polygon(48.5% 0%, 51.5% 0%, 59% 100%, 41% 100%)",
+            background: `linear-gradient(
+              180deg,
+              rgba(240,245,255, 0.00)  0%,
+              rgba(240,245,255, 0.07)  5%,
+              rgba(238,243,255, 0.13)  20%,
+              rgba(236,242,255, 0.15)  45%,
+              rgba(234,240,254, 0.11)  68%,
+              rgba(230,238,253, 0.05)  88%,
+              rgba(226,235,252, 0.01) 100%
+            )`,
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── LAYER 5: Volumetric haze — atmospheric scatter inside cone ── */}
+          {/* ── 4. ATMOSPHERIC DUST: Very subtle animated haze inside beam ── */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            clipPath: "polygon(44% 0%, 56% 0%, 82% 100%, 18% 100%)",
-            background: "radial-gradient(ellipse 55% 80% at 50% 30%, rgba(255,255,220,0.08) 0%, rgba(255,250,200,0.04) 50%, transparent 100%)",
-            animation: "spotDust 4s ease-in-out infinite",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0,
+            clipPath: "polygon(45.5% 0%, 54.5% 0%, 78% 100%, 22% 100%)",
+            background: `radial-gradient(
+              ellipse 40% 70% at 50% 20%,
+              rgba(220,232,255, 0.06) 0%,
+              rgba(215,228,255, 0.03) 40%,
+              transparent 80%
+            )`,
+            animation: "dustFloat 5s ease-in-out infinite",
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── LAYER 6: Lamp source glow — hot point at top-center ── */}
+          {/* ── 5. LAMP SOURCE: Intense white-hot bloom at the fixture ── */}
           <div style={{
             position: "absolute",
-            top: "-20px",
-            left: "50%",
+            top: "-8px", left: "50%",
             transform: "translateX(-50%)",
-            width: "160px",
-            height: "90px",
-            background: "radial-gradient(ellipse 50% 60% at 50% 20%, rgba(255,255,240,0.55) 0%, rgba(255,252,220,0.25) 35%, rgba(255,248,200,0.08) 65%, transparent 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            width: "120px", height: "80px",
+            background: `radial-gradient(
+              ellipse 50% 65% at 50% 15%,
+              rgba(255,255,255,0.90)  0%,
+              rgba(248,252,255,0.55) 18%,
+              rgba(240,248,255,0.25) 38%,
+              rgba(230,242,255,0.08) 60%,
+              transparent 82%
+            )`,
+            pointerEvents: "none", zIndex: 2,
           }} />
 
-          {/* ── LAYER 7: Floor pool — bright ellipse where light hits the ground ── */}
+          {/* ── 6. LAMP RING: The actual fixture housing ── */}
           <div style={{
             position: "absolute",
-            bottom: "22%",
-            left: "50%",
+            top: "2px", left: "50%",
             transform: "translateX(-50%)",
-            width: "520px",
-            height: "100px",
-            background: "radial-gradient(ellipse at center, rgba(255,254,230,0.28) 0%, rgba(255,252,218,0.16) 35%, rgba(255,248,205,0.07) 60%, transparent 100%)",
+            width: "14px", height: "14px",
             borderRadius: "50%",
-            pointerEvents: "none",
-            zIndex: 0,
+            background: "radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(200,220,255,0.7) 50%, transparent 100%)",
+            boxShadow: "0 0 12px 4px rgba(200,220,255,0.4), 0 0 30px 8px rgba(180,210,255,0.15)",
+            pointerEvents: "none", zIndex: 3,
           }} />
 
-          {/* ── LAYER 8: Hard left darkness — theatre black wing ── */}
+          {/* ── 7. FLOOR POOL: The brightest point — where light physically accumulates ──
+               Real physics: light diverges then pools on the floor in a bright ellipse.
+               This should be MORE visible than the beam itself.
+          ── */}
           <div style={{
             position: "absolute",
-            inset: 0,
-            background: "linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 10%, rgba(0,0,0,0.80) 20%, rgba(0,0,0,0.40) 32%, transparent 44%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            bottom: "19%", left: "50%",
+            transform: "translateX(-50%)",
+            width: "560px", height: "120px",
+            background: `radial-gradient(
+              ellipse at 50% 60%,
+              rgba(240,248,255, 0.38)  0%,
+              rgba(232,244,255, 0.22) 25%,
+              rgba(225,240,255, 0.12) 48%,
+              rgba(215,234,253, 0.05) 68%,
+              transparent 88%
+            )`,
+            borderRadius: "50%",
+            animation: "poolPulse 4s ease-in-out infinite",
+            pointerEvents: "none", zIndex: 2,
           }} />
 
-          {/* ── LAYER 9: Hard right darkness — theatre black wing ── */}
+          {/* ── 8. FLOOR POOL CORE: The very center hot-spot of the floor pool ── */}
           <div style={{
             position: "absolute",
-            inset: 0,
-            background: "linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 10%, rgba(0,0,0,0.80) 20%, rgba(0,0,0,0.40) 32%, transparent 44%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            bottom: "19.5%", left: "50%",
+            transform: "translateX(-50%)",
+            width: "220px", height: "55px",
+            background: `radial-gradient(
+              ellipse at 50% 55%,
+              rgba(255,255,255, 0.22) 0%,
+              rgba(245,252,255, 0.12) 35%,
+              rgba(235,248,255, 0.04) 65%,
+              transparent 100%
+            )`,
+            borderRadius: "50%",
+            pointerEvents: "none", zIndex: 2,
           }} />
 
-          {/* ── LAYER 10: Top vignette — darkens ceiling outside beam ── */}
+          {/* ── 9. BLACKOUT MASK: The key — covers everything outside the cone in pure black ──
+               This is what makes the spotlight real. The darkness defines the light.
+               Two triangles that cover left and right of the beam.
+          ── */}
+
+          {/* Left blackout — covers left of beam */}
           <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "35%",
-            background: "linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, transparent 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0,
+            background: `linear-gradient(
+              to right,
+              rgba(0,0,0,1.0)   0%,
+              rgba(0,0,0,1.0)  18%,
+              rgba(0,0,0,0.97) 26%,
+              rgba(0,0,0,0.88) 33%,
+              rgba(0,0,0,0.60) 39%,
+              rgba(0,0,0,0.20) 43%,
+              transparent      46%
+            )`,
+            pointerEvents: "none", zIndex: 4,
           }} />
 
-          {/* ── LAYER 11: Bottom fade — floor fades back to black ── */}
+          {/* Right blackout — covers right of beam */}
           <div style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: "30%",
-            background: "linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 40%, transparent 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
+            position: "absolute", inset: 0,
+            background: `linear-gradient(
+              to left,
+              rgba(0,0,0,1.0)   0%,
+              rgba(0,0,0,1.0)  18%,
+              rgba(0,0,0,0.97) 26%,
+              rgba(0,0,0,0.88) 33%,
+              rgba(0,0,0,0.60) 39%,
+              rgba(0,0,0,0.20) 43%,
+              transparent      46%
+            )`,
+            pointerEvents: "none", zIndex: 4,
           }} />
 
+          {/* ── 10. CEILING BLACKOUT: Above the lamp — total dark ── */}
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: "12%",
+            background: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 60%, transparent 100%)",
+            pointerEvents: "none", zIndex: 4,
+          }} />
+
+          {/* ── 11. FLOOR BLACKOUT: Below robot feet — fades to black ── */}
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            height: "22%",
+            background: "linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 35%, rgba(0,0,0,0.4) 65%, transparent 100%)",
+            pointerEvents: "none", zIndex: 4,
+          }} />
+
+          {/* ── 12. EDGE DEFINITION: Sharp beam-edge shafts of light catching the cone walls ──
+               In real spotlights you see the two clean straight lines at the beam edges.
+               These simulate that edge scatter.
+          ── */}
+          {/* Left beam edge */}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: `linear-gradient(
+              to right,
+              transparent                42%,
+              rgba(210,228,255, 0.04)   44%,
+              rgba(218,234,255, 0.09)   45%,
+              rgba(210,228,255, 0.04)   46%,
+              transparent                48%
+            )`,
+            pointerEvents: "none", zIndex: 3,
+          }} />
+          {/* Right beam edge */}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: `linear-gradient(
+              to left,
+              transparent                42%,
+              rgba(210,228,255, 0.04)   44%,
+              rgba(218,234,255, 0.09)   45%,
+              rgba(210,228,255, 0.04)   46%,
+              transparent                48%
+            )`,
+            pointerEvents: "none", zIndex: 3,
+          }} />
+
+          {/* ── CONTENT ── */}
           <motion.div
             className="z-10 text-center w-full max-w-3xl"
+            style={{ position: "relative", zIndex: 10 }}
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}
           >
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
@@ -424,39 +502,24 @@ function LandingPage() {
             </motion.div>
 
             <div style={{ marginBottom: "32px" }}>
-              <h1 className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4">
-                The Hustler Bot
-              </h1>
-              <p className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto">
-                Build any app. Just describe it.
-              </p>
-              <p className="text-base text-gray-400 max-w-lg mx-auto">
-                Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.
-              </p>
+              <h1 className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4">The Hustler Bot</h1>
+              <p className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto">Build any app. Just describe it.</p>
+              <p className="text-base text-gray-400 max-w-lg mx-auto">Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.</p>
             </div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.8 }} style={{ width: "100%", marginBottom: "16px" }}>
               <div className="prompt-wrap" style={{ background: "rgba(8,2,2,0.92)", border: "1px solid rgba(120,0,0,0.5)", borderRadius: "20px", backdropFilter: "blur(20px)", boxShadow: "0 4px 40px rgba(100,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.04)", overflow: "hidden" }}>
-                <textarea ref={textareaRef} value={prompt} onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder="Describe the app you want to build..." rows={2}
-                  style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: "1.05rem", padding: "20px 22px 12px", resize: "none", fontFamily: "Segoe UI, sans-serif", lineHeight: 1.6, minHeight: "72px", maxHeight: "160px", caretColor: "#ff3333" }} />
+                <textarea ref={textareaRef} value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe the app you want to build..." rows={2} style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: "1.05rem", padding: "20px 22px 12px", resize: "none", fontFamily: "Segoe UI, sans-serif", lineHeight: 1.6, minHeight: "72px", maxHeight: "160px", caretColor: "#ff3333" }} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px 14px" }}>
                   <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.75rem" }}>Enter to build · Shift+Enter for new line</span>
-                  <button className="send-btn" onClick={() => handleSend()} disabled={!prompt.trim()}
-                    style={{ background: prompt.trim() ? "linear-gradient(135deg,#cc0000 0%,#8b0000 100%)" : "rgba(40,40,40,0.8)", color: prompt.trim() ? "#fff" : "rgba(255,255,255,0.25)", border: "none", borderRadius: "12px", padding: "11px 26px", fontSize: "0.95rem", fontWeight: 600, cursor: prompt.trim() ? "pointer" : "default", transition: "all 0.2s ease", boxShadow: prompt.trim() ? "0 0 20px rgba(180,0,0,0.4)" : "none" }}>
-                    Build it
-                  </button>
+                  <button className="send-btn" onClick={() => handleSend()} disabled={!prompt.trim()} style={{ background: prompt.trim() ? "linear-gradient(135deg,#cc0000 0%,#8b0000 100%)" : "rgba(40,40,40,0.8)", color: prompt.trim() ? "#fff" : "rgba(255,255,255,0.25)", border: "none", borderRadius: "12px", padding: "11px 26px", fontSize: "0.95rem", fontWeight: 600, cursor: prompt.trim() ? "pointer" : "default", transition: "all 0.2s ease", boxShadow: prompt.trim() ? "0 0 20px rgba(180,0,0,0.4)" : "none" }}>Build it</button>
                 </div>
               </div>
             </motion.div>
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px" }}>
               {examplePrompts.map((p, i) => (
-                <button key={i} className="example-btn" onClick={() => { setPrompt(p); textareaRef.current?.focus(); }}
-                  style={{ background: "rgba(15,4,4,0.8)", border: "1px solid rgba(80,0,0,0.4)", borderRadius: "100px", padding: "6px 14px", color: "rgba(255,255,255,0.45)", fontSize: "0.78rem", cursor: "pointer", transition: "all 0.2s ease", backdropFilter: "blur(8px)" }}>
-                  {p}
-                </button>
+                <button key={i} className="example-btn" onClick={() => { setPrompt(p); textareaRef.current?.focus(); }} style={{ background: "rgba(15,4,4,0.8)", border: "1px solid rgba(80,0,0,0.4)", borderRadius: "100px", padding: "6px 14px", color: "rgba(255,255,255,0.45)", fontSize: "0.78rem", cursor: "pointer", transition: "all 0.2s ease", backdropFilter: "blur(8px)" }}>{p}</button>
               ))}
             </motion.div>
 
@@ -481,8 +544,8 @@ function LandingPage() {
             )}
           </motion.div>
 
-          {/* Robot — inside the spotlight */}
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -65%)", width: "700px", height: "700px", zIndex: 1, opacity: 0.9, pointerEvents: "none" }}>
+          {/* Robot — illuminated by the spotlight */}
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -65%)", width: "700px", height: "700px", zIndex: 5, opacity: 0.92, pointerEvents: "none" }}>
             <HeroBot style={{ width: "100%", height: "100%" }} />
           </div>
         </section>
@@ -500,8 +563,7 @@ function LandingPage() {
               ))}
             </div>
             <div style={{ position: "relative" }}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
-                style={{ filter: "blur(5px)", opacity: 0.35, pointerEvents: "none", userSelect: "none" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" style={{ filter: "blur(5px)", opacity: 0.35, pointerEvents: "none", userSelect: "none" }}>
                 {TEMPLATES.slice(3).map((t, i) => (
                   <TemplateCard key={t.job_id} template={t} index={i + 3} onUse={() => {}} disabled />
                 ))}
@@ -513,10 +575,7 @@ function LandingPage() {
                   <span style={{ fontSize: "0.75rem", color: "rgba(255,180,180,0.7)", letterSpacing: "0.06em" }}>12 more templates across 6 categories</span>
                 </div>
                 <div onClick={() => navigate("/templates")} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", cursor: "pointer" }}>
-                  <span style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "0.04em", color: "rgba(255,255,255,0.85)", textShadow: "0 0 20px rgba(255,255,255,0.4)", transition: "all 0.2s ease", borderBottom: "1px solid rgba(255,255,255,0.15)", paddingBottom: "2px" }}
-                    onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.textShadow = "0 0 30px rgba(255,100,100,0.7)"; e.currentTarget.style.borderBottomColor = "rgba(255,80,80,0.5)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.85)"; e.currentTarget.style.textShadow = "0 0 20px rgba(255,255,255,0.4)"; e.currentTarget.style.borderBottomColor = "rgba(255,255,255,0.15)"; }}
-                  >Browse all templates</span>
+                  <span style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "0.04em", color: "rgba(255,255,255,0.85)", textShadow: "0 0 20px rgba(255,255,255,0.4)", transition: "all 0.2s ease", borderBottom: "1px solid rgba(255,255,255,0.15)", paddingBottom: "2px" }} onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.textShadow = "0 0 30px rgba(255,100,100,0.7)"; e.currentTarget.style.borderBottomColor = "rgba(255,80,80,0.5)"; }} onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.85)"; e.currentTarget.style.textShadow = "0 0 20px rgba(255,255,255,0.4)"; e.currentTarget.style.borderBottomColor = "rgba(255,255,255,0.15)"; }}>Browse all templates</span>
                   <span className="template-arrow" style={{ fontSize: "1.2rem", color: "rgba(220,60,60,0.8)" }}>↓</span>
                 </div>
               </div>
@@ -530,8 +589,7 @@ function LandingPage() {
           <div className="relative max-w-6xl mx-auto">
             <div className="absolute left-1/2 top-0 h-full w-[3px] bg-gradient-to-b from-red-600 via-transparent to-black animate-pulse z-0 transform -translate-x-1/2" />
             {roadmapSteps.map((item, index) => (
-              <motion.div key={index} initial={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: index * 0.2 }}
-                className={`relative flex flex-col md:flex-row ${index % 2 === 0 ? "" : "md:flex-row-reverse"} items-center justify-between gap-10 mb-24 z-10`}>
+              <motion.div key={index} initial={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: index * 0.2 }} className={`relative flex flex-col md:flex-row ${index % 2 === 0 ? "" : "md:flex-row-reverse"} items-center justify-between gap-10 mb-24 z-10`}>
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 flex flex-col items-center z-10">
                   <div className="w-6 h-6 bg-red-600 rounded-full shadow-[0_0_20px_#ff1a1a]" />
                 </div>
@@ -548,14 +606,8 @@ function LandingPage() {
         {/* ── BOTTOM CTA ── */}
         <section className="relative py-36 bg-gradient-to-b from-black via-[#110000] to-black overflow-hidden z-20 px-4">
           <motion.div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[200%] h-full bg-gradient-radial from-red-800/30 to-transparent blur-2xl opacity-60 pointer-events-none" initial={{ scale: 0.7, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} transition={{ duration: 1.5 }} />
-          <motion.h2 initial={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}
-            className="text-4xl md:text-5xl font-bold text-white text-center z-10 relative mb-4" style={{ textShadow: "0 0 30px rgba(255,26,26,0.3)" }}>
-            Your next app is one sentence away.
-          </motion.h2>
-          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.2 }}
-            className="mb-14 text-lg text-center text-gray-400 max-w-xl mx-auto z-10 relative">
-            No coding required. Just describe it and watch it come to life.
-          </motion.p>
+          <motion.h2 initial={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="text-4xl md:text-5xl font-bold text-white text-center z-10 relative mb-4" style={{ textShadow: "0 0 30px rgba(255,26,26,0.3)" }}>Your next app is one sentence away.</motion.h2>
+          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.2 }} className="mb-14 text-lg text-center text-gray-400 max-w-xl mx-auto z-10 relative">No coding required. Just describe it and watch it come to life.</motion.p>
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="z-10 relative">
             <BottomPromptBox onSend={handleSend} />
           </motion.div>
@@ -563,14 +615,7 @@ function LandingPage() {
       </div>
 
       {/* ── FLOATING BUBBLE ── */}
-      <div
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#111] border border-red-700 rounded-full px-4 py-2 shadow-[0_0_25px_#ff1a1a] hover:scale-105 transition cursor-pointer"
-        onClick={() => {
-          if (isLoggedIn) navigate("/studio");
-          else { window.scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => textareaRef.current?.focus(), 600); }
-        }}
-        style={{ height: "64px", minWidth: "260px", maxWidth: "380px" }}
-      >
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#111] border border-red-700 rounded-full px-4 py-2 shadow-[0_0_25px_#ff1a1a] hover:scale-105 transition cursor-pointer" onClick={() => { if (isLoggedIn) navigate("/studio"); else { window.scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => textareaRef.current?.focus(), 600); } }} style={{ height: "64px", minWidth: "260px", maxWidth: "380px" }}>
         <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
           <BubbleBot style={{ width: "100%", height: "100%" }} />
         </div>
