@@ -138,7 +138,7 @@ function RotateScreen() {
 // ── Hustler Bot avatar ──
 function BotAvatar() {
   const { RiveComponent, rive } = useRive({
-    src: "/hustler-bubble-bot.riv",
+    src: "/hustler-robot.riv",
     autoplay: true,
     stateMachines: ["State Machine 1"],
   });
@@ -262,7 +262,7 @@ const downloadProjectZip = async (jobId, title) => {
 // ── Static bot avatar for empty state ────────────────────────────────────────
 function BotAvatarStatic() {
   const { RiveComponent } = useRive({
-    src: "/hustler-bubble-bot.riv",
+    src: "/hustler-robot.riv",
     autoplay: true,
     stateMachines: ["State Machine 1"],
   });
