@@ -1639,7 +1639,6 @@ export default function Studio() {
 
   if (isMobilePortrait) return <><GlobalStyles /><RotateScreen /></>;
 
-  // ── Chat panel width: narrower on phone landscape, normal on desktop ──
   const chatPanelFlex = isMobileLandscape ? "0 0 260px" : "0 0 400px";
 
   return (
@@ -1677,10 +1676,7 @@ export default function Studio() {
       />
 
       {/* ── Chat panel ── */}
-      <div style={{
-        ...S.chatPanel,
-        flex: chatPanelFlex,
-      }}>
+      <div style={{ ...S.chatPanel, flex: chatPanelFlex }}>
 
         <div style={S.topBar}>
           <button onClick={() => setSidebarOpen(true)} style={S.iconBtn} title="Menu">☰</button>
@@ -1729,78 +1725,78 @@ export default function Studio() {
               !isRunning;
 
             return (
-            <div
-              key={i}
-              className="msg-row"
-              style={{
-                display: "flex",
-                flexDirection: msg.role === "user" ? "row-reverse" : "row",
-                alignItems: "flex-end",
-                gap: "8px",
-                minWidth: 0,
-              }}
-            >
-              {msg.role === "assistant" && (
-                isLastAssistant
-                  ? <BotAvatar />
-                  : <div style={{ width: "34px", flexShrink: 0 }} />
-              )}
-
-              <div style={{
-                maxWidth: "78%",
-                minWidth: 0,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: msg.role === "user" ? "flex-end" : "flex-start",
-                overflow: "hidden",
-              }}>
-                <span style={{
-                  fontSize: "0.65rem",
-                  fontWeight: 600,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  color: msg.role === "user" ? "rgba(255,150,150,0.6)" : "rgba(180,0,0,0.8)",
-                  marginBottom: "4px",
-                  paddingLeft: msg.role === "user" ? 0 : "2px",
-                  paddingRight: msg.role === "user" ? "2px" : 0,
-                }}>
-                  {msg.role === "user" ? "You" : "The Hustler Bot"}
-                </span>
+              <div
+                key={i}
+                className="msg-row"
+                style={{
+                  display: "flex",
+                  flexDirection: msg.role === "user" ? "row-reverse" : "row",
+                  alignItems: "flex-end",
+                  gap: "8px",
+                  minWidth: 0,
+                }}
+              >
+                {msg.role === "assistant" && (
+                  isLastAssistant
+                    ? <BotAvatar />
+                    : <div style={{ width: "34px", flexShrink: 0 }} />
+                )}
 
                 <div style={{
-                  padding: "10px 14px",
-                  borderRadius: msg.role === "user"
-                    ? "16px 16px 4px 16px"
-                    : "16px 16px 16px 4px",
-                  background: msg.role === "user"
-                    ? "linear-gradient(135deg, #8b0000, #5a0000)"
-                    : "#0f0f0f",
-                  border: msg.role === "assistant"
-                    ? "1px solid rgba(140,0,0,0.25)"
-                    : "none",
-                  boxShadow: msg.role === "user"
-                    ? "0 2px 16px rgba(180,0,0,0.25)"
-                    : "0 2px 12px rgba(0,0,0,0.4)",
-                  wordBreak: "break-word",
-                  overflowWrap: "anywhere",
+                  maxWidth: "78%",
                   minWidth: 0,
-                  maxWidth: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: msg.role === "user" ? "flex-end" : "flex-start",
+                  overflow: "hidden",
                 }}>
-                  <div
-                    style={{ color: "#ddd", fontSize: "0.86rem", lineHeight: 1.65 }}
-                    dangerouslySetInnerHTML={{ __html: marked.parse(msg.content || "") }}
-                    className="message-content"
-                  />
-                  {msg.role === "assistant" && msg.credits_used !== undefined && (
-                    <CostDots credits={msg.credits_used} />
-                  )}
+                  <span style={{
+                    fontSize: "0.65rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    color: msg.role === "user" ? "rgba(255,150,150,0.6)" : "rgba(180,0,0,0.8)",
+                    marginBottom: "4px",
+                    paddingLeft: msg.role === "user" ? 0 : "2px",
+                    paddingRight: msg.role === "user" ? "2px" : 0,
+                  }}>
+                    {msg.role === "user" ? "You" : "The Hustler Bot"}
+                  </span>
+
+                  <div style={{
+                    padding: "10px 14px",
+                    borderRadius: msg.role === "user"
+                      ? "16px 16px 4px 16px"
+                      : "16px 16px 16px 4px",
+                    background: msg.role === "user"
+                      ? "linear-gradient(135deg, #8b0000, #5a0000)"
+                      : "#0f0f0f",
+                    border: msg.role === "assistant"
+                      ? "1px solid rgba(140,0,0,0.25)"
+                      : "none",
+                    boxShadow: msg.role === "user"
+                      ? "0 2px 16px rgba(180,0,0,0.25)"
+                      : "0 2px 12px rgba(0,0,0,0.4)",
+                    wordBreak: "break-word",
+                    overflowWrap: "anywhere",
+                    minWidth: 0,
+                    maxWidth: "100%",
+                  }}>
+                    <div
+                      style={{ color: "#ddd", fontSize: "0.86rem", lineHeight: 1.65 }}
+                      dangerouslySetInnerHTML={{ __html: marked.parse(msg.content || "") }}
+                      className="message-content"
+                    />
+                    {msg.role === "assistant" && msg.credits_used !== undefined && (
+                      <CostDots credits={msg.credits_used} />
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
             );
           })}
 
-          {/* ── Loading indicators below messages ── */}
+          {/* ── Loading indicators ── */}
           {(isRunning || isRendering) && (() => {
             const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
             const agentAlreadyReplied = lastMsg && lastMsg.role === "assistant";
@@ -1865,6 +1861,7 @@ export default function Studio() {
           <div ref={bottomRef} />
         </div>
 
+        {/* ── Input area ── */}
         <div style={{ padding: "10px", borderTop: "1px solid #111", background: "#000", flexShrink: 0 }}>
           <div
             className="input-wrap"
@@ -1875,7 +1872,7 @@ export default function Studio() {
               background: "#0a0a0a",
               border: "1px solid #1a1a1a",
               borderRadius: "14px",
-              padding: "10px 10px 10px 10px",
+              padding: "10px",
               transition: "all 0.2s",
             }}
           >
@@ -1889,14 +1886,13 @@ export default function Studio() {
               value={prompt}
               onChange={e => {
                 setPrompt(e.target.value);
-                // Auto-expand textarea
                 const el = e.target;
                 el.style.height = "auto";
                 el.style.height = Math.min(el.scrollHeight, 160) + "px";
               }}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(e); } }}
               placeholder={placeholder}
-              rows={1}
+              rows={2}
               disabled={isRunning}
               style={{
                 flex: 1,
@@ -1909,7 +1905,7 @@ export default function Studio() {
                 fontFamily: "Inter, Segoe UI, sans-serif",
                 lineHeight: 1.5,
                 maxHeight: "160px",
-                minHeight: "24px",
+                minHeight: "44px",
                 overflowY: "auto",
                 opacity: isRunning ? 0.4 : 1,
                 padding: "0",
@@ -2058,24 +2054,16 @@ export default function Studio() {
             ) : (
               previewError ? (
                 <div style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "#050505",
-                  gap: "16px",
+                  flex: 1, display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center",
+                  background: "#050505", gap: "16px",
                 }}>
                   <div style={{
-                    width: "52px", height: "52px",
-                    borderRadius: "50%",
-                    background: "rgba(140,0,0,0.12)",
-                    border: "1px solid rgba(140,0,0,0.3)",
+                    width: "52px", height: "52px", borderRadius: "50%",
+                    background: "rgba(140,0,0,0.12)", border: "1px solid rgba(140,0,0,0.3)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: "1.5rem",
-                  }}>
-                    ⚠
-                  </div>
+                  }}>⚠</div>
                   <p style={{ color: "#555", fontSize: "0.82rem", textAlign: "center", maxWidth: "220px", lineHeight: 1.6 }}>
                     Preview couldn't load. The app may still be building or deploying.
                   </p>
@@ -2086,8 +2074,7 @@ export default function Studio() {
                       background: "linear-gradient(135deg, #cc0000, #8b0000)",
                       border: "none", borderRadius: "8px",
                       color: "#fff", fontSize: "0.8rem", fontWeight: 600,
-                      cursor: "pointer",
-                      boxShadow: "0 0 14px rgba(180,0,0,0.35)",
+                      cursor: "pointer", boxShadow: "0 0 14px rgba(180,0,0,0.35)",
                       transition: "box-shadow 0.2s",
                     }}
                     onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 24px rgba(200,0,0,0.55)"}
