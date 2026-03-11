@@ -220,13 +220,13 @@ const generateTitle = async (prompt) => {
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
 
-const generateProject = async (prompt, title) => {
-  const res = await API.post("/auth/generate", { prompt, title });
+const generateProject = async (prompt, title, model) => {
+  const res = await API.post("/auth/generate", { prompt, title, model });
   return res.data.job_id;
 };
 
-const sendFollowUp = async (jobId, message) => {
-  await API.post(`/auth/job/${jobId}/message`, { message });
+const sendFollowUp = async (jobId, message, model) => {
+  await API.post(`/auth/job/${jobId}/message`, { message, model });
 };
 
 const getJobStatus = async (jobId) => {
@@ -1265,6 +1265,7 @@ export default function Studio() {
   const [previewError,  setPreviewError]  = useState(false);
 
   const [codeChanged,  setCodeChanged]  = useState(false);
+  const [selectedModel, setSelectedModel] = useState("hb-6");
 
   // NameModal
   const [showNameModal, setShowNameModal] = useState(
@@ -1441,6 +1442,11 @@ export default function Studio() {
         }
 
         if (data.credits_balance !== undefined) setCredits(data.credits_balance);
+        if (data.model) setSelectedModel(data.model);
+        if (data.plan) {
+          setUserPlan(data.plan);
+          localStorage.setItem("user_plan", data.plan);
+        }
 
         if (data.progress && data.progress.length > 0) {
           setProgress(data.progress);
@@ -1503,7 +1509,7 @@ export default function Studio() {
       setMessages([{ role: "user", content: text }]);
 
       const [jobId, smartTitle] = await Promise.all([
-        generateProject(text, ""),
+        generateProject(text, "", selectedModel),
         generateTitle(text),
       ]);
 
@@ -1537,7 +1543,7 @@ export default function Studio() {
         setThinkingText("");
         setCodeChanged(false);
         setMessages(prev => [...prev, { role: "user", content: text }]);
-        await sendFollowUp(currentJobId, text);
+        await sendFollowUp(currentJobId, text, selectedModel);
         startPolling(currentJobId);
       }
     } catch (err) {
@@ -1553,6 +1559,7 @@ export default function Studio() {
     setPreviewError(false);
     setCodeChanged(false);
     setState("idle"); setPrompt(""); setError("");
+    setSelectedModel(userPlan === "free" ? "hb-6" : "hb-6");
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -1581,6 +1588,7 @@ export default function Studio() {
       setMessages(serverMessages);
       if (data.state) setState(data.state);
       if (data.code_changed !== undefined) setCodeChanged(data.code_changed);
+      if (data.model) setSelectedModel(data.model);
       if (data.preview_url) {
         const url = _getSafePreviewUrl(data.preview_url, project.job_id);
         setPreviewUrl(url);
@@ -1861,19 +1869,30 @@ export default function Studio() {
             className="input-wrap"
             style={{
               display: "flex",
-              alignItems: "center",
+              alignItems: "flex-end",
               gap: "8px",
               background: "#0a0a0a",
               border: "1px solid #1a1a1a",
               borderRadius: "14px",
-              padding: "10px 10px 10px 14px",
+              padding: "10px 10px 10px 10px",
               transition: "all 0.2s",
             }}
           >
+            <ModelSelector
+              selectedModel={selectedModel}
+              onSelect={setSelectedModel}
+              plan={userPlan}
+            />
             <textarea
               ref={inputRef}
               value={prompt}
-              onChange={e => setPrompt(e.target.value)}
+              onChange={e => {
+                setPrompt(e.target.value);
+                // Auto-expand textarea
+                const el = e.target;
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 160) + "px";
+              }}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(e); } }}
               placeholder={placeholder}
               rows={1}
@@ -1888,7 +1907,8 @@ export default function Studio() {
                 resize: "none",
                 fontFamily: "Inter, Segoe UI, sans-serif",
                 lineHeight: 1.5,
-                maxHeight: "120px",
+                maxHeight: "160px",
+                minHeight: "24px",
                 overflowY: "auto",
                 opacity: isRunning ? 0.4 : 1,
                 padding: "0",
