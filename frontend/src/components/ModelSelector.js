@@ -49,7 +49,6 @@ function RiveBot({ src, color, size = 22 }) {
   const { RiveComponent } = useRive({
     src,
     autoplay: true,
-    stateMachines: ["State Machine 1"],
   });
   return (
     <div style={{
@@ -200,8 +199,8 @@ export default function ModelSelector({ selectedModel, onSelect, plan }) {
           }
         }}
       >
-        {/* the bot face for the current model */}
-        <RiveBot src={current.riveSrc} color={current.color} size={22} />
+        {/* key forces remount when model changes so useRive reinitialises with correct src */}
+        <RiveBot key={current.id} src={current.riveSrc} color={current.color} size={22} />
 
         <span style={{
           fontSize: "0.67rem", fontWeight: 700,
