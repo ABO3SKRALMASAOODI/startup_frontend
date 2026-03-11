@@ -1,6 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useRive } from "rive-react";
 import API from "../api/api";
+
+/* ─── Shared model definitions (mirrors ModelSelector) ───────────────────── */
+const MODEL_DEFS = {
+  "hb-6":     { name: "HB-6",     riveSrc: "/hustler-robot.riv",      glow: null },
+  "hb-6-pro": { name: "HB-6 Pro", riveSrc: "/hustler-robot.riv",      glow: "rgba(200,16,46,0.9)" },
+  "hb-7":     { name: "HB-7",     riveSrc: "/hustler-bubble-bot.riv", glow: "rgba(200,16,46,0.9)" },
+};
+
+/* ─── Tiny Rive bot for use inside plan cards ─────────────────────────────── */
+function PlanBot({ modelId, size = 18 }) {
+  const def = MODEL_DEFS[modelId];
+  const { RiveComponent } = useRive({ src: def.riveSrc, autoplay: true });
+  return (
+    <div style={{
+      width: size, height: size, flexShrink: 0,
+      filter: def.glow
+        ? `drop-shadow(0 0 3px ${def.glow}) drop-shadow(0 0 6px ${def.glow})`
+        : "none",
+    }}>
+      <RiveComponent style={{ width: "100%", height: "100%", display: "block" }} />
+    </div>
+  );
+}
 
 /* ─── GLOBAL CSS ─────────────────────────────────────────────────────────── */
 const GLOBAL_CSS = `
@@ -107,38 +131,38 @@ const PLANS = [
   {
     id: "free", name: "Free", tagline: "Always free",
     price: 0, yearlyPrice: 0, monthlyCredits: 0, dailyCredits: 20,
-    model: "HB-6", tier: "free",
+    models: ["hb-6"], tier: "free",
     perks: ["20 credits per day","HB-6 model","Live preview","Basic app generation"],
   },
   {
     id: "plus", name: "Plus", tagline: "Get started",
     price: 20, yearlyPrice: 216, monthlyCredits: 1000, dailyCredits: 20,
-    model: "HB-6 + HB-6 Pro", tier: "base",
+    models: ["hb-6", "hb-6-pro"], tier: "base",
     perks: ["1,000 credits per month","20 daily bonus credits","HB-6 and HB-6 Pro models","Unlimited downloads","All app types"],
   },
   {
     id: "pro", name: "Pro", tagline: "Most popular",
     price: 50, yearlyPrice: 540, monthlyCredits: 2400, dailyCredits: 20,
-    model: "HB-6 + HB-6 Pro", tier: "pro", badge: "MOST POPULAR",
+    models: ["hb-6", "hb-6-pro"], tier: "pro", badge: "MOST POPULAR",
     perks: ["2,400 credits per month","20 daily bonus credits","HB-6 and HB-6 Pro models","Priority build queue","Everything in Plus","Email support"],
   },
   {
     id: "ultra", name: "Ultra", tagline: "Full power",
     price: 100, yearlyPrice: 1080, monthlyCredits: 5000, dailyCredits: 20,
-    model: "All models incl. HB-7", hb7: true, tier: "base",
+    models: ["hb-6", "hb-6-pro", "hb-7"], hb7: true, tier: "base",
     perks: ["5,000 credits per month","20 daily bonus credits","All models including HB-7","Advanced reasoning engine","Everything in Pro","Priority support"],
   },
   {
     id: "titan", name: "Titan", tagline: "No ceiling",
     price: 200, yearlyPrice: 2160, monthlyCredits: 10000, dailyCredits: 20,
-    model: "All models incl. HB-7", hb7: true, tier: "titan", badge: "POWER TIER",
-    perks: ["10,000 credits per month","20 daily bonus credits","All models including HB-7","Top priority queue","Everything in Ultra","Early feature access","Dedicated support"],
+    models: ["hb-6", "hb-6-pro", "hb-7"], hb7: true, tier: "titan", badge: "POWER TIER",
+    perks: ["10,000 credits per month","20 daily bonus credits","All models including HB-7","No build queue — instant generation","Early access to new models","Everything in Ultra","Dedicated support channel"],
   },
   {
     id: "ace", name: "Ace", tagline: "Enterprise-grade",
     price: 500, yearlyPrice: 5400, monthlyCredits: 30000, dailyCredits: 20,
-    model: "All models incl. HB-7", hb7: true, tier: "ace", badge: "ELITE",
-    perks: ["30,000 credits per month","20 daily bonus credits","All models including HB-7","Absolute top priority","Everything in Titan","Custom build requests","White-glove support","Direct line to the team"],
+    models: ["hb-6", "hb-6-pro", "hb-7"], hb7: true, tier: "ace", badge: "ELITE",
+    perks: ["30,000 credits per month","20 daily bonus credits","All models including HB-7","No build queue — always first","Early access to research models","Custom feature requests","Everything in Titan","Direct support from the team"],
   },
 ];
 
@@ -484,21 +508,42 @@ function PlanCard({ plan, isCurrent, isHigher, isSubscribed, loading, billing, p
           marginBottom: "1.3rem",
         }} />
 
-        {/* model */}
+        {/* models — animated bots */}
         <div style={{ marginBottom: "1.1rem" }}>
           <p style={{
             fontFamily: "'DM Mono', monospace", fontSize: "0.55rem",
             letterSpacing: "0.16em", color: "var(--text-dim)",
-            textTransform: "uppercase", marginBottom: "5px",
+            textTransform: "uppercase", marginBottom: "8px",
           }}>
-            Model
+            Models
           </p>
-          <p style={{
-            fontFamily: "'DM Sans', sans-serif", fontSize: "0.78rem",
-            color: isFree ? "var(--text-dim)" : "var(--text-muted)", fontWeight: 400,
-          }}>
-            {plan.model}
-          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+            {plan.models.map(modelId => {
+              const def = MODEL_DEFS[modelId];
+              return (
+                <div key={modelId} style={{
+                  display: "flex", alignItems: "center", gap: "7px",
+                  padding: "5px 8px",
+                  background: isFree ? "transparent" : def.glow
+                    ? "rgba(200,16,46,0.05)"
+                    : "rgba(255,255,255,0.02)",
+                  border: `1px solid ${isFree ? "var(--border)" : def.glow ? "rgba(200,16,46,0.15)" : "rgba(255,255,255,0.04)"}`,
+                  borderRadius: "5px",
+                  opacity: isFree ? 0.35 : 1,
+                }}>
+                  {!isFree && <PlanBot modelId={modelId} size={16} />}
+                  <span style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: "0.66rem", fontWeight: 500,
+                    letterSpacing: "0.04em",
+                    color: isFree ? "var(--text-dim)" : def.glow ? "var(--red)" : "var(--text-muted)",
+                  }}>
+                    {def.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* perks */}
