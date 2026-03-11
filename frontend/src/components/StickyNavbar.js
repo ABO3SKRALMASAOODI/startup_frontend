@@ -11,7 +11,6 @@ const StickyNavbar = ({ userName }) => {
   const isLoggedIn = !!localStorage.getItem("token");
   const userEmail  = localStorage.getItem("user_email") || "";
 
-  // Display initial: first letter of name if available, else email
   const displayName = userName || localStorage.getItem("user_name") || userEmail.split("@")[0] || "U";
   const initial = displayName[0]?.toUpperCase() || "U";
 
@@ -41,7 +40,7 @@ const StickyNavbar = ({ userName }) => {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
 
-        {/* LEFT: account avatar (logged-in) + logo */}
+        {/* LEFT: account avatar + logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           {isLoggedIn && (
             <button
@@ -87,8 +86,25 @@ const StickyNavbar = ({ userName }) => {
 
         {/* RIGHT: nav links */}
         <div className="flex items-center gap-6">
-          <Link to="/features" className="text-white hover:text-red-500 transition">
-            Features
+
+          {/* Templates — replaces Features */}
+          <Link
+            to="/templates"
+            className="text-white transition"
+            style={{
+              fontSize: "0.9rem",
+              color: location.pathname === "/templates"
+                ? "#ff4444"
+                : "rgba(255,255,255,0.75)",
+              fontWeight: location.pathname === "/templates" ? 600 : 400,
+              textDecoration: "none",
+              transition: "color 0.2s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = "#ff4444"}
+            onMouseLeave={e => e.currentTarget.style.color =
+              location.pathname === "/templates" ? "#ff4444" : "rgba(255,255,255,0.75)"}
+          >
+            Templates
           </Link>
 
           {isLoggedIn ? (
@@ -135,10 +151,26 @@ const StickyNavbar = ({ userName }) => {
             </div>
           ) : (
             <>
-              <Link to="/register" className="text-white hover:text-red-500 transition">
+              <Link
+                to="/register"
+                style={{
+                  color: "rgba(255,255,255,0.75)", textDecoration: "none",
+                  fontSize: "0.9rem", transition: "color 0.2s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "#ff4444"}
+                onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.75)"}
+              >
                 Register
               </Link>
-              <Link to="/login" className="text-white hover:text-red-500 transition">
+              <Link
+                to="/login"
+                style={{
+                  color: "rgba(255,255,255,0.75)", textDecoration: "none",
+                  fontSize: "0.9rem", transition: "color 0.2s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "#ff4444"}
+                onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.75)"}
+              >
                 Login
               </Link>
             </>
