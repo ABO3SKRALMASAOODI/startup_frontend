@@ -202,7 +202,12 @@ function LandingPage() {
   const { rive: bubbleRive, RiveComponent: BubbleBot } = useRive({ src: "/hustler-bubble-bot.riv", autoplay: true, stateMachines: ["State Machine 1"] });
 
   useEffect(() => {
+    // Throttled to ~30fps — cuts CPU load significantly
+    let lastCall = 0;
     const handleMouse = (x) => {
+      const now = Date.now();
+      if (now - lastCall < 32) return;
+      lastCall = now;
       const mx = x / window.innerWidth;
       const hi = heroRive?.inputs?.find((i) => i.name === "mouseX");
       const bi = bubbleRive?.inputs?.find((i) => i.name === "mouseX");
@@ -212,7 +217,7 @@ function LandingPage() {
     const onMove   = (e) => handleMouse(e.clientX);
     const onScroll = ()  => handleMouse(window.scrollY % window.innerWidth);
     window.addEventListener("mousemove", onMove);
-    window.addEventListener("scroll", onScroll);
+    window.addEventListener("scroll",    onScroll);
     return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("scroll", onScroll); };
   }, [heroRive, bubbleRive]);
 
@@ -273,21 +278,23 @@ function LandingPage() {
         <style>{`
           @keyframes badgePulse { 0%,100%{opacity:1;box-shadow:0 0 6px #ff3333,0 0 12px #ff3333} 50%{opacity:0.6;box-shadow:0 0 3px #ff3333} }
           @keyframes glowPulse  { 0%,100%{box-shadow:0 0 30px rgba(200,0,0,0.5),0 0 60px rgba(180,0,0,0.3)} 50%{box-shadow:0 0 50px rgba(220,0,0,0.8),0 0 100px rgba(200,0,0,0.5)} }
-          @keyframes heroBlockGlow {
-            0%,100% { filter: drop-shadow(0 0 35px rgba(255,255,255,0.5)) drop-shadow(0 0 80px rgba(255,255,255,0.2)) drop-shadow(0 0 150px rgba(255,200,200,0.1)); }
-            50%     { filter: drop-shadow(0 0 55px rgba(255,255,255,0.8)) drop-shadow(0 0 120px rgba(255,255,255,0.35)) drop-shadow(0 0 200px rgba(255,200,200,0.15)); }
-          }
-          .hero-glow-block { animation: heroBlockGlow 3s ease-in-out infinite; }
+
+          /* Ambient orb: only animates opacity — GPU composited, zero repaint cost */
+          @keyframes ambientBreathe { 0%,100%{opacity:0.5} 50%{opacity:1} }
+          .hero-ambient { animation: ambientBreathe 4s ease-in-out infinite; will-change: opacity; }
+
+          /* Static text-shadow on each element — painted once, never repaints */
+          .hero-title    { text-shadow: 0 0 40px rgba(255,255,255,0.9), 0 0 80px rgba(255,255,255,0.45), 0 0 130px rgba(255,220,220,0.2); }
+          .hero-subtitle { text-shadow: 0 0 28px rgba(255,255,255,0.6), 0 0 60px rgba(255,255,255,0.2); }
+          .hero-desc     { text-shadow: 0 0 18px rgba(255,255,255,0.35); }
+
           .prompt-wrap { transition: box-shadow 0.3s ease, border-color 0.3s ease; }
           .prompt-wrap:focus-within { border-color:rgba(200,0,0,0.7)!important; box-shadow:0 0 0 1px rgba(180,0,0,0.25),0 0 60px rgba(180,0,0,0.2)!important; }
           .example-btn:hover { border-color:rgba(180,0,0,0.6)!important; color:#fff!important; background:rgba(60,0,0,0.4)!important; }
           .send-btn:hover:not(:disabled) { box-shadow:0 0 30px rgba(220,0,0,0.6)!important; transform:scale(1.02); }
           @keyframes templateArrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
           .template-arrow { animation: templateArrowBounce 1.8s ease-in-out infinite; }
-          @keyframes templateShimmer {
-            0%   { background-position: -200% center; }
-            100% { background-position: 200% center; }
-          }
+          @keyframes templateShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
         `}</style>
 
         {/* ── HERO ── */}
@@ -307,15 +314,31 @@ function LandingPage() {
               <span style={{ fontSize: "0.82rem", color: "rgba(255,200,200,0.95)", letterSpacing: "0.04em" }}>{badgeText}</span>
             </motion.div>
 
-            {/* ── Hero text block — entire group glows together ── */}
-            <div className="hero-glow-block" style={{ marginBottom: "32px" }}>
-              <h1 className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4">
+            {/* ── Hero text block with cheap ambient glow orb behind it ── */}
+            <div style={{ position: "relative", marginBottom: "32px" }}>
+
+              {/* Ambient orb — a blurred radial gradient div, only opacity animates (GPU only, no repaint) */}
+              <div
+                className="hero-ambient"
+                style={{
+                  position: "absolute",
+                  top: "50%", left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "620px", height: "230px",
+                  background: "radial-gradient(ellipse at center, rgba(255,255,255,0.16) 0%, rgba(255,200,200,0.07) 50%, transparent 75%)",
+                  borderRadius: "50%",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                }}
+              />
+
+              <h1 className="hero-title text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4" style={{ position: "relative", zIndex: 1 }}>
                 The Hustler Bot
               </h1>
-              <p className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto">
+              <p className="hero-subtitle text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto" style={{ position: "relative", zIndex: 1 }}>
                 Build any app. Just describe it.
               </p>
-              <p className="text-base text-gray-400 max-w-lg mx-auto">
+              <p className="hero-desc text-base text-gray-400 max-w-lg mx-auto" style={{ position: "relative", zIndex: 1 }}>
                 Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.
               </p>
             </div>
@@ -387,16 +410,13 @@ function LandingPage() {
           </motion.div>
 
           <div className="max-w-6xl mx-auto">
-            {/* ── Row 1: first 3 — fully interactive ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
               {TEMPLATES.slice(0, 3).map((t, i) => (
                 <TemplateCard key={t.job_id} template={t} index={i} onUse={handleUseTemplate} />
               ))}
             </div>
 
-            {/* ── Row 2: blurred with elegant scroll-down indicator ── */}
             <div style={{ position: "relative" }}>
-              {/* blurred, non-interactive cards */}
               <div
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
                 style={{ filter: "blur(5px)", opacity: 0.35, pointerEvents: "none", userSelect: "none" }}
@@ -406,52 +426,32 @@ function LandingPage() {
                 ))}
               </div>
 
-              {/* gradient fade + elegant CTA */}
               <div style={{
                 position: "absolute", inset: 0,
                 background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.96) 100%)",
                 display: "flex", flexDirection: "column",
                 alignItems: "center", justifyContent: "flex-end",
                 paddingBottom: "2.5rem",
-                gap: "0",
               }}>
-                {/* Shimmer line */}
                 <div style={{
                   width: "120px", height: "1px", marginBottom: "20px",
                   background: "linear-gradient(90deg, transparent, rgba(200,0,0,0.6), rgba(255,80,80,0.9), rgba(200,0,0,0.6), transparent)",
                   backgroundSize: "200% auto",
                   animation: "templateShimmer 2.5s linear infinite",
                 }} />
-
-                {/* Count pill */}
                 <div style={{
                   display: "flex", alignItems: "center", gap: "8px",
-                  background: "rgba(10,0,0,0.7)",
-                  border: "1px solid rgba(120,0,0,0.4)",
-                  borderRadius: "100px",
-                  padding: "5px 16px 5px 10px",
-                  marginBottom: "18px",
-                  backdropFilter: "blur(12px)",
+                  background: "rgba(10,0,0,0.7)", border: "1px solid rgba(120,0,0,0.4)",
+                  borderRadius: "100px", padding: "5px 16px 5px 10px",
+                  marginBottom: "18px", backdropFilter: "blur(12px)",
                 }}>
                   <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ff3333", boxShadow: "0 0 6px #ff3333", flexShrink: 0 }} />
                   <span style={{ fontSize: "0.75rem", color: "rgba(255,180,180,0.7)", letterSpacing: "0.06em" }}>
                     12 more templates across 6 categories
                   </span>
                 </div>
-
-                {/* Elegant text link with arrow */}
-                <div
-                  onClick={() => navigate("/templates")}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", cursor: "pointer" }}
-                >
-                  <span style={{
-                    fontSize: "1.1rem", fontWeight: 700, letterSpacing: "0.04em",
-                    color: "rgba(255,255,255,0.85)",
-                    textShadow: "0 0 20px rgba(255,255,255,0.4)",
-                    transition: "all 0.2s ease",
-                    borderBottom: "1px solid rgba(255,255,255,0.15)",
-                    paddingBottom: "2px",
-                  }}
+                <div onClick={() => navigate("/templates")} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                  <span style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "0.04em", color: "rgba(255,255,255,0.85)", textShadow: "0 0 20px rgba(255,255,255,0.4)", transition: "all 0.2s ease", borderBottom: "1px solid rgba(255,255,255,0.15)", paddingBottom: "2px" }}
                     onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.textShadow = "0 0 30px rgba(255,100,100,0.7)"; e.currentTarget.style.borderBottomColor = "rgba(255,80,80,0.5)"; }}
                     onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.85)"; e.currentTarget.style.textShadow = "0 0 20px rgba(255,255,255,0.4)"; e.currentTarget.style.borderBottomColor = "rgba(255,255,255,0.15)"; }}
                   >
