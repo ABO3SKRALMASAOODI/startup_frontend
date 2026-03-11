@@ -128,7 +128,6 @@ function BottomPromptBox({ onSend }) {
             edit or use as-is
           </span>
         </div>
-
         <textarea
           ref={ref}
           value={prompt}
@@ -147,7 +146,6 @@ function BottomPromptBox({ onSend }) {
             transition: "text-shadow 0.3s ease, color 0.3s ease",
           }}
         />
-
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 14px 16px" }}>
           <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.75rem" }}>Enter to build · Shift+Enter for new line</span>
           <button onClick={() => onSend(prompt)} disabled={!prompt.trim()}
@@ -166,7 +164,6 @@ function BottomPromptBox({ onSend }) {
           </button>
         </div>
       </div>
-
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px", marginTop: "14px" }}>
         {examples.map((p, i) => (
           <button key={i} onClick={() => setPrompt(p)}
@@ -291,39 +288,58 @@ function LandingPage() {
           className="relative flex flex-col justify-center items-center px-6 overflow-hidden"
           style={{ minHeight: "100vh", paddingBottom: "300px", paddingTop: "60px" }}
         >
-          {/* ── THEATRE SPOTLIGHT ──
-              Two layers, both static divs, painted once, zero ongoing cost:
-              1. The bright circle — radial gradient centered on the robot, warm white core fading out
-              2. The side vignette — darkens left and right edges, leaving center lit
-          ── */}
 
-          {/* Layer 1: spotlight cone from top, bright pool centered on robot */}
+          {/*
+            ── THEATRE SPOTLIGHT ──
+            Three CSS-only layers, all static (painted once, zero ongoing CPU/GPU cost):
+
+            1. CONE  — conic-gradient triangle from a point at the very top-center,
+                       fanning out downward. This gives the hard-edged beam shape.
+            2. POOL  — soft ellipse at the bottom of the cone (the lit circle on the floor).
+            3. DARK  — everything outside the cone stays pure black / very dark.
+          */}
+
+          {/* Layer 1 — the cone beam, hard edges, top-center origin */}
           <div style={{
             position: "absolute",
-            top: 0, left: "50%",
-            transform: "translateX(-50%)",
-            width: "900px",
-            height: "100%",
-            background: "radial-gradient(ellipse 520px 680px at 50% 38%, rgba(255,248,230,0.13) 0%, rgba(255,240,200,0.07) 30%, rgba(255,220,180,0.03) 55%, transparent 75%)",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: `conic-gradient(
+              from 180deg at 50% -10%,
+              transparent        0deg,
+              transparent       68deg,
+              rgba(255,252,240,0.07) 72deg,
+              rgba(255,252,240,0.13) 80deg,
+              rgba(255,252,240,0.13) 100deg,
+              rgba(255,252,240,0.07) 108deg,
+              transparent       112deg,
+              transparent       360deg
+            )`,
             pointerEvents: "none",
             zIndex: 0,
           }} />
 
-          {/* Layer 2: side vignette — darkens left & right, leaves center bright */}
+          {/* Layer 2 — lit pool/circle at the robot's feet, centre-bottom of cone */}
+          <div style={{
+            position: "absolute",
+            bottom: "22%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "480px",
+            height: "120px",
+            background: "radial-gradient(ellipse at center, rgba(255,250,235,0.18) 0%, rgba(255,245,220,0.08) 45%, transparent 75%)",
+            borderRadius: "50%",
+            pointerEvents: "none",
+            zIndex: 0,
+          }} />
+
+          {/* Layer 3 — heavy vignette: everything outside cone is very dark */}
           <div style={{
             position: "absolute",
             inset: 0,
-            background: "radial-gradient(ellipse 60% 100% at 50% 38%, transparent 0%, transparent 40%, rgba(0,0,0,0.55) 70%, rgba(0,0,0,0.82) 100%)",
+            background: `radial-gradient(ellipse 55% 90% at 50% 50%, transparent 0%, transparent 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.88) 100%)`,
             pointerEvents: "none",
             zIndex: 0,
           }} />
-
-          {/* Original red ambient from before — keep it, theatre lights can be warm */}
-          <motion.div
-            className="absolute top-0 left-0 w-full h-full pointer-events-none"
-            style={{ background: "radial-gradient(ellipse 50% 60% at 50% 38%, rgba(120,0,0,0.18) 0%, transparent 70%)", zIndex: 0 }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }}
-          />
 
           <motion.div
             className="z-10 text-center w-full max-w-3xl"
@@ -335,24 +351,14 @@ function LandingPage() {
               <span style={{ fontSize: "0.82rem", color: "rgba(255,200,200,0.95)", letterSpacing: "0.04em" }}>{badgeText}</span>
             </motion.div>
 
-            {/* Hero text — static text-shadow, no animation, zero cost */}
             <div style={{ marginBottom: "32px" }}>
-              <h1
-                className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4"
-                style={{ textShadow: "0 0 30px rgba(255,248,220,0.7), 0 0 60px rgba(255,240,200,0.3)" }}
-              >
+              <h1 className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4">
                 The Hustler Bot
               </h1>
-              <p
-                className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto"
-                style={{ textShadow: "0 0 20px rgba(255,248,220,0.4)" }}
-              >
+              <p className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto">
                 Build any app. Just describe it.
               </p>
-              <p
-                className="text-base text-gray-400 max-w-lg mx-auto"
-                style={{ textShadow: "0 0 12px rgba(255,248,220,0.2)" }}
-              >
+              <p className="text-base text-gray-400 max-w-lg mx-auto">
                 Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.
               </p>
             </div>
@@ -411,7 +417,7 @@ function LandingPage() {
             )}
           </motion.div>
 
-          {/* Robot — sits inside the spotlight circle */}
+          {/* Robot — inside the spotlight */}
           <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -65%)", width: "700px", height: "700px", zIndex: 1, opacity: 0.9, pointerEvents: "none" }}>
             <HeroBot style={{ width: "100%", height: "100%" }} />
           </div>
@@ -423,55 +429,34 @@ function LandingPage() {
             <h2 className="text-5xl md:text-6xl font-bold mb-5" style={{ textShadow: "0 0 30px rgba(255,26,26,0.3)" }}>Start from a Template</h2>
             <p style={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.4)", maxWidth: "520px", margin: "0 auto", lineHeight: 1.6 }}>Pick a pre-built project, make it yours, and iterate with the agent. Every template is fully editable.</p>
           </motion.div>
-
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
               {TEMPLATES.slice(0, 3).map((t, i) => (
                 <TemplateCard key={t.job_id} template={t} index={i} onUse={handleUseTemplate} />
               ))}
             </div>
-
             <div style={{ position: "relative" }}>
-              <div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
-                style={{ filter: "blur(5px)", opacity: 0.35, pointerEvents: "none", userSelect: "none" }}
-              >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+                style={{ filter: "blur(5px)", opacity: 0.35, pointerEvents: "none", userSelect: "none" }}>
                 {TEMPLATES.slice(3).map((t, i) => (
                   <TemplateCard key={t.job_id} template={t} index={i + 3} onUse={() => {}} disabled />
                 ))}
               </div>
-
               <div style={{
                 position: "absolute", inset: 0,
                 background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.96) 100%)",
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "flex-end",
-                paddingBottom: "2.5rem",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "2.5rem",
               }}>
-                <div style={{
-                  width: "120px", height: "1px", marginBottom: "20px",
-                  background: "linear-gradient(90deg, transparent, rgba(200,0,0,0.6), rgba(255,80,80,0.9), rgba(200,0,0,0.6), transparent)",
-                  backgroundSize: "200% auto",
-                  animation: "templateShimmer 2.5s linear infinite",
-                }} />
-                <div style={{
-                  display: "flex", alignItems: "center", gap: "8px",
-                  background: "rgba(10,0,0,0.7)", border: "1px solid rgba(120,0,0,0.4)",
-                  borderRadius: "100px", padding: "5px 16px 5px 10px",
-                  marginBottom: "18px", backdropFilter: "blur(12px)",
-                }}>
+                <div style={{ width: "120px", height: "1px", marginBottom: "20px", background: "linear-gradient(90deg, transparent, rgba(200,0,0,0.6), rgba(255,80,80,0.9), rgba(200,0,0,0.6), transparent)", backgroundSize: "200% auto", animation: "templateShimmer 2.5s linear infinite" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(10,0,0,0.7)", border: "1px solid rgba(120,0,0,0.4)", borderRadius: "100px", padding: "5px 16px 5px 10px", marginBottom: "18px", backdropFilter: "blur(12px)" }}>
                   <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ff3333", boxShadow: "0 0 6px #ff3333", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.75rem", color: "rgba(255,180,180,0.7)", letterSpacing: "0.06em" }}>
-                    12 more templates across 6 categories
-                  </span>
+                  <span style={{ fontSize: "0.75rem", color: "rgba(255,180,180,0.7)", letterSpacing: "0.06em" }}>12 more templates across 6 categories</span>
                 </div>
                 <div onClick={() => navigate("/templates")} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", cursor: "pointer" }}>
                   <span style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "0.04em", color: "rgba(255,255,255,0.85)", textShadow: "0 0 20px rgba(255,255,255,0.4)", transition: "all 0.2s ease", borderBottom: "1px solid rgba(255,255,255,0.15)", paddingBottom: "2px" }}
                     onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.textShadow = "0 0 30px rgba(255,100,100,0.7)"; e.currentTarget.style.borderBottomColor = "rgba(255,80,80,0.5)"; }}
                     onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.85)"; e.currentTarget.style.textShadow = "0 0 20px rgba(255,255,255,0.4)"; e.currentTarget.style.borderBottomColor = "rgba(255,255,255,0.15)"; }}
-                  >
-                    Browse all templates
-                  </span>
+                  >Browse all templates</span>
                   <span className="template-arrow" style={{ fontSize: "1.2rem", color: "rgba(220,60,60,0.8)" }}>↓</span>
                 </div>
               </div>
