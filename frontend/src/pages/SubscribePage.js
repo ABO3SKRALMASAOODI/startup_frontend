@@ -136,9 +136,9 @@ const PLANS = [
   },
   {
     id: "plus", name: "Plus", tagline: "Get started",
-    price: 20, yearlyPrice: 216, monthlyCredits: 1000, dailyCredits: 20,
+    price: 20, yearlyPrice: 216, monthlyCredits: 800, dailyCredits: 20,
     models: ["hb-6", "hb-6-pro"], tier: "base",
-    perks: ["1,000 credits per month","20 daily bonus credits","HB-6 and HB-6 Pro models","Unlimited downloads","All app types"],
+    perks: ["800 credits per month","20 daily bonus credits","HB-6 and HB-6 Pro models","Unlimited downloads","All app types"],
   },
   {
     id: "pro", name: "Pro", tagline: "Most popular",
