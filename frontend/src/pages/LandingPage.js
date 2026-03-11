@@ -240,256 +240,116 @@ function LandingPage() {
         >
 
           {/*
-            ═══════════════════════════════════════════════════════════════
-            REALISTIC THEATRE SPOTLIGHT
-            ═══════════════════════════════════════════════════════════════
-
-            PRINCIPLE: Real stage light is mostly invisible.
-            You see it only where it HITS something — the robot, the floor.
-            The beam in air is barely visible, just a faint haze from dust.
-
-            COLOR: Cool/neutral white (not yellow). Real tungsten fresnels
-            are neutral-to-slightly-cool. Yellow looks fake.
-
-            STRUCTURE:
-              1. Total blackout canvas — everything starts at pitch black
-              2. The beam in air — very faint, barely-there cool white haze
-              3. Sharp beam edges — the defining straight lines
-              4. Floor pool — the BRIGHTEST element, where light accumulates
-              5. Lamp source — hot white point at top center
-              6. Side walls — absolute black, no bleed
-          ═══════════════════════════════════════════════════════════════
+            ══════════════════════════════════════════════════
+            THEATRE SPOTLIGHT — strong clean beam, pure black outside
+            Narrow at lamp top, fans wide to robot feet only.
+            No bands. Inside = strong uniform white. Outside = #000.
+            ══════════════════════════════════════════════════
           */}
 
-          {/* ── 0. BASE: Pitch black canvas — the dark theatre ── */}
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "#000",
-            pointerEvents: "none", zIndex: 0,
-          }} />
-
-          {/* ── 1. BEAM BODY: Faint cool-white haze — mostly air, barely visible ──
-               Real insight: the cone shape comes from what's NOT lit, not the beam.
-               The beam itself in clean air is nearly invisible.
-               clipPath: tiny at top (lamp), wide at bottom (floor)
-          ── */}
-          <div style={{
-            position: "absolute", inset: 0,
-            clipPath: "polygon(45.5% 0%, 54.5% 0%, 78% 100%, 22% 100%)",
-            background: `linear-gradient(
-              180deg,
-              rgba(220,230,255, 0.00)  0%,
-              rgba(220,230,255, 0.03)  8%,
-              rgba(215,228,255, 0.055) 25%,
-              rgba(210,225,255, 0.07)  50%,
-              rgba(205,222,252, 0.06)  72%,
-              rgba(200,218,250, 0.03)  90%,
-              rgba(195,215,248, 0.01) 100%
-            )`,
-            pointerEvents: "none", zIndex: 1,
-          }} />
-
-          {/* ── 2. BEAM INNER: Slightly brighter core, still very subtle ── */}
-          <div style={{
-            position: "absolute", inset: 0,
-            clipPath: "polygon(47% 0%, 53% 0%, 68% 100%, 32% 100%)",
-            background: `linear-gradient(
-              180deg,
-              rgba(230,238,255, 0.00)  0%,
-              rgba(230,238,255, 0.05)  6%,
-              rgba(228,236,255, 0.09)  22%,
-              rgba(225,234,255, 0.11)  48%,
-              rgba(222,232,253, 0.09)  70%,
-              rgba(218,229,252, 0.04)  90%,
-              rgba(215,226,250, 0.01) 100%
-            )`,
-            pointerEvents: "none", zIndex: 1,
-          }} />
-
-          {/* ── 3. BEAM NEEDLE: The absolute center — faintest hint of bright ── */}
-          <div style={{
-            position: "absolute", inset: 0,
-            clipPath: "polygon(48.5% 0%, 51.5% 0%, 59% 100%, 41% 100%)",
-            background: `linear-gradient(
-              180deg,
-              rgba(240,245,255, 0.00)  0%,
-              rgba(240,245,255, 0.07)  5%,
-              rgba(238,243,255, 0.13)  20%,
-              rgba(236,242,255, 0.15)  45%,
-              rgba(234,240,254, 0.11)  68%,
-              rgba(230,238,253, 0.05)  88%,
-              rgba(226,235,252, 0.01) 100%
-            )`,
-            pointerEvents: "none", zIndex: 1,
-          }} />
-
-          {/* ── 4. ATMOSPHERIC DUST: Very subtle animated haze inside beam ── */}
-          <div style={{
-            position: "absolute", inset: 0,
-            clipPath: "polygon(45.5% 0%, 54.5% 0%, 78% 100%, 22% 100%)",
-            background: `radial-gradient(
-              ellipse 40% 70% at 50% 20%,
-              rgba(220,232,255, 0.06) 0%,
-              rgba(215,228,255, 0.03) 40%,
-              transparent 80%
-            )`,
-            animation: "dustFloat 5s ease-in-out infinite",
-            pointerEvents: "none", zIndex: 1,
-          }} />
-
-          {/* ── 5. LAMP SOURCE: Intense white-hot bloom at the fixture ── */}
-          <div style={{
-            position: "absolute",
-            top: "-8px", left: "50%",
-            transform: "translateX(-50%)",
-            width: "120px", height: "80px",
-            background: `radial-gradient(
-              ellipse 50% 65% at 50% 15%,
-              rgba(255,255,255,0.90)  0%,
-              rgba(248,252,255,0.55) 18%,
-              rgba(240,248,255,0.25) 38%,
-              rgba(230,242,255,0.08) 60%,
-              transparent 82%
-            )`,
-            pointerEvents: "none", zIndex: 2,
-          }} />
-
-          {/* ── 6. LAMP RING: The actual fixture housing ── */}
-          <div style={{
-            position: "absolute",
-            top: "2px", left: "50%",
-            transform: "translateX(-50%)",
-            width: "14px", height: "14px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(200,220,255,0.7) 50%, transparent 100%)",
-            boxShadow: "0 0 12px 4px rgba(200,220,255,0.4), 0 0 30px 8px rgba(180,210,255,0.15)",
-            pointerEvents: "none", zIndex: 3,
-          }} />
-
-          {/* ── 7. FLOOR POOL: The brightest point — where light physically accumulates ──
-               Real physics: light diverges then pools on the floor in a bright ellipse.
-               This should be MORE visible than the beam itself.
+          {/* ── BEAM: One strong cone, uniform brightness throughout.
+               Top: tiny lamp aperture (47%–53%)
+               Bottom: fans to 20%–80% but height capped at 78% (robot feet)
+               All 5 stops use the same strong opacity — no dimming bands.
           ── */}
           <div style={{
             position: "absolute",
-            bottom: "19%", left: "50%",
-            transform: "translateX(-50%)",
-            width: "560px", height: "120px",
-            background: `radial-gradient(
-              ellipse at 50% 60%,
-              rgba(240,248,255, 0.38)  0%,
-              rgba(232,244,255, 0.22) 25%,
-              rgba(225,240,255, 0.12) 48%,
-              rgba(215,234,253, 0.05) 68%,
-              transparent 88%
+            top: 0, left: 0, right: 0,
+            height: "78%",
+            clipPath: "polygon(47% 0%, 53% 0%, 80% 100%, 20% 100%)",
+            background: `linear-gradient(
+              180deg,
+              rgba(255,255,255,0.00)  0%,
+              rgba(255,255,252,0.34)  5%,
+              rgba(255,255,252,0.34) 25%,
+              rgba(255,255,252,0.34) 50%,
+              rgba(255,255,252,0.34) 72%,
+              rgba(255,255,252,0.34) 90%,
+              rgba(255,255,252,0.20) 100%
             )`,
-            borderRadius: "50%",
-            animation: "poolPulse 4s ease-in-out infinite",
-            pointerEvents: "none", zIndex: 2,
+            pointerEvents: "none", zIndex: 1,
           }} />
 
-          {/* ── 8. FLOOR POOL CORE: The very center hot-spot of the floor pool ── */}
+          {/* ── BEAM RADIAL BOOST: Extra brightness in the centre of the cone ── */}
           <div style={{
             position: "absolute",
-            bottom: "19.5%", left: "50%",
-            transform: "translateX(-50%)",
-            width: "220px", height: "55px",
+            top: 0, left: 0, right: 0,
+            height: "78%",
+            clipPath: "polygon(47% 0%, 53% 0%, 80% 100%, 20% 100%)",
             background: `radial-gradient(
-              ellipse at 50% 55%,
-              rgba(255,255,255, 0.22) 0%,
-              rgba(245,252,255, 0.12) 35%,
-              rgba(235,248,255, 0.04) 65%,
+              ellipse 35% 75% at 50% 45%,
+              rgba(255,255,255,0.20) 0%,
+              rgba(255,255,255,0.08) 55%,
               transparent 100%
             )`,
+            pointerEvents: "none", zIndex: 1,
+          }} />
+
+          {/* ── LAMP SOURCE: Blazing white-hot point at the fixture ── */}
+          <div style={{
+            position: "absolute",
+            top: 0, left: "50%",
+            transform: "translateX(-50%)",
+            width: "100px", height: "60px",
+            background: `radial-gradient(
+              ellipse 50% 70% at 50% 10%,
+              rgba(255,255,255,0.98)  0%,
+              rgba(255,255,255,0.60) 22%,
+              rgba(255,255,255,0.18) 52%,
+              transparent 80%
+            )`,
+            pointerEvents: "none", zIndex: 2,
+          }} />
+
+          {/* ── FLOOR POOL: Bright ellipse at robot feet — where light accumulates ── */}
+          <div style={{
+            position: "absolute",
+            top: "72%", left: "50%",
+            transform: "translateX(-50%)",
+            width: "500px", height: "90px",
+            background: `radial-gradient(
+              ellipse at 50% 50%,
+              rgba(255,255,252,0.50)  0%,
+              rgba(255,255,250,0.28) 32%,
+              rgba(255,255,248,0.10) 60%,
+              transparent 82%
+            )`,
             borderRadius: "50%",
             pointerEvents: "none", zIndex: 2,
           }} />
 
-          {/* ── 9. BLACKOUT MASK: The key — covers everything outside the cone in pure black ──
-               This is what makes the spotlight real. The darkness defines the light.
-               Two triangles that cover left and right of the beam.
-          ── */}
-
-          {/* Left blackout — covers left of beam */}
+          {/* ── PURE BLACK LEFT: Hard cut — no gradient bands, just black ── */}
           <div style={{
             position: "absolute", inset: 0,
-            background: `linear-gradient(
-              to right,
-              rgba(0,0,0,1.0)   0%,
-              rgba(0,0,0,1.0)  18%,
-              rgba(0,0,0,0.97) 26%,
-              rgba(0,0,0,0.88) 33%,
-              rgba(0,0,0,0.60) 39%,
-              rgba(0,0,0,0.20) 43%,
-              transparent      46%
-            )`,
-            pointerEvents: "none", zIndex: 4,
-          }} />
-
-          {/* Right blackout — covers right of beam */}
-          <div style={{
-            position: "absolute", inset: 0,
-            background: `linear-gradient(
-              to left,
-              rgba(0,0,0,1.0)   0%,
-              rgba(0,0,0,1.0)  18%,
-              rgba(0,0,0,0.97) 26%,
-              rgba(0,0,0,0.88) 33%,
-              rgba(0,0,0,0.60) 39%,
-              rgba(0,0,0,0.20) 43%,
-              transparent      46%
-            )`,
-            pointerEvents: "none", zIndex: 4,
-          }} />
-
-          {/* ── 10. CEILING BLACKOUT: Above the lamp — total dark ── */}
-          <div style={{
-            position: "absolute", top: 0, left: 0, right: 0,
-            height: "12%",
-            background: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 60%, transparent 100%)",
-            pointerEvents: "none", zIndex: 4,
-          }} />
-
-          {/* ── 11. FLOOR BLACKOUT: Below robot feet — fades to black ── */}
-          <div style={{
-            position: "absolute", bottom: 0, left: 0, right: 0,
-            height: "22%",
-            background: "linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 35%, rgba(0,0,0,0.4) 65%, transparent 100%)",
-            pointerEvents: "none", zIndex: 4,
-          }} />
-
-          {/* ── 12. EDGE DEFINITION: Sharp beam-edge shafts of light catching the cone walls ──
-               In real spotlights you see the two clean straight lines at the beam edges.
-               These simulate that edge scatter.
-          ── */}
-          {/* Left beam edge */}
-          <div style={{
-            position: "absolute", inset: 0,
-            background: `linear-gradient(
-              to right,
-              transparent                42%,
-              rgba(210,228,255, 0.04)   44%,
-              rgba(218,234,255, 0.09)   45%,
-              rgba(210,228,255, 0.04)   46%,
-              transparent                48%
-            )`,
-            pointerEvents: "none", zIndex: 3,
-          }} />
-          {/* Right beam edge */}
-          <div style={{
-            position: "absolute", inset: 0,
-            background: `linear-gradient(
-              to left,
-              transparent                42%,
-              rgba(210,228,255, 0.04)   44%,
-              rgba(218,234,255, 0.09)   45%,
-              rgba(210,228,255, 0.04)   46%,
-              transparent                48%
-            )`,
+            background: "linear-gradient(to right, #000 0%, #000 44%, transparent 47%)",
             pointerEvents: "none", zIndex: 3,
           }} />
 
-          {/* ── CONTENT ── */}
+          {/* ── PURE BLACK RIGHT: Hard cut — no gradient bands, just black ── */}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to left, #000 0%, #000 44%, transparent 47%)",
+            pointerEvents: "none", zIndex: 3,
+          }} />
+
+          {/* ── PURE BLACK BOTTOM: Hard stop at robot feet (78%) ── */}
+          <div style={{
+            position: "absolute",
+            top: "76%", left: 0, right: 0, bottom: 0,
+            background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 18%, #000 45%)",
+            pointerEvents: "none", zIndex: 3,
+          }} />
+
+          {/* ── PURE BLACK TOP: Ceiling above lamp ── */}
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0,
+            height: "2%",
+            background: "#000",
+            pointerEvents: "none", zIndex: 3,
+          }} />
+
+                    {/* ── CONTENT ── */}
           <motion.div
             className="z-10 text-center w-full max-w-3xl"
             style={{ position: "relative", zIndex: 10 }}
