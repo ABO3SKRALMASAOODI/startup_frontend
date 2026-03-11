@@ -333,7 +333,28 @@ export default function TemplatesPage() {
 
           {/* system status bar */}
           <div style={{ maxWidth:"1200px",margin:"0 auto 2.2rem",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"1rem" }}>
-            <div style={{ display:"flex",alignItems:"center",gap:"12px",fontFamily:"'DM Mono',monospace",fontSize:"0.52rem",letterSpacing:"0.18em",textTransform:"uppercase" }}>
+            <div style={{ display:"flex",alignItems:"center",gap:"16px",fontFamily:"'DM Mono',monospace",fontSize:"0.52rem",letterSpacing:"0.18em",textTransform:"uppercase" }}>
+              {/* back button */}
+              <button
+                onClick={() => navigate(-1)}
+                style={{
+                  display:"flex", alignItems:"center", gap:"7px",
+                  background:"transparent",
+                  border:"1px solid rgba(200,16,46,0.22)",
+                  color:"var(--muted)",
+                  fontFamily:"'DM Mono',monospace",
+                  fontSize:"0.52rem", letterSpacing:"0.16em",
+                  textTransform:"uppercase",
+                  padding:"5px 12px",
+                  cursor:"pointer",
+                  clipPath:"polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%)",
+                  transition:"all 0.15s ease",
+                }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(200,16,46,0.5)";e.currentTarget.style.color="var(--text)";e.currentTarget.style.background="rgba(200,16,46,0.06)";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(200,16,46,0.22)";e.currentTarget.style.color="var(--muted)";e.currentTarget.style.background="transparent";}}
+              >
+                ← BACK
+              </button>
               <div className="node-dot"/>
               <span style={{ color:"var(--muted)" }}>SYS // TEMPLATE REGISTRY</span>
               <div style={{ width:"50px",height:"1px",background:"linear-gradient(90deg,rgba(200,16,46,0.3),transparent)" }}/>
