@@ -271,77 +271,7 @@ function LandingPage() {
           style={{ minHeight: "100vh", paddingBottom: "300px", paddingTop: "60px" }}
         >
 
-          {/*
-            ══════════════════════════════════════════════════════
-            THEATRE SPOTLIGHT — single flat uniform beam
-            One cone, one brightness level, no banding, no waves.
-            Hard edges left and right, stops at robot level.
-            ══════════════════════════════════════════════════════
-          */}
 
-          {/* ── SINGLE BEAM — flat uniform cone, stops at legs ── */}
-          <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: `calc(100% - 72%)`,
-            clipPath: "polygon(47% 0%, 53% 0%, 68% 100%, 32% 100%)",
-            background: "rgba(255, 252, 230, 0.52)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }} />
-
-          {/* ── FLOOR POOL — elliptical glow matching cone bottom width ── */}
-          <div style={{
-            position: "absolute",
-            top: "69%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "520px",
-            height: "80px",
-            background: "radial-gradient(ellipse at center, rgba(255,252,220,0.60) 0%, rgba(255,250,210,0.38) 40%, rgba(255,246,200,0.14) 70%, transparent 100%)",
-            borderRadius: "50%",
-            pointerEvents: "none",
-            zIndex: 0,
-          }} />
-
-          {/* ── Lamp source glow — hot point at top-center ── */}
-          <div style={{
-            position: "absolute",
-            top: "-20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "160px",
-            height: "90px",
-            background: "radial-gradient(ellipse 50% 60% at 50% 20%, rgba(255,255,240,0.65) 0%, rgba(255,252,220,0.35) 35%, rgba(255,248,200,0.12) 65%, transparent 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }} />
-
-          {/* ── Top vignette — darkens ceiling outside beam ── */}
-          <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "35%",
-            background: "linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 40%, transparent 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }} />
-
-          {/* ── Bottom fade — floor fades back to black ── */}
-          <div style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: "30%",
-            background: "linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 40%, transparent 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }} />
 
           <motion.div
             className="z-10 text-center w-full max-w-3xl"
@@ -354,13 +284,34 @@ function LandingPage() {
             </motion.div>
 
             <div style={{ marginBottom: "32px" }}>
-              <h1 className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4">
+              <h1
+                className="text-6xl md:text-7xl font-extrabold leading-tight mb-4"
+                style={{
+                  color: "#ffffff",
+                  textShadow: "0 0 40px rgba(255,255,255,0.9), 0 0 80px rgba(255,255,255,0.5), 0 0 120px rgba(255,200,200,0.3)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
                 The Hustler Bot
               </h1>
-              <p className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto">
+              <p
+                className="text-xl md:text-2xl mb-3 max-w-xl mx-auto font-semibold"
+                style={{
+                  color: "#ffffff",
+                  textShadow: "0 0 20px rgba(255,100,100,0.8), 0 0 40px rgba(255,60,60,0.4)",
+                  letterSpacing: "0.01em",
+                }}
+              >
                 Build any app. Just describe it.
               </p>
-              <p className="text-base text-gray-400 max-w-lg mx-auto">
+              <p
+                className="text-base max-w-lg mx-auto"
+                style={{
+                  color: "rgba(255,255,255,0.75)",
+                  textShadow: "0 0 12px rgba(255,255,255,0.3)",
+                  lineHeight: 1.7,
+                }}
+              >
                 Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.
               </p>
             </div>
