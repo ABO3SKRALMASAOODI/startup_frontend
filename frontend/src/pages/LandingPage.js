@@ -298,7 +298,7 @@ function LandingPage() {
                 className="text-xl md:text-2xl mb-3 max-w-xl mx-auto font-semibold"
                 style={{
                   color: "#ffffff",
-                  textShadow: "0 0 20px rgba(255,100,100,0.8), 0 0 40px rgba(255,60,60,0.4)",
+                  textShadow: "0 0 40px rgba(255,255,255,0.9), 0 0 80px rgba(255,255,255,0.5), 0 0 120px rgba(255,255,255,0.3)",
                   letterSpacing: "0.01em",
                 }}
               >
@@ -307,8 +307,8 @@ function LandingPage() {
               <p
                 className="text-base max-w-lg mx-auto"
                 style={{
-                  color: "rgba(255,255,255,0.75)",
-                  textShadow: "0 0 12px rgba(255,255,255,0.3)",
+                  color: "#ffffff",
+                  textShadow: "0 0 40px rgba(255,255,255,0.9), 0 0 80px rgba(255,255,255,0.5), 0 0 120px rgba(255,255,255,0.3)",
                   lineHeight: 1.7,
                 }}
               >
