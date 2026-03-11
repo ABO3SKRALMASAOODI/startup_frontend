@@ -96,7 +96,7 @@ function ModelRow({ model, isAllowed, isSelected, onSelect, onClose }) {
     >
       <RiveBot
         src={model.riveSrc}
-        glow={isAllowed ? model.botGlow : null}
+        glow={model.botGlow}
         size={26}
       />
 
