@@ -290,53 +290,52 @@ function LandingPage() {
         >
 
           {/*
-            ── THEATRE SPOTLIGHT ──
-            Three CSS-only layers, all static (painted once, zero ongoing CPU/GPU cost):
+            THEATRE SPOTLIGHT — 3 static layers, zero animation cost.
 
-            1. CONE  — conic-gradient triangle from a point at the very top-center,
-                       fanning out downward. This gives the hard-edged beam shape.
-            2. POOL  — soft ellipse at the bottom of the cone (the lit circle on the floor).
-            3. DARK  — everything outside the cone stays pure black / very dark.
+            The key fix: origin moved to "50% -2%" (just above viewport top)
+            and cone angle widened to ~100deg so it covers head + text + feet.
           */}
 
-          {/* Layer 1 — the cone beam, hard edges, top-center origin */}
+          {/* Layer 1 — wide cone from just above top, hard edges */}
           <div style={{
             position: "absolute",
             top: 0, left: 0, right: 0, bottom: 0,
             background: `conic-gradient(
-              from 180deg at 50% -10%,
-              transparent        0deg,
-              transparent       68deg,
-              rgba(255,252,240,0.07) 72deg,
-              rgba(255,252,240,0.13) 80deg,
-              rgba(255,252,240,0.13) 100deg,
-              rgba(255,252,240,0.07) 108deg,
-              transparent       112deg,
-              transparent       360deg
+              from 180deg at 50% -2%,
+              transparent           0deg,
+              transparent          40deg,
+              rgba(255,252,240,0.04) 44deg,
+              rgba(255,252,240,0.11) 50deg,
+              rgba(255,252,240,0.15) 70deg,
+              rgba(255,252,240,0.15) 110deg,
+              rgba(255,252,240,0.11) 130deg,
+              rgba(255,252,240,0.04) 136deg,
+              transparent          140deg,
+              transparent          360deg
             )`,
             pointerEvents: "none",
             zIndex: 0,
           }} />
 
-          {/* Layer 2 — lit pool/circle at the robot's feet, centre-bottom of cone */}
+          {/* Layer 2 — bright pool at robot feet */}
           <div style={{
             position: "absolute",
-            bottom: "22%",
+            bottom: "18%",
             left: "50%",
             transform: "translateX(-50%)",
-            width: "480px",
-            height: "120px",
-            background: "radial-gradient(ellipse at center, rgba(255,250,235,0.18) 0%, rgba(255,245,220,0.08) 45%, transparent 75%)",
+            width: "520px",
+            height: "130px",
+            background: "radial-gradient(ellipse at center, rgba(255,252,235,0.22) 0%, rgba(255,248,220,0.10) 40%, transparent 72%)",
             borderRadius: "50%",
             pointerEvents: "none",
             zIndex: 0,
           }} />
 
-          {/* Layer 3 — heavy vignette: everything outside cone is very dark */}
+          {/* Layer 3 — vignette: left/right edges go very dark */}
           <div style={{
             position: "absolute",
             inset: 0,
-            background: `radial-gradient(ellipse 55% 90% at 50% 50%, transparent 0%, transparent 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.88) 100%)`,
+            background: `radial-gradient(ellipse 52% 100% at 50% 50%, transparent 0%, transparent 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 100%)`,
             pointerEvents: "none",
             zIndex: 0,
           }} />
