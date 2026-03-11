@@ -6,7 +6,7 @@ import API from "../api/api";
 
 /* ─── CSS ────────────────────────────────────────────────────────────────── */
 const PAGE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap');
 
   :root {
     --red:       #C8102E;
@@ -341,9 +341,10 @@ function TemplateCard({ template, index, onUse, isLoggedIn }) {
         </span>
 
         <h3 style={{
-          fontFamily: "'DM Serif Display', serif",
-          fontSize: "1.15rem", fontWeight: 400,
+          fontFamily: "'Space Grotesk', sans-serif",
+          fontSize: "1rem", fontWeight: 600,
           color: "#F0EDE6", marginBottom: "6px", lineHeight: 1.2,
+          letterSpacing: "0.01em",
         }}>
           {template.title}
         </h3>
@@ -431,7 +432,7 @@ export default function TemplatesPage() {
         minHeight: "100vh",
         background: "#060608",
         paddingTop: "72px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Space Grotesk', sans-serif",
         position: "relative",
         overflowX: "hidden",
       }}>
@@ -451,57 +452,82 @@ export default function TemplatesPage() {
           position: "relative",
           animation: "tplFadeUp 0.55s ease both",
         }}>
+          {/* top label */}
           <div style={{
-            display: "inline-block",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: "0.58rem", fontWeight: 500,
-            letterSpacing: "0.26em", color: "#C8102E",
-            textTransform: "uppercase", marginBottom: "1.4rem",
+            display: "inline-flex", alignItems: "center", gap: "10px",
+            marginBottom: "2rem",
           }}>
-            Template Gallery
+            <div style={{ width: "28px", height: "1px", background: "#C8102E" }} />
+            <span style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: "0.62rem", fontWeight: 600,
+              letterSpacing: "0.28em", color: "#C8102E",
+              textTransform: "uppercase",
+            }}>
+              Template Gallery
+            </span>
+            <div style={{ width: "28px", height: "1px", background: "#C8102E" }} />
           </div>
 
+          {/* main headline — all-caps, tight, sharp */}
           <h1 style={{
-            fontFamily: "'DM Serif Display', serif",
-            fontWeight: 400,
-            fontSize: "clamp(2.8rem, 6vw, 5rem)",
-            letterSpacing: "-0.025em", lineHeight: 1.05,
-            color: "#F0EDE6", marginBottom: "1rem",
+            fontFamily: "'DM Mono', monospace",
+            fontWeight: 600,
+            fontSize: "clamp(2rem, 5vw, 3.8rem)",
+            letterSpacing: "-0.01em",
+            lineHeight: 1.1,
+            color: "#F0EDE6",
+            marginBottom: "0.5rem",
+            textTransform: "uppercase",
           }}>
-            Start with something<br />
-            <em style={{ color: "#C8102E", fontStyle: "italic" }}>already great.</em>
+            PICK A TEMPLATE.
+          </h1>
+          <h1 style={{
+            fontFamily: "'DM Mono', monospace",
+            fontWeight: 600,
+            fontSize: "clamp(2rem, 5vw, 3.8rem)",
+            letterSpacing: "-0.01em",
+            lineHeight: 1.1,
+            color: "#C8102E",
+            marginBottom: "2rem",
+            textTransform: "uppercase",
+          }}>
+            SHIP IT TODAY.
           </h1>
 
           <p style={{
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: "1rem", color: "#4A4A52",
-            fontWeight: 300, maxWidth: "440px",
-            margin: "0 auto 2.5rem", lineHeight: 1.8,
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontSize: "0.9rem", color: "#4A4A52",
+            fontWeight: 400, maxWidth: "400px",
+            margin: "0 auto 2.5rem", lineHeight: 1.75,
+            letterSpacing: "0.01em",
           }}>
-            Pick a template, make it yours, and ship in minutes.
-            Every template is fully editable with the AI agent.
+            Every template is a live, editable app. Clone it, describe your changes,
+            and the agent rewrites the code instantly.
           </p>
 
-          {/* count badge */}
+          {/* count badge — sharp corners */}
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: "8px",
-            padding: "6px 16px",
-            background: "rgba(200,16,46,0.06)",
-            border: "1px solid rgba(200,16,46,0.2)",
-            borderRadius: "100px",
+            display: "inline-flex", alignItems: "center", gap: "10px",
+            padding: "7px 16px",
+            background: "rgba(200,16,46,0.05)",
+            border: "1px solid rgba(200,16,46,0.18)",
+            borderRadius: "3px",
           }}>
             <div style={{
-              width: "5px", height: "5px", borderRadius: "50%",
+              width: "6px", height: "6px",
               background: "#C8102E",
               boxShadow: "0 0 6px #C8102E",
               animation: "tplGlow 2s ease-in-out infinite",
+              flexShrink: 0,
             }} />
             <span style={{
               fontFamily: "'DM Mono', monospace",
-              fontSize: "0.65rem", fontWeight: 500,
-              color: "#C8102E", letterSpacing: "0.08em",
+              fontSize: "0.62rem", fontWeight: 500,
+              color: "#C8102E", letterSpacing: "0.1em",
+              textTransform: "uppercase",
             }}>
-              {ALL_TEMPLATES.length} templates across {CATEGORIES.length - 1} categories
+              {ALL_TEMPLATES.length} templates — {CATEGORIES.length - 1} categories
             </span>
           </div>
         </header>
@@ -651,17 +677,19 @@ export default function TemplatesPage() {
             background: "radial-gradient(ellipse at 50% 100%, rgba(200,16,46,0.08) 0%, transparent 65%)",
           }} />
           <p style={{
-            fontFamily: "'DM Serif Display', serif",
-            fontSize: "clamp(1.6rem, 3vw, 2.4rem)",
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontSize: "clamp(1.4rem, 3vw, 2rem)",
             color: "#F0EDE6", marginBottom: "0.6rem",
-            fontWeight: 400,
+            fontWeight: 700, letterSpacing: "-0.01em",
+            textTransform: "uppercase",
           }}>
             Don't see what you need?
           </p>
           <p style={{
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: "0.9rem", color: "#4A4A52",
-            marginBottom: "1.8rem", fontWeight: 300,
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontSize: "0.85rem", color: "#4A4A52",
+            marginBottom: "1.8rem", fontWeight: 400,
+            letterSpacing: "0.01em",
           }}>
             Describe any app and the agent builds it from scratch — in seconds.
           </p>
