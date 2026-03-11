@@ -39,20 +39,22 @@ const TEMPLATES = [
   { job_id: "4338edbb", title: "Restaurant / Menu",       desc: "Restaurant site with menu, reservations, and location info." },
 ];
 
-function TemplateCard({ template, index, onUse }) {
+function TemplateCard({ template, index, onUse, disabled = false }) {
   const [hovered, setHovered] = useState(false);
   const [cloning, setCloning] = useState(false);
   const previewUrl = `https://entrepreneur-bot-backend.onrender.com/auth/preview/${template.job_id}/`;
   const handleClick = async () => {
-    if (cloning) return;
+    if (cloning || disabled) return;
     setCloning(true);
     try { await onUse(template); } finally { setCloning(false); }
   };
   return (
     <motion.div
       initial={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: index * 0.1 }}
-      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={handleClick}
-      style={{ position: "relative", borderRadius: "16px", overflow: "hidden", cursor: cloning ? "wait" : "pointer", border: hovered ? "1px solid rgba(220,0,0,0.6)" : "1px solid rgba(40,40,40,0.8)", background: "#0a0a0a", transition: "all 0.3s ease", boxShadow: hovered ? "0 0 40px rgba(180,0,0,0.3),0 8px 32px rgba(0,0,0,0.6)" : "0 2px 16px rgba(0,0,0,0.4)", transform: hovered ? "translateY(-4px)" : "translateY(0)" }}
+      onMouseEnter={() => !disabled && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={handleClick}
+      style={{ position: "relative", borderRadius: "16px", overflow: "hidden", cursor: disabled ? "default" : cloning ? "wait" : "pointer", border: hovered ? "1px solid rgba(220,0,0,0.6)" : "1px solid rgba(40,40,40,0.8)", background: "#0a0a0a", transition: "all 0.3s ease", boxShadow: hovered ? "0 0 40px rgba(180,0,0,0.3),0 8px 32px rgba(0,0,0,0.6)" : "0 2px 16px rgba(0,0,0,0.4)", transform: hovered ? "translateY(-4px)" : "translateY(0)" }}
     >
       <div style={{ width: "100%", height: "240px", overflow: "hidden", position: "relative", background: "#111", borderBottom: "1px solid rgba(40,40,40,0.6)" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "28px", background: "rgba(20,20,20,0.95)", display: "flex", alignItems: "center", gap: "5px", padding: "0 10px", zIndex: 2, borderBottom: "1px solid rgba(40,40,40,0.5)" }}>
@@ -65,7 +67,7 @@ function TemplateCard({ template, index, onUse }) {
           <iframe src={previewUrl} title={template.title} style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} sandbox="allow-scripts allow-same-origin" loading="eager" />
         </div>
         <div style={{ position: "absolute", inset: 0, zIndex: 3, background: hovered ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s ease" }}>
-          {hovered && (
+          {hovered && !disabled && (
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.15 }}
               style={{ padding: "10px 24px", background: "linear-gradient(135deg,#cc0000,#8b0000)", borderRadius: "10px", color: "#fff", fontSize: "0.88rem", fontWeight: 700, boxShadow: "0 0 24px rgba(200,0,0,0.5)", letterSpacing: "0.03em" }}>
               {cloning ? "Cloning..." : "Use Template →"}
@@ -271,6 +273,7 @@ function LandingPage() {
         <style>{`
           @keyframes badgePulse { 0%,100%{opacity:1;box-shadow:0 0 6px #ff3333,0 0 12px #ff3333} 50%{opacity:0.6;box-shadow:0 0 3px #ff3333} }
           @keyframes glowPulse  { 0%,100%{box-shadow:0 0 30px rgba(200,0,0,0.5),0 0 60px rgba(180,0,0,0.3)} 50%{box-shadow:0 0 50px rgba(220,0,0,0.8),0 0 100px rgba(200,0,0,0.5)} }
+          @keyframes titleWhiteGlow { 0%,100%{text-shadow:0 0 30px rgba(255,255,255,0.95),0 0 70px rgba(255,255,255,0.6),0 0 130px rgba(255,255,255,0.25)} 50%{text-shadow:0 0 50px rgba(255,255,255,1),0 0 100px rgba(255,255,255,0.8),0 0 180px rgba(255,255,255,0.35)} }
           .prompt-wrap { transition: box-shadow 0.3s ease, border-color 0.3s ease; }
           .prompt-wrap:focus-within { border-color:rgba(200,0,0,0.7)!important; box-shadow:0 0 0 1px rgba(180,0,0,0.25),0 0 60px rgba(180,0,0,0.2)!important; }
           .example-btn:hover { border-color:rgba(180,0,0,0.6)!important; color:#fff!important; background:rgba(60,0,0,0.4)!important; }
@@ -284,7 +287,6 @@ function LandingPage() {
         >
           <motion.div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-red-900/30 via-transparent to-black pointer-events-none z-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }} />
 
-          {/* Content */}
           <motion.div
             className="z-10 text-center w-full max-w-3xl"
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}
@@ -295,7 +297,14 @@ function LandingPage() {
               <span style={{ fontSize: "0.82rem", color: "rgba(255,200,200,0.95)", letterSpacing: "0.04em" }}>{badgeText}</span>
             </motion.div>
 
-            <h1 className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4" style={{ textShadow: "0 0 40px rgba(255,26,26,0.4),0 0 80px rgba(255,26,26,0.15)" }}>The Hustler Bot</h1>
+            {/* ── CHANGE 1: pure white glow title, no red tint ── */}
+            <h1
+              className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4"
+              style={{ animation: "titleWhiteGlow 3s ease-in-out infinite" }}
+            >
+              The Hustler Bot
+            </h1>
+
             <p className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto">Build any app. Just describe it.</p>
             <p className="text-base text-gray-500 mb-10 max-w-lg mx-auto">Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.</p>
 
@@ -353,18 +362,7 @@ function LandingPage() {
             )}
           </motion.div>
 
-          {/* ── Robot — head behind title, body behind prompt box ── */}
-          <div style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -65%)",
-            width: "700px",
-            height: "700px",
-            zIndex: 1,
-            opacity: 0.9,
-            pointerEvents: "none",
-          }}>
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -65%)", width: "700px", height: "700px", zIndex: 1, opacity: 0.9, pointerEvents: "none" }}>
             <HeroBot style={{ width: "100%", height: "100%" }} />
           </div>
         </section>
@@ -375,8 +373,66 @@ function LandingPage() {
             <h2 className="text-5xl md:text-6xl font-bold mb-5" style={{ textShadow: "0 0 30px rgba(255,26,26,0.3)" }}>Start from a Template</h2>
             <p style={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.4)", maxWidth: "520px", margin: "0 auto", lineHeight: 1.6 }}>Pick a pre-built project, make it yours, and iterate with the agent. Every template is fully editable.</p>
           </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {TEMPLATES.map((t, i) => <TemplateCard key={t.job_id} template={t} index={i} onUse={handleUseTemplate} />)}
+
+          <div className="max-w-6xl mx-auto">
+            {/* ── Row 1: first 3 — fully interactive ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+              {TEMPLATES.slice(0, 3).map((t, i) => (
+                <TemplateCard key={t.job_id} template={t} index={i} onUse={handleUseTemplate} />
+              ))}
+            </div>
+
+            {/* ── CHANGE 2: Row 2 — blurred with "Explore More Templates" overlay ── */}
+            <div style={{ position: "relative" }}>
+              {/* blurred, non-interactive cards */}
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+                style={{ filter: "blur(4px)", opacity: 0.4, pointerEvents: "none", userSelect: "none" }}
+              >
+                {TEMPLATES.slice(3).map((t, i) => (
+                  <TemplateCard key={t.job_id} template={t} index={i + 3} onUse={() => {}} disabled />
+                ))}
+              </div>
+
+              {/* gradient + CTA overlay */}
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.92) 100%)",
+                display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "flex-end",
+                paddingBottom: "2.5rem",
+              }}>
+                <p style={{
+                  fontSize: "0.8rem", letterSpacing: "0.08em",
+                  color: "rgba(255,255,255,0.3)", marginBottom: "16px",
+                  textTransform: "uppercase",
+                }}>
+                  +12 more templates across 6 categories
+                </p>
+                <button
+                  onClick={() => navigate("/templates")}
+                  style={{
+                    background: "linear-gradient(135deg, #cc0000, #8b0000)",
+                    border: "none", borderRadius: "14px",
+                    padding: "14px 40px", fontSize: "1rem",
+                    fontWeight: 700, color: "#fff", cursor: "pointer",
+                    letterSpacing: "0.02em",
+                    boxShadow: "0 0 32px rgba(200,0,0,0.6), 0 0 64px rgba(180,0,0,0.25)",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.boxShadow = "0 0 48px rgba(220,0,0,0.85), 0 0 90px rgba(200,0,0,0.4)";
+                    e.currentTarget.style.transform = "scale(1.05) translateY(-2px)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.boxShadow = "0 0 32px rgba(200,0,0,0.6), 0 0 64px rgba(180,0,0,0.25)";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                >
+                  Explore All Templates →
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
