@@ -18,7 +18,7 @@ const MODEL_DEFS = [
     glow: "rgba(76,175,80,0.4)",
     min_plan_label: "Free+",
     badge: "FAST",
-    riveSrc: "/favicon.ico",              // favicon image
+    riveSrc: "/hustler-robot.riv",        // regular robot
   },
   {
     id: "hb-6-pro",
@@ -58,28 +58,6 @@ function RiveBot({ src, color, size = 22 }) {
       <RiveComponent style={{ width: "100%", height: "100%", display: "block" }} />
     </div>
   );
-
-/* ── Smart avatar — img for .ico/.png, Rive for .riv ── */
-function BotAvatar({ src, color, size = 22 }) {
-  const isImage = /\.(ico|png|svg|webp|jpg)$/i.test(src);
-  if (isImage) {
-    return (
-      <img
-        src={src}
-        alt="model"
-        style={{
-          width: size, height: size,
-          flexShrink: 0,
-          objectFit: "contain",
-          filter: `drop-shadow(0 0 4px ${color})`,
-          borderRadius: "4px",
-        }}
-      />
-    );
-  }
-  return <RiveBot src={src} color={color} size={size} />;
-}
-
 }
 
 /* ── Row inside the open dropdown ── */
@@ -111,7 +89,7 @@ function ModelRow({ model, isAllowed, isSelected, onSelect, onClose }) {
         boxShadow: isSelected ? `0 0 8px ${model.glow}` : "none",
       }}
     >
-      <BotAvatar src={model.riveSrc} color={isAllowed ? model.color : "#333"} size={26} />
+      <RiveBot src={model.riveSrc} color={isAllowed ? model.color : "#333"} size={26} />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "1px" }}>
@@ -222,7 +200,7 @@ export default function ModelSelector({ selectedModel, onSelect, plan }) {
         }}
       >
         {/* key forces remount when model changes so useRive reinitialises with correct src */}
-        <BotAvatar key={current.id} src={current.riveSrc} color={current.color} size={22} />
+        <RiveBot key={current.id} src={current.riveSrc} color={current.color} size={22} />
 
         <span style={{
           fontSize: "0.67rem", fontWeight: 700,
