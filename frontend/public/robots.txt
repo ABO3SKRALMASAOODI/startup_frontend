@@ -8,6 +8,6 @@ Disallow: /account
 Disallow: /admin
 Disallow: /subscribe
 Disallow: /checkout
-Disallow: /agent
+Disallow: /templates
 
 Sitemap: https://thehustlerbot.com/sitemap.xml
