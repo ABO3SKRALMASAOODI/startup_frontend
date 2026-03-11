@@ -202,7 +202,6 @@ function LandingPage() {
   const { rive: bubbleRive, RiveComponent: BubbleBot } = useRive({ src: "/hustler-bubble-bot.riv", autoplay: true, stateMachines: ["State Machine 1"] });
 
   useEffect(() => {
-    // Throttled to ~30fps — cuts CPU load significantly
     let lastCall = 0;
     const handleMouse = (x) => {
       const now = Date.now();
@@ -278,16 +277,6 @@ function LandingPage() {
         <style>{`
           @keyframes badgePulse { 0%,100%{opacity:1;box-shadow:0 0 6px #ff3333,0 0 12px #ff3333} 50%{opacity:0.6;box-shadow:0 0 3px #ff3333} }
           @keyframes glowPulse  { 0%,100%{box-shadow:0 0 30px rgba(200,0,0,0.5),0 0 60px rgba(180,0,0,0.3)} 50%{box-shadow:0 0 50px rgba(220,0,0,0.8),0 0 100px rgba(200,0,0,0.5)} }
-
-          /* Ambient orb: only animates opacity — GPU composited, zero repaint cost */
-          @keyframes ambientBreathe { 0%,100%{opacity:0.5} 50%{opacity:1} }
-          .hero-ambient { animation: ambientBreathe 4s ease-in-out infinite; will-change: opacity; }
-
-          /* Static text-shadow on each element — painted once, never repaints */
-          .hero-title    { text-shadow: 0 0 40px rgba(255,255,255,0.9), 0 0 80px rgba(255,255,255,0.45), 0 0 130px rgba(255,220,220,0.2); }
-          .hero-subtitle { text-shadow: 0 0 28px rgba(255,255,255,0.6), 0 0 60px rgba(255,255,255,0.2); }
-          .hero-desc     { text-shadow: 0 0 18px rgba(255,255,255,0.35); }
-
           .prompt-wrap { transition: box-shadow 0.3s ease, border-color 0.3s ease; }
           .prompt-wrap:focus-within { border-color:rgba(200,0,0,0.7)!important; box-shadow:0 0 0 1px rgba(180,0,0,0.25),0 0 60px rgba(180,0,0,0.2)!important; }
           .example-btn:hover { border-color:rgba(180,0,0,0.6)!important; color:#fff!important; background:rgba(60,0,0,0.4)!important; }
@@ -302,7 +291,39 @@ function LandingPage() {
           className="relative flex flex-col justify-center items-center px-6 overflow-hidden"
           style={{ minHeight: "100vh", paddingBottom: "300px", paddingTop: "60px" }}
         >
-          <motion.div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-red-900/30 via-transparent to-black pointer-events-none z-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }} />
+          {/* ── THEATRE SPOTLIGHT ──
+              Two layers, both static divs, painted once, zero ongoing cost:
+              1. The bright circle — radial gradient centered on the robot, warm white core fading out
+              2. The side vignette — darkens left and right edges, leaving center lit
+          ── */}
+
+          {/* Layer 1: spotlight cone from top, bright pool centered on robot */}
+          <div style={{
+            position: "absolute",
+            top: 0, left: "50%",
+            transform: "translateX(-50%)",
+            width: "900px",
+            height: "100%",
+            background: "radial-gradient(ellipse 520px 680px at 50% 38%, rgba(255,248,230,0.13) 0%, rgba(255,240,200,0.07) 30%, rgba(255,220,180,0.03) 55%, transparent 75%)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }} />
+
+          {/* Layer 2: side vignette — darkens left & right, leaves center bright */}
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            background: "radial-gradient(ellipse 60% 100% at 50% 38%, transparent 0%, transparent 40%, rgba(0,0,0,0.55) 70%, rgba(0,0,0,0.82) 100%)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }} />
+
+          {/* Original red ambient from before — keep it, theatre lights can be warm */}
+          <motion.div
+            className="absolute top-0 left-0 w-full h-full pointer-events-none"
+            style={{ background: "radial-gradient(ellipse 50% 60% at 50% 38%, rgba(120,0,0,0.18) 0%, transparent 70%)", zIndex: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }}
+          />
 
           <motion.div
             className="z-10 text-center w-full max-w-3xl"
@@ -314,31 +335,24 @@ function LandingPage() {
               <span style={{ fontSize: "0.82rem", color: "rgba(255,200,200,0.95)", letterSpacing: "0.04em" }}>{badgeText}</span>
             </motion.div>
 
-            {/* ── Hero text block with cheap ambient glow orb behind it ── */}
-            <div style={{ position: "relative", marginBottom: "32px" }}>
-
-              {/* Ambient orb — a blurred radial gradient div, only opacity animates (GPU only, no repaint) */}
-              <div
-                className="hero-ambient"
-                style={{
-                  position: "absolute",
-                  top: "50%", left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  width: "620px", height: "230px",
-                  background: "radial-gradient(ellipse at center, rgba(255,255,255,0.16) 0%, rgba(255,200,200,0.07) 50%, transparent 75%)",
-                  borderRadius: "50%",
-                  pointerEvents: "none",
-                  zIndex: 0,
-                }}
-              />
-
-              <h1 className="hero-title text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4" style={{ position: "relative", zIndex: 1 }}>
+            {/* Hero text — static text-shadow, no animation, zero cost */}
+            <div style={{ marginBottom: "32px" }}>
+              <h1
+                className="text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4"
+                style={{ textShadow: "0 0 30px rgba(255,248,220,0.7), 0 0 60px rgba(255,240,200,0.3)" }}
+              >
                 The Hustler Bot
               </h1>
-              <p className="hero-subtitle text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto" style={{ position: "relative", zIndex: 1 }}>
+              <p
+                className="text-xl md:text-2xl text-gray-300 mb-3 max-w-xl mx-auto"
+                style={{ textShadow: "0 0 20px rgba(255,248,220,0.4)" }}
+              >
                 Build any app. Just describe it.
               </p>
-              <p className="hero-desc text-base text-gray-400 max-w-lg mx-auto" style={{ position: "relative", zIndex: 1 }}>
+              <p
+                className="text-base text-gray-400 max-w-lg mx-auto"
+                style={{ textShadow: "0 0 12px rgba(255,248,220,0.2)" }}
+              >
                 Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.
               </p>
             </div>
@@ -397,6 +411,7 @@ function LandingPage() {
             )}
           </motion.div>
 
+          {/* Robot — sits inside the spotlight circle */}
           <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -65%)", width: "700px", height: "700px", zIndex: 1, opacity: 0.9, pointerEvents: "none" }}>
             <HeroBot style={{ width: "100%", height: "100%" }} />
           </div>
