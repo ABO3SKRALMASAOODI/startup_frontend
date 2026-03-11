@@ -292,15 +292,15 @@ function LandingPage() {
             zIndex: 0,
           }} />
 
-          {/* ── FLOOR POOL — elliptical glow circle around the legs ── */}
+          {/* ── FLOOR POOL — elliptical glow matching cone bottom width ── */}
           <div style={{
             position: "absolute",
-            top: "68%",
+            top: "69%",
             left: "50%",
             transform: "translateX(-50%)",
-            width: "280px",
-            height: "60px",
-            background: "radial-gradient(ellipse at center, rgba(255,252,220,0.55) 0%, rgba(255,250,210,0.35) 35%, rgba(255,246,200,0.12) 65%, transparent 100%)",
+            width: "520px",
+            height: "80px",
+            background: "radial-gradient(ellipse at center, rgba(255,252,220,0.60) 0%, rgba(255,250,210,0.38) 40%, rgba(255,246,200,0.14) 70%, transparent 100%)",
             borderRadius: "50%",
             pointerEvents: "none",
             zIndex: 0,
