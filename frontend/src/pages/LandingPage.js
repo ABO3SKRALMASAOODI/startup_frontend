@@ -120,48 +120,23 @@ function BottomPromptBox({ onSend }) {
         }}
       >
         <div style={{ padding: "12px 22px 0", display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,80,80,0.7)", fontWeight: 600 }}>
-            Ready to build
-          </span>
+          <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,80,80,0.7)", fontWeight: 600 }}>Ready to build</span>
           <span style={{ flex: 1, height: "1px", background: "linear-gradient(90deg, rgba(200,0,0,0.3), transparent)" }} />
-          <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>
-            edit or use as-is
-          </span>
+          <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>edit or use as-is</span>
         </div>
-        <textarea
-          ref={ref}
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+        <textarea ref={ref} value={prompt} onChange={(e) => setPrompt(e.target.value)}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(prompt); } }}
           rows={2}
-          style={{
-            width: "100%", background: "transparent", border: "none", outline: "none",
-            color: focused ? "#ffffff" : "rgba(255,180,180,0.9)",
-            fontSize: "1.08rem", padding: "10px 22px 12px", resize: "none",
-            fontFamily: "Segoe UI, sans-serif", lineHeight: 1.6,
-            minHeight: "68px", maxHeight: "160px", caretColor: "#ff3333",
-            textShadow: focused ? "0 0 18px rgba(255,80,80,0.6), 0 0 40px rgba(255,30,30,0.3)" : "0 0 12px rgba(255,60,60,0.4)",
-            transition: "text-shadow 0.3s ease, color 0.3s ease",
-          }}
+          style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: focused ? "#ffffff" : "rgba(255,180,180,0.9)", fontSize: "1.08rem", padding: "10px 22px 12px", resize: "none", fontFamily: "Segoe UI, sans-serif", lineHeight: 1.6, minHeight: "68px", maxHeight: "160px", caretColor: "#ff3333", textShadow: focused ? "0 0 18px rgba(255,80,80,0.6), 0 0 40px rgba(255,30,30,0.3)" : "0 0 12px rgba(255,60,60,0.4)", transition: "text-shadow 0.3s ease, color 0.3s ease" }}
         />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 14px 16px" }}>
           <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.75rem" }}>Enter to build · Shift+Enter for new line</span>
           <button onClick={() => onSend(prompt)} disabled={!prompt.trim()}
-            style={{
-              background: prompt.trim() ? "linear-gradient(135deg, #ff2020 0%, #cc0000 40%, #8b0000 100%)" : "rgba(40,40,40,0.8)",
-              color: prompt.trim() ? "#fff" : "rgba(255,255,255,0.25)",
-              border: "none", borderRadius: "12px", padding: "12px 32px",
-              fontSize: "1rem", fontWeight: 700, cursor: prompt.trim() ? "pointer" : "default",
-              letterSpacing: "0.03em", transition: "all 0.25s ease",
-              boxShadow: prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none",
-            }}
+            style={{ background: prompt.trim() ? "linear-gradient(135deg, #ff2020 0%, #cc0000 40%, #8b0000 100%)" : "rgba(40,40,40,0.8)", color: prompt.trim() ? "#fff" : "rgba(255,255,255,0.25)", border: "none", borderRadius: "12px", padding: "12px 32px", fontSize: "1rem", fontWeight: 700, cursor: prompt.trim() ? "pointer" : "default", letterSpacing: "0.03em", transition: "all 0.25s ease", boxShadow: prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none" }}
             onMouseEnter={e => { if (prompt.trim()) { e.currentTarget.style.boxShadow = "0 0 40px rgba(255,40,40,0.9), 0 0 80px rgba(220,0,0,0.5)"; e.currentTarget.style.transform = "scale(1.04) translateY(-1px)"; } }}
             onMouseLeave={e => { e.currentTarget.style.boxShadow = prompt.trim() ? "0 0 28px rgba(255,30,30,0.8), 0 0 60px rgba(200,0,0,0.4)" : "none"; e.currentTarget.style.transform = "scale(1)"; }}
-          >
-            Build it
-          </button>
+          >Build it</button>
         </div>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px", marginTop: "14px" }}>
@@ -290,52 +265,52 @@ function LandingPage() {
         >
 
           {/*
-            THEATRE SPOTLIGHT — 3 static layers, zero animation cost.
-
-            The key fix: origin moved to "50% -2%" (just above viewport top)
-            and cone angle widened to ~100deg so it covers head + text + feet.
+            THEATRE SPOTLIGHT — clip-path triangle approach.
+            Perfectly symmetric: apex at top-center (50%, 0),
+            base spreads to (15%, 100%) and (85%, 100%).
+            Inner fill uses a linear gradient so it's bright top-center,
+            fading slightly toward the edges of the beam.
           */}
 
-          {/* Layer 1 — wide cone from just above top, hard edges */}
+          {/* The beam itself — white triangle clipped to a cone shape */}
           <div style={{
             position: "absolute",
             top: 0, left: 0, right: 0, bottom: 0,
-            background: `conic-gradient(
-              from 180deg at 50% -2%,
-              transparent           0deg,
-              transparent          40deg,
-              rgba(255,252,240,0.04) 44deg,
-              rgba(255,252,240,0.11) 50deg,
-              rgba(255,252,240,0.15) 70deg,
-              rgba(255,252,240,0.15) 110deg,
-              rgba(255,252,240,0.11) 130deg,
-              rgba(255,252,240,0.04) 136deg,
-              transparent          140deg,
-              transparent          360deg
-            )`,
+            background: "linear-gradient(to bottom, rgba(255,252,240,0.0) 0%, rgba(255,252,240,0.12) 30%, rgba(255,252,240,0.10) 70%, rgba(255,252,240,0.06) 100%)",
+            clipPath: "polygon(50% 0%, 15% 100%, 85% 100%)",
             pointerEvents: "none",
             zIndex: 0,
           }} />
 
-          {/* Layer 2 — bright pool at robot feet */}
+          {/* Soft inner beam — slightly narrower, brighter center */}
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "linear-gradient(to bottom, rgba(255,252,240,0.0) 0%, rgba(255,252,240,0.10) 20%, rgba(255,252,240,0.08) 70%, rgba(255,252,240,0.04) 100%)",
+            clipPath: "polygon(50% 0%, 28% 100%, 72% 100%)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }} />
+
+          {/* Floor pool — lit ellipse at robot's feet */}
           <div style={{
             position: "absolute",
             bottom: "18%",
             left: "50%",
             transform: "translateX(-50%)",
-            width: "520px",
-            height: "130px",
-            background: "radial-gradient(ellipse at center, rgba(255,252,235,0.22) 0%, rgba(255,248,220,0.10) 40%, transparent 72%)",
+            width: "500px",
+            height: "110px",
+            background: "radial-gradient(ellipse at center, rgba(255,252,235,0.20) 0%, rgba(255,248,220,0.09) 45%, transparent 72%)",
             borderRadius: "50%",
             pointerEvents: "none",
             zIndex: 0,
           }} />
 
-          {/* Layer 3 — vignette: left/right edges go very dark */}
+          {/* Side darkness — dims everything outside the beam */}
           <div style={{
             position: "absolute",
             inset: 0,
-            background: `radial-gradient(ellipse 52% 100% at 50% 50%, transparent 0%, transparent 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 100%)`,
+            background: "radial-gradient(ellipse 48% 95% at 50% 50%, transparent 0%, transparent 20%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.82) 100%)",
             pointerEvents: "none",
             zIndex: 0,
           }} />
@@ -388,27 +363,19 @@ function LandingPage() {
             </motion.div>
 
             {isLoggedIn && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1 }}
-                style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}
-              >
-                <button
-                  onClick={() => navigate("/studio")}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}
+                style={{ marginTop: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+                <button onClick={() => navigate("/studio")}
                   style={{ background: "linear-gradient(135deg,#cc0000,#8b0000)", border: "none", borderRadius: "14px", padding: "14px 36px", fontSize: "1rem", fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)", transition: "all 0.2s ease", letterSpacing: "0.02em" }}
                   onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 0 40px rgba(220,0,0,0.8),0 0 80px rgba(200,0,0,0.4)"; e.currentTarget.style.transform = "scale(1.03)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)"; e.currentTarget.style.transform = "scale(1)"; }}
-                >
+                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 28px rgba(200,0,0,0.6),0 0 56px rgba(180,0,0,0.25)"; e.currentTarget.style.transform = "scale(1)"; }}>
                   Open Dashboard
                 </button>
                 {localStorage.getItem("user_email") === "thehustlerbot@gmail.com" && (
-                  <button
-                    onClick={() => navigate("/admin")}
+                  <button onClick={() => navigate("/admin")}
                     style={{ background: "rgba(220,0,0,0.08)", border: "1px solid rgba(220,0,0,0.25)", borderRadius: "10px", padding: "8px 22px", fontSize: "0.78rem", fontWeight: 600, color: "rgba(220,0,0,0.6)", cursor: "pointer", letterSpacing: "0.06em", transition: "all 0.2s" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(220,0,0,0.15)"; e.currentTarget.style.color = "#fff"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(220,0,0,0.08)"; e.currentTarget.style.color = "rgba(220,0,0,0.6)"; }}
-                  >
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(220,0,0,0.08)"; e.currentTarget.style.color = "rgba(220,0,0,0.6)"; }}>
                     ⚙ Admin
                   </button>
                 )}
@@ -441,11 +408,7 @@ function LandingPage() {
                   <TemplateCard key={t.job_id} template={t} index={i + 3} onUse={() => {}} disabled />
                 ))}
               </div>
-              <div style={{
-                position: "absolute", inset: 0,
-                background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.96) 100%)",
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "2.5rem",
-              }}>
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.96) 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "2.5rem" }}>
                 <div style={{ width: "120px", height: "1px", marginBottom: "20px", background: "linear-gradient(90deg, transparent, rgba(200,0,0,0.6), rgba(255,80,80,0.9), rgba(200,0,0,0.6), transparent)", backgroundSize: "200% auto", animation: "templateShimmer 2.5s linear infinite" }} />
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(10,0,0,0.7)", border: "1px solid rgba(120,0,0,0.4)", borderRadius: "100px", padding: "5px 16px 5px 10px", marginBottom: "18px", backdropFilter: "blur(12px)" }}>
                   <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ff3333", boxShadow: "0 0 6px #ff3333", flexShrink: 0 }} />
