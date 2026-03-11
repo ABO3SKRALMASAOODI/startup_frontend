@@ -3,9 +3,9 @@ import { useRive } from "rive-react";
 import API from "../api/api";
 
 /* ─── Model Selector ───────────────────────────────────────────────────────── *
- * Closed: tiny pill — Rive bot + model name only, minimal width
- * Open:   floating card upward with bot + model info per row
- * Bot shape alternates per model: robot / bubble-bot / robot
+ * HB-6     → regular robot,      NO glow
+ * HB-6 Pro → regular robot,      RED glow
+ * HB-7     → white bubble-bot,   RED glow
  * ──────────────────────────────────────────────────────────────────────────── */
 
 const MODEL_DEFS = [
@@ -15,10 +15,11 @@ const MODEL_DEFS = [
     short: "HB-6",
     tip: "Fast & efficient for everyday tasks",
     color: "#4caf50",
-    glow: "rgba(76,175,80,0.4)",
+    botGlow: null,                          // no glow on bot
+    badgeColor: "#4caf50",
     min_plan_label: "Free+",
     badge: "FAST",
-    riveSrc: "/hustler-robot.riv",        // regular robot
+    riveSrc: "/hustler-robot.riv",
   },
   {
     id: "hb-6-pro",
@@ -26,10 +27,11 @@ const MODEL_DEFS = [
     short: "Pro",
     tip: "Powerful for complex apps — uses more credits",
     color: "#cc0000",
-    glow: "rgba(204,0,0,0.4)",
+    botGlow: "rgba(200,0,0,0.85)",          // red glow
+    badgeColor: "#cc0000",
     min_plan_label: "Plus+",
     badge: "PRO",
-    riveSrc: "/hustler-bubble-bot.riv",   // bubble bot alternate shape
+    riveSrc: "/hustler-robot.riv",          // same robot + red glow
   },
   {
     id: "hb-7",
@@ -37,15 +39,16 @@ const MODEL_DEFS = [
     short: "HB-7",
     tip: "Advanced reasoning & complex tasks — highest credit usage",
     color: "#ff6600",
-    glow: "rgba(255,102,0,0.4)",
+    botGlow: "rgba(200,0,0,0.85)",          // red glow on white bot
+    badgeColor: "#ff6600",
     min_plan_label: "Ultra+",
     badge: "MAX",
-    riveSrc: "/hustler-robot.riv",        // regular robot
+    riveSrc: "/hustler-bubble-bot.riv",     // white bubble-bot
   },
 ];
 
-/* ── Rive bot instance ── */
-function RiveBot({ src, color, size = 22 }) {
+/* ── Rive bot — glow is optional ── */
+function RiveBot({ src, glow, size = 22 }) {
   const { RiveComponent } = useRive({
     src,
     autoplay: true,
@@ -53,7 +56,10 @@ function RiveBot({ src, color, size = 22 }) {
   return (
     <div style={{
       width: size, height: size, flexShrink: 0,
-      filter: `drop-shadow(0 0 3px ${color})`,
+      filter: glow
+        ? `drop-shadow(0 0 3px ${glow}) drop-shadow(0 0 7px ${glow})`
+        : "none",
+      transition: "filter 0.2s ease",
     }}>
       <RiveComponent style={{ width: "100%", height: "100%", display: "block" }} />
     </div>
@@ -86,10 +92,13 @@ function ModelRow({ model, isAllowed, isSelected, onSelect, onClose }) {
         textAlign: "left",
         marginBottom: "2px",
         outline: "none",
-        boxShadow: isSelected ? `0 0 8px ${model.glow}` : "none",
       }}
     >
-      <RiveBot src={model.riveSrc} color={isAllowed ? model.color : "#333"} size={26} />
+      <RiveBot
+        src={model.riveSrc}
+        glow={isAllowed ? model.botGlow : null}
+        size={26}
+      />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "1px" }}>
@@ -115,10 +124,10 @@ function ModelRow({ model, isAllowed, isSelected, onSelect, onClose }) {
           ) : (
             <span style={{
               fontSize: "0.52rem", fontWeight: 800,
-              color: model.color,
-              background: `${model.color}18`,
+              color: model.badgeColor,
+              background: `${model.badgeColor}18`,
               padding: "1px 5px", borderRadius: "4px",
-              border: `1px solid ${model.color}28`,
+              border: `1px solid ${model.badgeColor}28`,
               letterSpacing: "0.1em",
               fontFamily: "'JetBrains Mono', monospace",
             }}>
@@ -170,7 +179,7 @@ export default function ModelSelector({ selectedModel, onSelect, plan }) {
   return (
     <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
 
-      {/* ── Closed pill: just bot + name + chevron, very compact ── */}
+      {/* ── Closed pill ── */}
       <button
         onClick={() => setOpen(o => !o)}
         title={`Model: ${current.name} — click to change`}
@@ -183,7 +192,7 @@ export default function ModelSelector({ selectedModel, onSelect, plan }) {
           cursor: "pointer",
           outline: "none",
           transition: "all 0.16s ease",
-          boxShadow: open ? `0 0 8px ${current.glow}` : "none",
+          boxShadow: open && current.botGlow ? `0 0 10px ${current.botGlow}` : "none",
           height: "28px",
         }}
         onMouseEnter={e => {
@@ -199,8 +208,13 @@ export default function ModelSelector({ selectedModel, onSelect, plan }) {
           }
         }}
       >
-        {/* key forces remount when model changes so useRive reinitialises with correct src */}
-        <RiveBot key={current.id} src={current.riveSrc} color={current.color} size={22} />
+        {/* key forces remount so useRive reinitialises when model changes */}
+        <RiveBot
+          key={current.id}
+          src={current.riveSrc}
+          glow={current.botGlow}
+          size={22}
+        />
 
         <span style={{
           fontSize: "0.67rem", fontWeight: 700,
