@@ -26,6 +26,7 @@ function PrivateRoute({ children }) {
 function PageTracker() {
   const location = useLocation();
   const lastTracked = useRef(null);
+
   const sessionId = useRef(
     sessionStorage.getItem("hb_sid") || (() => {
       const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -33,35 +34,43 @@ function PageTracker() {
       return id;
     })()
   );
+
+  const deviceId = useRef(
+    localStorage.getItem("hb_did") || (() => {
+      const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("hb_did", id);
+      return id;
+    })()
+  );
+
   const pageEntryTime = useRef(Date.now());
 
   useEffect(() => {
     const page = location.pathname;
     if (page === lastTracked.current) return;
 
-    // Send time_on_page for the page we're leaving
     const timeSpent = Math.round((Date.now() - pageEntryTime.current) / 1000);
     if (lastTracked.current) {
       API.post("/auth/track", {
         page: lastTracked.current,
         session_id: sessionId.current,
+        device_id: deviceId.current,
         referrer: document.referrer || "",
         time_on_page: timeSpent,
       }).catch(() => {});
     }
 
-    // Track the new page entry
     pageEntryTime.current = Date.now();
     lastTracked.current = page;
     API.post("/auth/track", {
       page,
       session_id: sessionId.current,
+      device_id: deviceId.current,
       referrer: document.referrer || "",
       time_on_page: 0,
     }).catch(() => {});
   }, [location.pathname]);
 
-  // Send time on page when user closes/leaves the tab
   useEffect(() => {
     const handleUnload = () => {
       const timeSpent = Math.round((Date.now() - pageEntryTime.current) / 1000);
@@ -71,6 +80,7 @@ function PageTracker() {
           JSON.stringify({
             page: lastTracked.current,
             session_id: sessionId.current,
+            device_id: deviceId.current,
             referrer: document.referrer || "",
             time_on_page: timeSpent,
           })
@@ -83,6 +93,7 @@ function PageTracker() {
 
   return null;
 }
+
 function App() {
   const token = localStorage.getItem("token");
   return (

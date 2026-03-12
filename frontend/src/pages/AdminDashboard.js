@@ -1041,7 +1041,7 @@ export default function AdminDashboard() {
                         {(() => {
                           const colors = { desktop: C.blue, mobile: C.green, tablet: C.amber };
                           const icons = { desktop: "🖥", mobile: "📱", tablet: "📟" };
-                          const total = (sessionStats.device_breakdown || []).reduce((s, r) => s + r.visits, 0) || 1;
+                          const total = (sessionStats.device_breakdown || []).reduce((s, r) => s + (r.unique_devices || r.visits), 0) || 1;
                           return (sessionStats.device_breakdown || []).map((r, i) => (
                             <div key={i}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
@@ -1049,11 +1049,11 @@ export default function AdminDashboard() {
                                   <span>{icons[r.device_type] || "•"}</span>{r.device_type}
                                 </span>
                                 <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#fff", fontFamily: "Space Mono, monospace" }}>
-                                  {r.visits} <span style={{ color: C.textMuted, fontWeight: 400 }}>({Math.round(r.visits/total*100)}%)</span>
+                                  {r.unique_devices || r.visits} <span style={{ color: C.textMuted, fontWeight: 400 }}>({Math.round((r.unique_devices || r.visits)/total*100)}%)</span>
                                 </span>
                               </div>
                               <div style={{ height: 4, background: C.textGhost, borderRadius: 2, overflow: "hidden" }}>
-                                <div style={{ height: "100%", width: `${r.visits/total*100}%`, background: colors[r.device_type] || C.blue, borderRadius: 2, transition: "width 0.6s" }} />
+                                <div style={{ height: "100%", width: `${(r.unique_devices || r.visits)/total*100}%`, background: colors[r.device_type] || C.blue, borderRadius: 2, transition: "width 0.6s" }} />
                               </div>
                             </div>
                           ));
