@@ -509,6 +509,7 @@ export default function AdminDashboard() {
   const [engagement, setEngagement] = useState(null);
   const [retention, setRetention] = useState(null);
   const [pageAnalytics, setPageAnalytics] = useState(null);
+  const [countryData, setCountryData] = useState([]);
   const [realtime, setRealtime] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -559,12 +560,14 @@ export default function AdminDashboard() {
 
   const loadEngagement = useCallback(async () => {
     try {
-      const [eng, ret, pa] = await Promise.all([
+      const [eng, ret, pa, countries] = await Promise.all([
         API.get("/admin/engagement", { headers }),
         API.get("/admin/retention", { headers }).catch(() => ({ data: { cohorts: [] } })),
         API.get("/admin/page-analytics", { headers }),
+        API.get("/admin/country-stats", { headers }).catch(() => ({ data: { countries: [] } })),
       ]);
       setEngagement(eng.data); setRetention(ret.data); setPageAnalytics(pa.data);
+      setCountryData(countries.data.countries || []);
     } catch (e) { console.error(e); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -969,6 +972,31 @@ export default function AdminDashboard() {
                   </ChartCard>
                 </div>
 
+                {countryData.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <ChartCard title="Visitors by Country" subtitle="Last 30 days — where your visitors come from">
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8, marginTop: 4 }}>
+                        {countryData.slice(0, 12).map((c, i) => {
+                          const maxVisits = countryData[0]?.visits || 1;
+                          return (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "rgba(255,255,255,0.02)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.04)" }}>
+                              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "rgba(255,255,255,0.2)", fontFamily: "Space Mono, monospace", minWidth: 18, textAlign: "right" }}>{i + 1}</span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                  <span style={{ fontSize: "0.76rem", color: "#fff", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.country}</span>
+                                  <span style={{ fontSize: "0.72rem", color: "#dc2626", fontWeight: 700, fontFamily: "Space Mono, monospace", flexShrink: 0, marginLeft: 6 }}>{fmt(c.visits)}</span>
+                                </div>
+                                <div style={{ height: 3, background: "rgba(255,255,255,0.08)", borderRadius: 2, overflow: "hidden" }}>
+                                  <div style={{ height: "100%", width: (c.visits / maxVisits * 100) + "%", background: "linear-gradient(90deg, rgba(220,38,38,0.6), #dc2626)", borderRadius: 2, transition: "width 0.6s ease" }} />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ChartCard>
+                  </div>
+                )}
                 {pageAnalytics && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     <ChartCard title="Top Pages" subtitle="Most visited — last 30 days">
@@ -1133,6 +1161,7 @@ export default function AdminDashboard() {
                         <span style={{ width: 5, height: 5, borderRadius: "50%", background: C.green, flexShrink: 0 }} />
                         <span style={{ fontSize: "0.74rem", color: C.textDim, fontFamily: "'Space Mono', monospace", minWidth: 50 }}>{h.page}</span>
                         <span style={{ flex: 1, fontSize: "0.66rem", color: C.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.ip}</span>
+                        {h.country && h.country !== "Unknown" && <span style={{ fontSize: "0.62rem", color: "#3b82f6", fontFamily: "Space Mono, monospace", flexShrink: 0 }}>{h.country}</span>}
                         <span style={{ fontSize: "0.62rem", color: C.textMuted, fontFamily: "'Space Mono', monospace", flexShrink: 0 }}>{fmtTime(h.visited_at)}</span>
                       </div>
                     ))}
