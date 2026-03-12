@@ -23,34 +23,41 @@ function PrivateRoute({ children }) {
   return token ? children : <Navigate to="/login" />;
 }
 
+/* ─── Stable device fingerprint ─── */
+function getDeviceId() {
+  const KEY = "hb_did";
+  let id = localStorage.getItem(KEY);
+  if (!id || id.length < 8) {
+    id = "d_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
+function getSessionId() {
+  const KEY = "hb_sid";
+  let id = sessionStorage.getItem(KEY);
+  if (!id || id.length < 8) {
+    id = "s_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    sessionStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
 function PageTracker() {
   const location = useLocation();
   const lastTracked = useRef(null);
-
-  const sessionId = useRef(
-    sessionStorage.getItem("hb_sid") || (() => {
-      const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      sessionStorage.setItem("hb_sid", id);
-      return id;
-    })()
-  );
-
-  const deviceId = useRef(
-    localStorage.getItem("hb_did") || (() => {
-      const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem("hb_did", id);
-      return id;
-    })()
-  );
-
+  const sessionId = useRef(getSessionId());
+  const deviceId = useRef(getDeviceId());
   const pageEntryTime = useRef(Date.now());
 
   useEffect(() => {
     const page = location.pathname;
     if (page === lastTracked.current) return;
 
+    /* ── Send time-on-page for PREVIOUS page ── */
     const timeSpent = Math.round((Date.now() - pageEntryTime.current) / 1000);
-    if (lastTracked.current) {
+    if (lastTracked.current && timeSpent > 0) {
       API.post("/auth/track", {
         page: lastTracked.current,
         session_id: sessionId.current,
@@ -60,6 +67,7 @@ function PageTracker() {
       }).catch(() => {});
     }
 
+    /* ── Track entry to NEW page ── */
     pageEntryTime.current = Date.now();
     lastTracked.current = page;
     API.post("/auth/track", {
@@ -71,20 +79,22 @@ function PageTracker() {
     }).catch(() => {});
   }, [location.pathname]);
 
+  /* ── Beacon on tab close (proper JSON Blob so Flask parses it) ── */
   useEffect(() => {
     const handleUnload = () => {
       const timeSpent = Math.round((Date.now() - pageEntryTime.current) / 1000);
       if (lastTracked.current && timeSpent > 2) {
-        navigator.sendBeacon(
-          "/api-backend/auth/track",
-          JSON.stringify({
+        const blob = new Blob(
+          [JSON.stringify({
             page: lastTracked.current,
             session_id: sessionId.current,
             device_id: deviceId.current,
             referrer: document.referrer || "",
             time_on_page: timeSpent,
-          })
+          })],
+          { type: "application/json" }
         );
+        navigator.sendBeacon("/api-backend/auth/track", blob);
       }
     };
     window.addEventListener("beforeunload", handleUnload);
