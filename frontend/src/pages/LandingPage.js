@@ -200,7 +200,9 @@ function LandingPage() {
   }, [prompt]);
 
   useEffect(() => {
-    API.post("/admin/track", { page: "/" }).catch(() => {});
+    if (!localStorage.getItem("is_admin_device")) {
+      API.post("/admin/track", { page: "/" }).catch(() => {});
+    }
   }, []);
 
   const handleSend = (text) => {
