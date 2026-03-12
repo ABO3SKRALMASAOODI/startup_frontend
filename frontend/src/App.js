@@ -58,7 +58,7 @@ function PageTracker() {
     /* ── Send time-on-page for PREVIOUS page ── */
     const timeSpent = Math.round((Date.now() - pageEntryTime.current) / 1000);
     if (lastTracked.current && timeSpent > 0) {
-      API.post("/auth/track", {
+      API.post("/admin/track", {
         page: lastTracked.current,
         session_id: sessionId.current,
         device_id: deviceId.current,
@@ -70,7 +70,7 @@ function PageTracker() {
     /* ── Track entry to NEW page ── */
     pageEntryTime.current = Date.now();
     lastTracked.current = page;
-    API.post("/auth/track", {
+    API.post("/admin/track", {
       page,
       session_id: sessionId.current,
       device_id: deviceId.current,
@@ -94,7 +94,7 @@ function PageTracker() {
           })],
           { type: "application/json" }
         );
-        navigator.sendBeacon("/api-backend/auth/track", blob);
+        navigator.sendBeacon("/api-backend/admin/track", blob);
       }
     };
     window.addEventListener("beforeunload", handleUnload);
