@@ -511,6 +511,7 @@ export default function AdminDashboard() {
   const [pageAnalytics, setPageAnalytics] = useState(null);
   const [countryData, setCountryData] = useState([]);
   const [realtime, setRealtime] = useState(null);
+  const [sessionStats, setSessionStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -580,6 +581,14 @@ export default function AdminDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loadSessionStats = useCallback(async () => {
+    try {
+      const res = await API.get("/admin/session-stats", { headers });
+      setSessionStats(res.data);
+    } catch (e) { console.error(e); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const loadUsers = useCallback(async () => {
     try {
       const res = await API.get(`/admin/users?page=${userPage}&search=${userSearch}`, { headers });
@@ -600,7 +609,7 @@ export default function AdminDashboard() {
   useEffect(() => { loadOverview(); }, [loadOverview]);
   useEffect(() => { if (activeTab === "revenue") loadRevenue(); }, [activeTab, loadRevenue]);
   useEffect(() => { if (activeTab === "engine") loadEngine(); }, [activeTab, loadEngine]);
-  useEffect(() => { if (activeTab === "engagement") loadEngagement(); }, [activeTab, loadEngagement]);
+  useEffect(() => { if (activeTab === "engagement") { loadEngagement(); loadSessionStats(); } }, [activeTab, loadEngagement, loadSessionStats]);
   useEffect(() => { if (activeTab === "live") loadRealtime(); }, [activeTab, loadRealtime]);
   useEffect(() => { if (activeTab === "users") loadUsers(); }, [activeTab, userPage, userSearch, loadUsers]);
   useEffect(() => { if (activeTab === "jobs") loadJobs(); }, [activeTab, jobPage, jobFilter, loadJobs]);
@@ -997,6 +1006,98 @@ export default function AdminDashboard() {
                     </ChartCard>
                   </div>
                 )}
+                {sessionStats && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 10 }}>
+                    {/* Referrer Sources */}
+                    <ChartCard title="Traffic Sources" subtitle="Last 30 days — how visitors found you">
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                        {(() => {
+                          const colors = { direct: C.blue, search: C.green, social: C.pink, referral: C.amber, internal: C.purple };
+                          const icons = { direct: "⌨", search: "🔍", social: "📱", referral: "🔗", internal: "↩" };
+                          const total = (sessionStats.referrer_breakdown || []).reduce((s, r) => s + r.visits, 0) || 1;
+                          return (sessionStats.referrer_breakdown || []).map((r, i) => (
+                            <div key={i}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                                <span style={{ fontSize: "0.76rem", color: C.textDim, display: "flex", alignItems: "center", gap: 6 }}>
+                                  <span>{icons[r.referrer_source] || "•"}</span>{r.referrer_source}
+                                </span>
+                                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#fff", fontFamily: "Space Mono, monospace" }}>
+                                  {r.visits} <span style={{ color: C.textMuted, fontWeight: 400 }}>({Math.round(r.visits/total*100)}%)</span>
+                                </span>
+                              </div>
+                              <div style={{ height: 4, background: C.textGhost, borderRadius: 2, overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${r.visits/total*100}%`, background: colors[r.referrer_source] || C.blue, borderRadius: 2, transition: "width 0.6s" }} />
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                        {!sessionStats.referrer_breakdown?.length && <div style={{ color: C.textMuted, fontSize: "0.8rem", textAlign: "center", padding: 20 }}>No data yet</div>}
+                      </div>
+                    </ChartCard>
+
+                    {/* Device Breakdown */}
+                    <ChartCard title="Devices" subtitle="Last 30 days">
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                        {(() => {
+                          const colors = { desktop: C.blue, mobile: C.green, tablet: C.amber };
+                          const icons = { desktop: "🖥", mobile: "📱", tablet: "📟" };
+                          const total = (sessionStats.device_breakdown || []).reduce((s, r) => s + r.visits, 0) || 1;
+                          return (sessionStats.device_breakdown || []).map((r, i) => (
+                            <div key={i}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                                <span style={{ fontSize: "0.76rem", color: C.textDim, display: "flex", alignItems: "center", gap: 6 }}>
+                                  <span>{icons[r.device_type] || "•"}</span>{r.device_type}
+                                </span>
+                                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#fff", fontFamily: "Space Mono, monospace" }}>
+                                  {r.visits} <span style={{ color: C.textMuted, fontWeight: 400 }}>({Math.round(r.visits/total*100)}%)</span>
+                                </span>
+                              </div>
+                              <div style={{ height: 4, background: C.textGhost, borderRadius: 2, overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${r.visits/total*100}%`, background: colors[r.device_type] || C.blue, borderRadius: 2, transition: "width 0.6s" }} />
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                        {!sessionStats.device_breakdown?.length && <div style={{ color: C.textMuted, fontSize: "0.8rem", textAlign: "center", padding: 20 }}>No data yet</div>}
+                        <div style={{ borderTop: `1px solid ${C.cardBorder}`, marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                          <div style={{ textAlign: "center", flex: 1 }}>
+                            <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#fff" }}>{sessionStats.avg_session_duration}s</div>
+                            <div style={{ fontSize: "0.62rem", color: C.textMuted, marginTop: 2 }}>Avg session</div>
+                          </div>
+                          <div style={{ textAlign: "center", flex: 1 }}>
+                            <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "#fff" }}>{sessionStats.avg_pages_per_session}</div>
+                            <div style={{ fontSize: "0.62rem", color: C.textMuted, marginTop: 2 }}>Pages/session</div>
+                          </div>
+                        </div>
+                      </div>
+                    </ChartCard>
+
+                    {/* Browser Breakdown */}
+                    <ChartCard title="Browsers" subtitle="Last 30 days">
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                        {(() => {
+                          const colors = { Chrome: C.blue, Safari: C.amber, Firefox: C.orange, Edge: C.teal, Opera: C.red, Other: "#555" };
+                          const total = (sessionStats.browser_breakdown || []).reduce((s, r) => s + r.visits, 0) || 1;
+                          return (sessionStats.browser_breakdown || []).map((r, i) => (
+                            <div key={i}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                                <span style={{ fontSize: "0.76rem", color: C.textDim }}>{r.browser}</span>
+                                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#fff", fontFamily: "Space Mono, monospace" }}>
+                                  {r.visits} <span style={{ color: C.textMuted, fontWeight: 400 }}>({Math.round(r.visits/total*100)}%)</span>
+                                </span>
+                              </div>
+                              <div style={{ height: 4, background: C.textGhost, borderRadius: 2, overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${r.visits/total*100}%`, background: colors[r.browser] || "#555", borderRadius: 2, transition: "width 0.6s" }} />
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                        {!sessionStats.browser_breakdown?.length && <div style={{ color: C.textMuted, fontSize: "0.8rem", textAlign: "center", padding: 20 }}>No data yet</div>}
+                      </div>
+                    </ChartCard>
+                  </div>
+                )}
+
                 {pageAnalytics && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     <ChartCard title="Top Pages" subtitle="Most visited — last 30 days">
