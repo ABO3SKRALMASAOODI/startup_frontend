@@ -1019,7 +1019,7 @@ export default function AdminDashboard() {
                         {(() => {
                           const colors = { direct: C.blue, search: C.green, social: C.pink, referral: C.amber, internal: C.purple };
                           const icons = { direct: "⌨", search: "🔍", social: "📱", referral: "🔗", internal: "↩" };
-                          const total = (sessionStats.referrer_breakdown || []).reduce((s, r) => s + r.visits, 0) || 1;
+                          const total = (sessionStats.referrer_breakdown || []).reduce((s, r) => s + (r.unique_visitors || r.visits), 0) || 1;
                           return (sessionStats.referrer_breakdown || []).map((r, i) => (
                             <div key={i}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
@@ -1027,11 +1027,11 @@ export default function AdminDashboard() {
                                   <span>{icons[r.referrer_source] || "•"}</span>{r.referrer_source}
                                 </span>
                                 <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#fff", fontFamily: "Space Mono, monospace" }}>
-                                  {r.visits} <span style={{ color: C.textMuted, fontWeight: 400 }}>({Math.round(r.visits/total*100)}%)</span>
+                                  {r.unique_visitors || r.visits} <span style={{ color: C.textMuted, fontWeight: 400 }}>({Math.round((r.unique_visitors || r.visits)/total*100)}%)</span>
                                 </span>
                               </div>
                               <div style={{ height: 4, background: C.textGhost, borderRadius: 2, overflow: "hidden" }}>
-                                <div style={{ height: "100%", width: `${r.visits/total*100}%`, background: colors[r.referrer_source] || C.blue, borderRadius: 2, transition: "width 0.6s" }} />
+                                <div style={{ height: "100%", width: `${(r.unique_visitors || r.visits)/total*100}%`, background: colors[r.referrer_source] || C.blue, borderRadius: 2, transition: "width 0.6s" }} />
                               </div>
                             </div>
                           ));
@@ -1082,17 +1082,17 @@ export default function AdminDashboard() {
                       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
                         {(() => {
                           const colors = { Chrome: C.blue, Safari: C.amber, Firefox: C.orange, Edge: C.teal, Opera: C.red, Other: "#555" };
-                          const total = (sessionStats.browser_breakdown || []).reduce((s, r) => s + r.visits, 0) || 1;
+                          const total = (sessionStats.browser_breakdown || []).reduce((s, r) => s + (r.unique_visitors || r.visits), 0) || 1;
                           return (sessionStats.browser_breakdown || []).map((r, i) => (
                             <div key={i}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
                                 <span style={{ fontSize: "0.76rem", color: C.textDim }}>{r.browser}</span>
                                 <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#fff", fontFamily: "Space Mono, monospace" }}>
-                                  {r.visits} <span style={{ color: C.textMuted, fontWeight: 400 }}>({Math.round(r.visits/total*100)}%)</span>
+                                  {r.unique_visitors || r.visits} <span style={{ color: C.textMuted, fontWeight: 400 }}>({Math.round((r.unique_visitors || r.visits)/total*100)}%)</span>
                                 </span>
                               </div>
                               <div style={{ height: 4, background: C.textGhost, borderRadius: 2, overflow: "hidden" }}>
-                                <div style={{ height: "100%", width: `${r.visits/total*100}%`, background: colors[r.browser] || "#555", borderRadius: 2, transition: "width 0.6s" }} />
+                                <div style={{ height: "100%", width: `${(r.unique_visitors || r.visits)/total*100}%`, background: colors[r.browser] || "#555", borderRadius: 2, transition: "width 0.6s" }} />
                               </div>
                             </div>
                           ));
