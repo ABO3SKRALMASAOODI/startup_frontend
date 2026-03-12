@@ -2037,7 +2037,7 @@ export default function Studio() {
               </button>
             )}
 
-            {currentJobId && !isRunning && (
+            {(
               <button
                 onClick={() => {
                   const project = projects.find(p => p.job_id === currentJobId);
