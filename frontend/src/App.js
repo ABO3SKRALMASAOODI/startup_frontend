@@ -1,5 +1,6 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect, useRef } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import API from "./api/api";
 import SignIn from "./pages/SignIn";
 import Legal from "./pages/legal";
 import VerifyCode from "./pages/VerifyCode";
@@ -22,28 +23,45 @@ function PrivateRoute({ children }) {
   return token ? children : <Navigate to="/login" />;
 }
 
+function PageTracker() {
+  const location = useLocation();
+  const lastTracked = useRef(null);
+
+  useEffect(() => {
+    const page = location.pathname;
+    if (page === lastTracked.current) return;
+    lastTracked.current = page;
+    API.post("/auth/track", { page }).catch(() => {});
+  }, [location.pathname]);
+
+  return null;
+}
+
 function App() {
   const token = localStorage.getItem("token");
   return (
-    <Routes>
-      <Route path="/" element={token ? <Navigate to="/studio" /> : <LandingPage />} />
-      <Route path="/home" element={<LandingPage />} />
-      <Route path="/login" element={<SignIn />} />
-      <Route path="/enter-password" element={<EnterPassword />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/verify" element={<VerifyCode />} />
-      <Route path="/change-password" element={<ChangePassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/account" element={<PrivateRoute><Account /></PrivateRoute>} />
-      <Route path="/legal" element={<Legal />} />
-      <Route path="/paddle-checkout" element={<PaddleCheckoutPage />} />
-      <Route path="/subscribe" element={<SubscribePage />} />
-      <Route path="/studio" element={<PrivateRoute><Studio /></PrivateRoute>} />
-      <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
-      <Route path="/templates" element={<TemplatesPage />} />
-      <Route path="/purchase-success" element={<PurchaseSuccess />} />
-      <Route path="/github-callback" element={<GithubCallback />} />
-    </Routes>
+    <>
+      <PageTracker />
+      <Routes>
+        <Route path="/" element={token ? <Navigate to="/studio" /> : <LandingPage />} />
+        <Route path="/home" element={<LandingPage />} />
+        <Route path="/login" element={<SignIn />} />
+        <Route path="/enter-password" element={<EnterPassword />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify" element={<VerifyCode />} />
+        <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/account" element={<PrivateRoute><Account /></PrivateRoute>} />
+        <Route path="/legal" element={<Legal />} />
+        <Route path="/paddle-checkout" element={<PaddleCheckoutPage />} />
+        <Route path="/subscribe" element={<SubscribePage />} />
+        <Route path="/studio" element={<PrivateRoute><Studio /></PrivateRoute>} />
+        <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+        <Route path="/templates" element={<TemplatesPage />} />
+        <Route path="/purchase-success" element={<PurchaseSuccess />} />
+        <Route path="/github-callback" element={<GithubCallback />} />
+      </Routes>
+    </>
   );
 }
 
