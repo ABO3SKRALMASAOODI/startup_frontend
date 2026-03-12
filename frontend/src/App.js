@@ -14,7 +14,7 @@ import SubscribePage from "./pages/SubscribePage";
 import Studio from "./pages/Studio";
 import AdminDashboard from "./pages/AdminDashboard";
 import TemplatesPage from "./pages/TemplatesPage";
-
+import PurchaseSuccess from "./pages/PurchaseSuccess";
 
 
 function PrivateRoute({ children }) {
@@ -41,6 +41,7 @@ function App() {
       <Route path="/studio" element={<PrivateRoute><Studio /></PrivateRoute>} />
       <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
       <Route path="/templates" element={<TemplatesPage />} />
+      <Route path="/purchase-success" element={<PurchaseSuccess />} />
 
     </Routes>
   );
