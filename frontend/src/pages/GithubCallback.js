@@ -47,7 +47,8 @@ export default function GithubCallback() {
         }));
 
         setStatus("Done! Redirecting...");
-        window.location.href = repoUrl;
+        window.open(repoUrl, "_blank");
+        navigate("/studio");
       } catch (err) {
         const msg = err?.response?.data?.error || "Something went wrong.";
         setError(msg);
