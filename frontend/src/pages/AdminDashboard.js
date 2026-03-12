@@ -687,7 +687,7 @@ export default function AdminDashboard() {
               <MetricCard label="MRR" value={fmtDollar(o.subscriptions?.mrr)} sub={`${fmt(o.subscriptions?.total)} subscribers`} accent={C.green} icon="💰" delay={50} />
               <MetricCard label="Jobs Today" value={fmt(o.jobs?.today)} sub={`${fmt(o.jobs?.total)} all time`} accent={C.amber} icon="⚡" delay={100} />
               <MetricCard label="Success Rate" value={fmtPct(o.jobs?.success_rate)} sub={`${fmt(o.jobs?.failed_today)} failed today`} accent={o.jobs?.success_rate >= 90 ? C.green : C.red} icon="✓" delay={150} />
-              <MetricCard label="Visits Today" value={fmt(o.visits?.today)} sub={`${fmt(o.visits?.week)} this week`} accent={C.purple} icon="👁" trend={o.visits?.trend_week} delay={200} />
+              <MetricCard label="Visits Today" value={fmt(o.visits?.unique_today ?? o.visits?.today)} sub={`${fmt(o.visits?.today)} views · ${fmt(o.visits?.unique_week ?? o.visits?.week)} unique/wk`} accent={C.purple} icon="👁" trend={o.visits?.trend_week} delay={200} />
             </div>
 
             {/* KPI Row 2 */}
@@ -714,15 +714,20 @@ export default function AdminDashboard() {
                 </ResponsiveContainer>
               </ChartCard>
 
-              <ChartCard title="Page Visits" subtitle="Last 30 days — total page views">
+              <ChartCard title="Page Visits" subtitle="Last 30 days — unique visitors vs total views">
                 <ResponsiveContainer width="100%" height={190}>
                   <AreaChart data={visChart}>
-                    <defs><linearGradient id="vG2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.purple} stopOpacity={0.15} /><stop offset="100%" stopColor={C.purple} stopOpacity={0} /></linearGradient></defs>
+                    <defs>
+                      <linearGradient id="vG2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.purple} stopOpacity={0.15} /><stop offset="100%" stopColor={C.purple} stopOpacity={0} /></linearGradient>
+                      <linearGradient id="vG3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.teal} stopOpacity={0.15} /><stop offset="100%" stopColor={C.teal} stopOpacity={0} /></linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
                     <XAxis dataKey="day" tick={axisTick} tickFormatter={fmtShortDay} />
                     <YAxis tick={axisTick} />
                     <Tooltip content={<ChartTooltip />} />
-                    <Area type="monotone" dataKey="count" name="Visits" stroke={C.purple} strokeWidth={2} fill="url(#vG2)" dot={false} />
+                    <Legend wrapperStyle={{ fontSize: "0.65rem", color: C.textMuted }} />
+                    <Area type="monotone" dataKey="count" name="Total Views" stroke={C.purple} strokeWidth={2} fill="url(#vG2)" dot={false} />
+                    <Area type="monotone" dataKey="unique_visitors" name="Unique Visitors" stroke={C.teal} strokeWidth={2} fill="url(#vG3)" dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </ChartCard>
@@ -993,7 +998,7 @@ export default function AdminDashboard() {
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                                   <span style={{ fontSize: "0.76rem", color: "#fff", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.country}</span>
-                                  <span style={{ fontSize: "0.72rem", color: "#dc2626", fontWeight: 700, fontFamily: "Space Mono, monospace", flexShrink: 0, marginLeft: 6 }}>{fmt(c.visits)}</span>
+                                  <span style={{ fontSize: "0.72rem", color: "#dc2626", fontWeight: 700, fontFamily: "Space Mono, monospace", flexShrink: 0, marginLeft: 6 }}>{fmt(c.unique_visitors ?? c.visits)} <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: 400, fontSize: "0.6rem" }}>/{fmt(c.visits)}</span></span>
                                 </div>
                                 <div style={{ height: 3, background: "rgba(255,255,255,0.08)", borderRadius: 2, overflow: "hidden" }}>
                                   <div style={{ height: "100%", width: (c.visits / maxVisits * 100) + "%", background: "linear-gradient(90deg, rgba(220,38,38,0.6), #dc2626)", borderRadius: 2, transition: "width 0.6s ease" }} />
@@ -1111,7 +1116,10 @@ export default function AdminDashboard() {
                               <div style={{ width: 80, height: 4, background: C.textGhost, borderRadius: 2, overflow: "hidden" }}>
                                 <div style={{ height: "100%", width: `${(p.views / maxViews) * 100}%`, background: C.red, borderRadius: 2 }} />
                               </div>
-                              <span style={{ fontSize: "0.72rem", color: "#fff", fontWeight: 700, fontFamily: "'Space Mono', monospace", minWidth: 40, textAlign: "right" }}>{fmt(p.views)}</span>
+                              <div style={{ textAlign: "right" }}>
+                                <div style={{ fontSize: "0.72rem", color: "#fff", fontWeight: 700, fontFamily: "'Space Mono', monospace" }}>{fmt(p.unique_visitors ?? p.views)}</div>
+                                <div style={{ fontSize: "0.58rem", color: C.textMuted, fontFamily: "'Space Mono', monospace" }}>{fmt(p.views)} views</div>
+                              </div>
                             </div>
                           );
                         })}
