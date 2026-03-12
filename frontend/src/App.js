@@ -15,7 +15,7 @@ import Studio from "./pages/Studio";
 import AdminDashboard from "./pages/AdminDashboard";
 import TemplatesPage from "./pages/TemplatesPage";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
-
+import GithubCallback from "./pages/GithubCallback";
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -42,7 +42,7 @@ function App() {
       <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
       <Route path="/templates" element={<TemplatesPage />} />
       <Route path="/purchase-success" element={<PurchaseSuccess />} />
-
+      <Route path="/github-callback" element={<GithubCallback />} />
     </Routes>
   );
 }
