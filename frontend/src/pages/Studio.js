@@ -221,12 +221,33 @@ const generateTitle = async (prompt) => {
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
 
-const generateProject = async (prompt, title, model) => {
+const generateProject = async (prompt, title, model, files = []) => {
+  if (files.length > 0) {
+    const fd = new FormData();
+    fd.append("prompt", prompt);
+    fd.append("title", title);
+    fd.append("model", model);
+    files.forEach(f => fd.append("files", f));
+    const res = await API.post("/auth/generate", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data.job_id;
+  }
   const res = await API.post("/auth/generate", { prompt, title, model });
   return res.data.job_id;
 };
 
-const sendFollowUp = async (jobId, message, model) => {
+const sendFollowUp = async (jobId, message, model, files = []) => {
+  if (files.length > 0) {
+    const fd = new FormData();
+    fd.append("message", message);
+    if (model) fd.append("model", model);
+    files.forEach(f => fd.append("files", f));
+    await API.post(`/auth/job/${jobId}/message`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return;
+  }
   await API.post(`/auth/job/${jobId}/message`, { message, model });
 };
 
@@ -609,6 +630,7 @@ const TIPS = [
   "Download your project anytime and deploy to Vercel or Netlify.",
   "The more detail you give, the better the result. Describe your vision.",
   "Ask for responsive design: \"Make sure it looks great on mobile.\"",
+  "Drop screenshots or images into the chat — the AI can see them and build from them.",
 ];
 
 function _syntaxColor(line) {
@@ -1268,6 +1290,11 @@ export default function Studio() {
   const [codeChanged,  setCodeChanged]  = useState(false);
   const [selectedModel, setSelectedModel] = useState("hb-6");
 
+  // File attachments for drag & drop
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+
   // NameModal
   const [showNameModal, setShowNameModal] = useState(
     localStorage.getItem("show_name_modal") === "1"
@@ -1497,6 +1524,31 @@ export default function Studio() {
 
   useEffect(() => () => stopPolling(), []);
 
+  // ── File attachment handlers ────────────────────────────────────────────
+  const ALLOWED_EXTENSIONS = ['png','jpg','jpeg','gif','webp','svg','pdf','txt','md','csv'];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+  const addFiles = (fileList) => {
+    const newFiles = Array.from(fileList).filter(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) return false;
+      if (f.size > MAX_FILE_SIZE) return false;
+      return true;
+    });
+    setAttachedFiles(prev => [...prev, ...newFiles].slice(0, 5));
+  };
+
+  const removeFile = (index) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+  const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
+  const handleDrop = (e) => {
+    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+    if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+  };
+
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleSendWithText = async (text) => {
@@ -1509,8 +1561,11 @@ export default function Studio() {
       setCodeChanged(false);
       setMessages([{ role: "user", content: text }]);
 
+      const filesToSend = [...attachedFiles];
+      setAttachedFiles([]);
+
       const [jobId, smartTitle] = await Promise.all([
-        generateProject(text, "", selectedModel),
+        generateProject(text, "", selectedModel, filesToSend),
         generateTitle(text),
       ]);
 
@@ -1533,18 +1588,21 @@ export default function Studio() {
   const handleSend = async (e) => {
     e.preventDefault();
     const text = prompt.trim();
-    if (!text || state === "running") return;
+    if (!text && attachedFiles.length === 0) return;
+    if (state === "running") return;
     setPrompt(""); setError("");
     try {
       if (!currentJobId) {
-        await handleSendWithText(text);
+        await handleSendWithText(text || "Build based on the attached files");
       } else {
         setState("running");
         setProgress([]);
         setThinkingText("");
         setCodeChanged(false);
-        setMessages(prev => [...prev, { role: "user", content: text }]);
-        await sendFollowUp(currentJobId, text, selectedModel);
+        setMessages(prev => [...prev, { role: "user", content: text || "(attached files)" }]);
+        const filesToSend = [...attachedFiles];
+        setAttachedFiles([]);
+        await sendFollowUp(currentJobId, text || "See the attached files", selectedModel, filesToSend);
         startPolling(currentJobId);
       }
     } catch (err) {
@@ -1561,6 +1619,7 @@ export default function Studio() {
     setCodeChanged(false);
     setState("idle"); setPrompt(""); setError("");
     setSelectedModel(userPlan === "free" ? "hb-6" : "hb-6");
+    setAttachedFiles([]);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -1571,6 +1630,7 @@ export default function Studio() {
     setError("");
     setPreviewError(false);
     setMessages([]);
+    setAttachedFiles([]);
 
     const safePreviewUrl = _getSafePreviewUrl(project.preview_url, project.job_id);
     setPreviewUrl(safePreviewUrl);
@@ -1633,7 +1693,7 @@ export default function Studio() {
     fetchProjects().then(jobs => setProjects(jobs)).catch(() => {});
   };
 
-  const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
+  const placeholder = currentJobId ? "Ask for changes... (drop images here)" : "Describe your app... (drop screenshots or images here)";
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -1714,7 +1774,7 @@ export default function Studio() {
               </div>
               <p style={{ color: "#fff", fontSize: "0.95rem", fontWeight: 600, marginBottom: "6px" }}>The Hustler Bot</p>
               <p style={{ color: "#444", fontSize: "0.82rem", maxWidth: "220px", lineHeight: 1.6 }}>
-                Describe an app and I'll build it for you in seconds.
+                Describe an app and I'll build it for you in seconds. Drop images or screenshots for reference.
               </p>
             </div>
           )}
@@ -1865,88 +1925,182 @@ export default function Studio() {
         <div style={{ padding: "10px", borderTop: "1px solid #111", background: "#000", flexShrink: 0 }}>
           <div
             className="input-wrap"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
             style={{
               display: "flex",
-              alignItems: "flex-end",
+              flexDirection: "column",
               gap: "8px",
-              background: "#0a0a0a",
-              border: "1px solid #1a1a1a",
+              background: isDragging ? "rgba(140,0,0,0.08)" : "#0a0a0a",
+              border: isDragging ? "1px dashed #8b0000" : "1px solid #1a1a1a",
               borderRadius: "14px",
               padding: "10px",
               transition: "all 0.2s",
+              position: "relative",
             }}
           >
-            <textarea
-              ref={inputRef}
-              value={prompt}
-              onChange={e => {
-                setPrompt(e.target.value);
-                const el = e.target;
-                el.style.height = "auto";
-                el.style.height = Math.min(el.scrollHeight, 160) + "px";
-              }}
-              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(e); } }}
-              placeholder={placeholder}
-              rows={2}
-              disabled={isRunning}
-              style={{
-                flex: 1,
-                background: "transparent",
-                color: "#fff",
-                border: "none",
-                outline: "none",
-                fontSize: "0.87rem",
-                resize: "none",
-                fontFamily: "Inter, Segoe UI, sans-serif",
-                lineHeight: 1.5,
-                maxHeight: "160px",
-                minHeight: "44px",
-                overflowY: "auto",
-                opacity: isRunning ? 0.4 : 1,
-                padding: "0",
-                margin: "0",
-                display: "block",
-                verticalAlign: "middle",
-              }}
-            />
-            {isRunning ? (
-              <button
-                onClick={handleStop}
-                title="Stop generation"
-                style={{
-                  width: "34px", height: "34px",
-                  borderRadius: "10px", border: "none",
-                  background: "linear-gradient(135deg, #cc0000, #8b0000)",
-                  color: "#fff", fontSize: "0.75rem",
-                  cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
-                  boxShadow: "0 0 12px rgba(180,0,0,0.5)",
-                  transition: "all 0.2s",
-                }}
-              >
-                ■
-              </button>
-            ) : (
-              <button
-                onClick={handleSend}
-                disabled={!prompt.trim()}
-                style={{
-                  width: "34px", height: "34px",
-                  borderRadius: "10px", border: "none",
-                  background: !prompt.trim() ? "#1a1a1a" : "linear-gradient(135deg, #cc0000, #8b0000)",
-                  color: !prompt.trim() ? "#333" : "#fff",
-                  fontSize: "0.95rem",
-                  cursor: !prompt.trim() ? "default" : "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
-                  boxShadow: !prompt.trim() ? "none" : "0 0 12px rgba(180,0,0,0.4)",
-                  transition: "all 0.2s",
-                }}
-              >
-                ➤
-              </button>
+            {/* Drag overlay */}
+            {isDragging && (
+              <div style={{
+                position: "absolute", inset: 0, borderRadius: "14px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(0,0,0,0.5)", zIndex: 10,
+                pointerEvents: "none",
+              }}>
+                <span style={{ color: "#cc0000", fontSize: "0.85rem", fontWeight: 600 }}>
+                  Drop files here
+                </span>
+              </div>
             )}
+
+            {/* File previews */}
+            {attachedFiles.length > 0 && (
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", paddingBottom: "4px" }}>
+                {attachedFiles.map((f, i) => {
+                  const isImage = f.type.startsWith("image/");
+                  return (
+                    <div key={i} style={{
+                      position: "relative",
+                      background: "#111", border: "1px solid #222",
+                      borderRadius: "8px", padding: "4px 8px",
+                      display: "flex", alignItems: "center", gap: "6px",
+                      maxWidth: "160px",
+                    }}>
+                      {isImage ? (
+                        <img
+                          src={URL.createObjectURL(f)}
+                          alt={f.name}
+                          style={{ width: "28px", height: "28px", borderRadius: "4px", objectFit: "cover" }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: "1rem" }}>📄</span>
+                      )}
+                      <span style={{
+                        fontSize: "0.68rem", color: "#888",
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        maxWidth: "90px",
+                      }}>
+                        {f.name}
+                      </span>
+                      <button
+                        onClick={() => removeFile(i)}
+                        style={{
+                          background: "none", border: "none", color: "#555",
+                          cursor: "pointer", fontSize: "0.8rem", padding: "0 2px",
+                          lineHeight: 1, flexShrink: 0,
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Input row */}
+            <div style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
+              {/* Paperclip / attach button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isRunning}
+                style={{
+                  background: "none", border: "none",
+                  color: attachedFiles.length > 0 ? "#cc0000" : "#333",
+                  cursor: isRunning ? "default" : "pointer",
+                  fontSize: "1.1rem", padding: "4px",
+                  flexShrink: 0, opacity: isRunning ? 0.3 : 1,
+                  transition: "color 0.2s",
+                  display: "flex", alignItems: "center",
+                }}
+                title="Attach files (images, PDFs, text)"
+                onMouseEnter={e => { if (!isRunning) e.currentTarget.style.color = "#cc0000"; }}
+                onMouseLeave={e => { if (!isRunning) e.currentTarget.style.color = attachedFiles.length > 0 ? "#cc0000" : "#333"; }}
+              >
+                📎
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.txt,.md,.csv"
+                style={{ display: "none" }}
+                onChange={e => { if (e.target.files?.length) { addFiles(e.target.files); e.target.value = ""; } }}
+              />
+
+              <textarea
+                ref={inputRef}
+                value={prompt}
+                onChange={e => {
+                  setPrompt(e.target.value);
+                  const el = e.target;
+                  el.style.height = "auto";
+                  el.style.height = Math.min(el.scrollHeight, 160) + "px";
+                }}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(e); } }}
+                placeholder={placeholder}
+                rows={2}
+                disabled={isRunning}
+                style={{
+                  flex: 1,
+                  background: "transparent",
+                  color: "#fff",
+                  border: "none",
+                  outline: "none",
+                  fontSize: "0.87rem",
+                  resize: "none",
+                  fontFamily: "Inter, Segoe UI, sans-serif",
+                  lineHeight: 1.5,
+                  maxHeight: "160px",
+                  minHeight: "44px",
+                  overflowY: "auto",
+                  opacity: isRunning ? 0.4 : 1,
+                  padding: "0",
+                  margin: "0",
+                  display: "block",
+                  verticalAlign: "middle",
+                }}
+              />
+              {isRunning ? (
+                <button
+                  onClick={handleStop}
+                  title="Stop generation"
+                  style={{
+                    width: "34px", height: "34px",
+                    borderRadius: "10px", border: "none",
+                    background: "linear-gradient(135deg, #cc0000, #8b0000)",
+                    color: "#fff", fontSize: "0.75rem",
+                    cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                    boxShadow: "0 0 12px rgba(180,0,0,0.5)",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  ■
+                </button>
+              ) : (
+                <button
+                  onClick={handleSend}
+                  disabled={!prompt.trim() && attachedFiles.length === 0}
+                  style={{
+                    width: "34px", height: "34px",
+                    borderRadius: "10px", border: "none",
+                    background: (!prompt.trim() && attachedFiles.length === 0) ? "#1a1a1a" : "linear-gradient(135deg, #cc0000, #8b0000)",
+                    color: (!prompt.trim() && attachedFiles.length === 0) ? "#333" : "#fff",
+                    fontSize: "0.95rem",
+                    cursor: (!prompt.trim() && attachedFiles.length === 0) ? "default" : "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                    boxShadow: (!prompt.trim() && attachedFiles.length === 0) ? "none" : "0 0 12px rgba(180,0,0,0.4)",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  ➤
+                </button>
+              )}
+            </div>
           </div>
 
           {/* ── Model selector + hint below the input box ── */}
