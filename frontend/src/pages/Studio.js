@@ -1293,7 +1293,9 @@ export default function Studio() {
   // File attachments for drag & drop
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [showPlusMenu, setShowPlusMenu] = useState(false);
   const fileInputRef = useRef(null);
+  const plusMenuRef = useRef(null);
 
   // NameModal
   const [showNameModal, setShowNameModal] = useState(
@@ -1548,6 +1550,16 @@ export default function Studio() {
     e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
   };
+
+  // Close plus menu on click outside
+  useEffect(() => {
+    if (!showPlusMenu) return;
+    const handler = (e) => {
+      if (plusMenuRef.current && !plusMenuRef.current.contains(e.target)) setShowPlusMenu(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showPlusMenu]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -2019,41 +2031,8 @@ export default function Studio() {
               </div>
             )}
 
-            {/* Input row */}
+            {/* Textarea + send button */}
             <div style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
-              {/* Paperclip / attach button */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isRunning}
-                style={{
-                  background: "none",
-                  border: `1px solid ${attachedFiles.length > 0 ? "rgba(200,0,0,0.4)" : "#222"}`,
-                  color: attachedFiles.length > 0 ? "#cc0000" : "#444",
-                  cursor: isRunning ? "default" : "pointer",
-                  fontSize: "1rem", padding: "0",
-                  width: "28px", height: "28px",
-                  borderRadius: "50%",
-                  flexShrink: 0, opacity: isRunning ? 0.3 : 1,
-                  transition: "all 0.2s",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontWeight: 300,
-                  lineHeight: 1,
-                }}
-                title="Attach files"
-                onMouseEnter={e => { if (!isRunning) { e.currentTarget.style.color = "#cc0000"; e.currentTarget.style.borderColor = "rgba(200,0,0,0.4)"; } }}
-                onMouseLeave={e => { if (!isRunning) { e.currentTarget.style.color = attachedFiles.length > 0 ? "#cc0000" : "#444"; e.currentTarget.style.borderColor = attachedFiles.length > 0 ? "rgba(200,0,0,0.4)" : "#222"; } }}
-              >
-                +
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.txt,.md,.csv"
-                style={{ display: "none" }}
-                onChange={e => { if (e.target.files?.length) { addFiles(e.target.files); e.target.value = ""; } }}
-              />
-
               <textarea
                 ref={inputRef}
                 value={prompt}
@@ -2125,6 +2104,87 @@ export default function Studio() {
                   ➤
                 </button>
               )}
+            </div>
+
+            {/* Bottom row: + button (left) */}
+            <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
+              <div ref={plusMenuRef} style={{ position: "relative" }}>
+                <button
+                  onClick={() => setShowPlusMenu(v => !v)}
+                  disabled={isRunning}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: showPlusMenu ? "#cc0000" : "#444",
+                    cursor: isRunning ? "default" : "pointer",
+                    fontSize: "1.15rem",
+                    padding: "2px 6px",
+                    flexShrink: 0,
+                    opacity: isRunning ? 0.3 : 1,
+                    transition: "color 0.15s",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 300,
+                    lineHeight: 1,
+                  }}
+                  title="More options"
+                  onMouseEnter={e => { if (!isRunning) e.currentTarget.style.color = "#cc0000"; }}
+                  onMouseLeave={e => { if (!isRunning && !showPlusMenu) e.currentTarget.style.color = "#444"; }}
+                >
+                  +
+                </button>
+
+                {/* Popup menu */}
+                {showPlusMenu && (
+                  <div style={{
+                    position: "absolute",
+                    bottom: "calc(100% + 6px)",
+                    left: 0,
+                    background: "#111",
+                    border: "1px solid #222",
+                    borderRadius: "10px",
+                    padding: "4px",
+                    minWidth: "160px",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.7)",
+                    zIndex: 50,
+                    animation: "fadeSlideIn 0.15s ease forwards",
+                  }}>
+                    <button
+                      onClick={() => {
+                        setShowPlusMenu(false);
+                        fileInputRef.current?.click();
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex", alignItems: "center", gap: "8px",
+                        padding: "8px 12px",
+                        background: "transparent",
+                        border: "none",
+                        borderRadius: "8px",
+                        color: "#aaa",
+                        fontSize: "0.78rem",
+                        cursor: "pointer",
+                        transition: "all 0.12s",
+                        textAlign: "left",
+                        fontFamily: "Inter, Segoe UI, sans-serif",
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = "rgba(140,0,0,0.1)"; e.currentTarget.style.color = "#fff"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#aaa"; }}
+                    >
+                      <span style={{ fontSize: "0.85rem", width: "20px", textAlign: "center" }}>📎</span>
+                      Attach files
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.txt,.md,.csv"
+                style={{ display: "none" }}
+                onChange={e => { if (e.target.files?.length) { addFiles(e.target.files); e.target.value = ""; } }}
+              />
             </div>
           </div>
 
