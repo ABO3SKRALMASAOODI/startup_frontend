@@ -16,6 +16,7 @@ const GLOBAL_STYLES = `
   @keyframes buildingDot  { 0%,80%,100%{transform:scale(0.6);opacity:0.3} 40%{transform:scale(1);opacity:1} }
   @keyframes fadeSlideIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
   @keyframes shimmer     { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  @keyframes pubDropIn   { from{opacity:0;transform:translateY(-6px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
 
   .chat-window::-webkit-scrollbar { width: 4px; }
   .chat-window::-webkit-scrollbar-track { background: transparent; }
@@ -1251,12 +1252,799 @@ const DS = {
 // ─── Safe preview URL ─────────────────────────────────────────────────────────
 function _getSafePreviewUrl(url, jobId) {
   if (!url && !jobId) return null;
-  if (url && /^http:\/\/127\.0\.0\.1:\d+$/.test(url)) {
-    return null;
-  }
+  if (url && /^http:\/\/127\.0\.0\.1:\d+$/.test(url)) return null;
   if (url) return url;
   return null;
 }
+
+// ─── Publish Popover ──────────────────────────────────────────────────────────
+// Styled to match ModelSelector: dark panel, same animation, JetBrains Mono font.
+
+function PublishPopover({
+  jobId,
+  previewUrl,
+  publishedUrl,
+  hasChanges,          // true when project has been edited since last publish
+  isRunning,
+  onPublishSuccess,    // (url) => void
+}) {
+  const [open,           setOpen]          = useState(false);
+  const [view,           setView]          = useState("main");    // "main" | "change_domain"
+  const [publishing,     setPublishing]    = useState(false);
+  const [newName,        setNewName]       = useState("");
+  const [nameError,      setNameError]     = useState("");
+  const [popoverError,   setPopoverError]  = useState("");
+  const [domainTimer,    setDomainTimer]   = useState(0);   // seconds countdown after domain change
+  const [domainTimerRun, setDomainTimerRun] = useState(false);
+  const timerRef  = useRef(null);
+  const ref       = useRef(null);
+
+  const isPublished = !!publishedUrl;
+  const currentDomain = publishedUrl
+    ? publishedUrl.replace("https://", "").replace(/\/$/, "")
+    : null;
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Reset view when closed
+  useEffect(() => {
+    if (!open) {
+      setTimeout(() => {
+        setView("main");
+        setNewName("");
+        setNameError("");
+        setPopoverError("");
+      }, 200);
+    }
+  }, [open]);
+
+  // Countdown timer for domain propagation
+  useEffect(() => {
+    if (!domainTimerRun || domainTimer <= 0) return;
+    timerRef.current = setInterval(() => {
+      setDomainTimer(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current);
+          setDomainTimerRun(false);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [domainTimerRun]); // eslint-disable-line
+
+  const validateName = (v) => {
+    if (!v || v.length < 3)  return "At least 3 characters";
+    if (v.length > 40)        return "Max 40 characters";
+    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(v) && v.length > 2)
+      return "Lowercase letters, numbers, hyphens only";
+    return "";
+  };
+
+  // ── Update (redeploy same domain) ────────────────────────────────────────
+  const handleUpdate = async () => {
+    if (!jobId || publishing) return;
+    setPublishing(true);
+    setPopoverError("");
+    try {
+      const res = await API.post(`/deploy/${jobId}`, { update_only: true });
+      onPublishSuccess(res.data.url);
+      setOpen(false);
+    } catch (err) {
+      setPopoverError(err?.response?.data?.error || "Update failed. Try again.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  // ── First publish ────────────────────────────────────────────────────────
+  const handleFirstPublish = async () => {
+    if (!jobId || publishing) return;
+    const err = validateName(newName);
+    if (err) { setNameError(err); return; }
+    setPublishing(true);
+    setPopoverError("");
+    try {
+      const res = await API.post(`/deploy/${jobId}`, { name: newName });
+      onPublishSuccess(res.data.url);
+      setOpen(false);
+    } catch (err) {
+      setPopoverError(err?.response?.data?.error || "Publish failed. Try again.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  // ── Change domain ────────────────────────────────────────────────────────
+  const handleChangeDomain = async () => {
+    if (!jobId || publishing) return;
+    const err = validateName(newName);
+    if (err) { setNameError(err); return; }
+    setPublishing(true);
+    setPopoverError("");
+    try {
+      const res = await API.post(`/deploy/${jobId}`, { name: newName });
+      onPublishSuccess(res.data.url);
+      // Start 90-second propagation timer
+      setDomainTimer(90);
+      setDomainTimerRun(true);
+      setView("main");
+      setNewName("");
+    } catch (err) {
+      setPopoverError(err?.response?.data?.error || "Domain change failed. Try again.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  // ── Button label / state ─────────────────────────────────────────────────
+  const buttonLabel = isPublished ? "Published" : "Publish";
+  const cannotOpen  = isRunning || !previewUrl;
+
+  const formatTimer = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${String(sec).padStart(2, "0")}`;
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
+
+      {/* ── Trigger button ── */}
+      <button
+        onClick={() => { if (!cannotOpen) setOpen(o => !o); }}
+        disabled={cannotOpen}
+        title={cannotOpen ? "Build a project first" : isPublished ? "Manage your published site" : "Publish your site"}
+        style={{
+          display: "flex", alignItems: "center", gap: "5px",
+          padding: "5px 12px",
+          height: "28px",
+          borderRadius: "999px",
+          border: open
+            ? "1px solid rgba(16,185,129,0.5)"
+            : isPublished
+              ? "1px solid rgba(16,185,129,0.3)"
+              : "1px solid #222",
+          background: open
+            ? "rgba(16,185,129,0.12)"
+            : isPublished
+              ? "rgba(16,185,129,0.08)"
+              : "transparent",
+          color: cannotOpen ? "#2a2a2a" : isPublished ? "#10b981" : "#888",
+          fontSize: "0.72rem",
+          fontWeight: 700,
+          fontFamily: "'JetBrains Mono', monospace",
+          letterSpacing: "0.04em",
+          cursor: cannotOpen ? "not-allowed" : "pointer",
+          transition: "all 0.16s ease",
+          outline: "none",
+          whiteSpace: "nowrap",
+          boxShadow: isPublished && !cannotOpen
+            ? "0 0 10px rgba(16,185,129,0.15)"
+            : "none",
+        }}
+        onMouseEnter={e => {
+          if (!cannotOpen && !open) {
+            e.currentTarget.style.borderColor = isPublished ? "rgba(16,185,129,0.5)" : "#444";
+            e.currentTarget.style.color       = isPublished ? "#10b981" : "#bbb";
+          }
+        }}
+        onMouseLeave={e => {
+          if (!cannotOpen && !open) {
+            e.currentTarget.style.borderColor = isPublished ? "rgba(16,185,129,0.3)" : "#222";
+            e.currentTarget.style.color       = isPublished ? "#10b981" : "#888";
+          }
+        }}
+      >
+        {/* Status dot */}
+        <span style={{
+          width: "6px", height: "6px", borderRadius: "50%", flexShrink: 0,
+          background: isPublished ? "#10b981" : "#333",
+          boxShadow: isPublished ? "0 0 5px rgba(16,185,129,0.7)" : "none",
+          transition: "all 0.2s",
+        }} />
+        {buttonLabel}
+        <svg
+          width="7" height="7" viewBox="0 0 8 8" fill="none"
+          style={{
+            color: "#3a3a3a",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.18s ease",
+          }}
+        >
+          <path d="M1 2.5L4 5.5L7 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {/* ── Popover panel ── */}
+      {open && (
+        <div style={{
+          position: "absolute",
+          top: "calc(100% + 8px)",
+          right: 0,
+          background: "#0b0b0b",
+          border: "1px solid #1e1e1e",
+          borderRadius: "14px",
+          padding: "6px",
+          width: "280px",
+          zIndex: 500,
+          boxShadow: "0 16px 48px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.025)",
+          animation: "pubDropIn 0.15s cubic-bezier(0.2,0,0,1) forwards",
+        }}>
+
+          {/* Header */}
+          <div style={{
+            padding: "6px 10px 8px",
+            borderBottom: "1px solid #161616",
+            marginBottom: "6px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <span style={{
+              fontSize: "0.58rem", color: "#2e2e2e",
+              letterSpacing: "0.12em", textTransform: "uppercase",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}>
+              {view === "change_domain" ? "Change Domain" : "Publish Settings"}
+            </span>
+            {view === "change_domain" && (
+              <button
+                onClick={() => { setView("main"); setNewName(""); setNameError(""); setPopoverError(""); }}
+                style={{
+                  background: "none", border: "none", color: "#444",
+                  cursor: "pointer", fontSize: "0.75rem", padding: "0 2px",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
+              >
+                ← back
+              </button>
+            )}
+          </div>
+
+          {/* ── Error banner (inside popover) ── */}
+          {popoverError && (
+            <div style={{
+              margin: "0 4px 8px",
+              padding: "8px 12px",
+              background: "rgba(200,0,0,0.1)",
+              border: "1px solid rgba(200,0,0,0.25)",
+              borderRadius: "10px",
+              fontSize: "0.72rem",
+              color: "#ff8080",
+              lineHeight: 1.4,
+            }}>
+              {popoverError}
+            </div>
+          )}
+
+          {/* ── Propagation timer notice ── */}
+          {domainTimerRun && domainTimer > 0 && (
+            <div style={{
+              margin: "0 4px 8px",
+              padding: "8px 12px",
+              background: "rgba(16,185,129,0.07)",
+              border: "1px solid rgba(16,185,129,0.2)",
+              borderRadius: "10px",
+              fontSize: "0.72rem",
+              color: "#10b981",
+              display: "flex", alignItems: "center", gap: "8px",
+              lineHeight: 1.4,
+            }}>
+              <span style={{
+                fontSize: "0.65rem",
+                fontFamily: "'JetBrains Mono', monospace",
+                background: "rgba(16,185,129,0.15)",
+                padding: "2px 7px", borderRadius: "6px",
+                flexShrink: 0,
+              }}>
+                {formatTimer(domainTimer)}
+              </span>
+              <span>New domain propagating — your old link is live in the meantime.</span>
+            </div>
+          )}
+
+          {/* ══ MAIN VIEW ══ */}
+          {view === "main" && (
+            <>
+              {/* Current domain row */}
+              {isPublished && (
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  padding: "8px 10px",
+                  background: "rgba(16,185,129,0.06)",
+                  border: "1px solid rgba(16,185,129,0.15)",
+                  borderRadius: "10px",
+                  marginBottom: "6px",
+                }}>
+                  <span style={{
+                    width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
+                    background: "#10b981",
+                    boxShadow: "0 0 6px rgba(16,185,129,0.7)",
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: "0.62rem", color: "#2a6a50",
+                      textTransform: "uppercase", letterSpacing: "0.1em",
+                      fontFamily: "'JetBrains Mono', monospace",
+                      marginBottom: "2px",
+                    }}>
+                      Live
+                    </div>
+                    <a
+                      href={publishedUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        fontSize: "0.72rem",
+                        color: "#10b981",
+                        fontFamily: "'JetBrains Mono', monospace",
+                        textDecoration: "none",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        display: "block",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                      onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
+                    >
+                      {currentDomain} ↗
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Not published yet — show name input inline */}
+              {!isPublished && (
+                <div style={{ padding: "4px 4px 6px" }}>
+                  <div style={{
+                    fontSize: "0.62rem", color: "#333",
+                    marginBottom: "6px", paddingLeft: "2px",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    textTransform: "uppercase", letterSpacing: "0.1em",
+                  }}>
+                    Choose a name
+                  </div>
+                  <div style={{
+                    display: "flex", alignItems: "center",
+                    background: "#0a0a0a",
+                    border: `1px solid ${nameError ? "rgba(200,0,0,0.5)" : "#1e1e1e"}`,
+                    borderRadius: "10px",
+                    overflow: "hidden",
+                    marginBottom: nameError ? "4px" : "8px",
+                    transition: "border-color 0.2s",
+                  }}>
+                    <input
+                      type="text"
+                      value={newName}
+                      onChange={e => {
+                        const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
+                        setNewName(v);
+                        setNameError(validateName(v));
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && !nameError && newName.length >= 3) handleFirstPublish();
+                      }}
+                      placeholder="my-awesome-app"
+                      autoFocus
+                      style={{
+                        flex: 1, background: "transparent", border: "none",
+                        outline: "none", color: "#fff", fontSize: "0.78rem",
+                        padding: "9px 10px",
+                        fontFamily: "'JetBrains Mono', monospace",
+                      }}
+                    />
+                    <span style={{
+                      padding: "9px 10px",
+                      color: "#2a2a2a", fontSize: "0.68rem",
+                      fontFamily: "'JetBrains Mono', monospace",
+                      borderLeft: "1px solid #1a1a1a",
+                      whiteSpace: "nowrap", flexShrink: 0,
+                    }}>
+                      .thehustlerbot.com
+                    </span>
+                  </div>
+                  {nameError && (
+                    <p style={{ fontSize: "0.66rem", color: "#cc4444", margin: "0 0 6px 4px" }}>{nameError}</p>
+                  )}
+                  {!nameError && newName.length >= 3 && (
+                    <p style={{
+                      fontSize: "0.62rem", color: "#1a5a40",
+                      margin: "0 0 8px 4px",
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}>
+                      https://{newName}.thehustlerbot.com
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "0 2px" }}>
+
+                {/* Update button — only shown when published, only clickable if there are changes */}
+                {isPublished && (
+                  <button
+                    onClick={hasChanges && !publishing ? handleUpdate : undefined}
+                    disabled={!hasChanges || publishing}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "8px",
+                      width: "100%",
+                      padding: "8px 10px",
+                      background: hasChanges && !publishing
+                        ? "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1))"
+                        : "transparent",
+                      border: hasChanges
+                        ? "1px solid rgba(16,185,129,0.25)"
+                        : "1px solid transparent",
+                      borderRadius: "10px",
+                      cursor: !hasChanges || publishing ? "not-allowed" : "pointer",
+                      opacity: !hasChanges ? 0.38 : publishing ? 0.6 : 1,
+                      transition: "all 0.13s ease",
+                      textAlign: "left",
+                      outline: "none",
+                    }}
+                    onMouseEnter={e => {
+                      if (hasChanges && !publishing) {
+                        e.currentTarget.style.background = "rgba(16,185,129,0.18)";
+                        e.currentTarget.style.borderColor = "rgba(16,185,129,0.4)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (hasChanges && !publishing) {
+                        e.currentTarget.style.background = "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1))";
+                        e.currentTarget.style.borderColor = "rgba(16,185,129,0.25)";
+                      }
+                    }}
+                  >
+                    <div style={{
+                      width: "28px", height: "28px", borderRadius: "8px",
+                      background: hasChanges ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${hasChanges ? "rgba(16,185,129,0.25)" : "#1a1a1a"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "0.85rem", flexShrink: 0,
+                    }}>
+                      {publishing ? (
+                        <div style={{
+                          width: "12px", height: "12px",
+                          border: "2px solid rgba(16,185,129,0.2)",
+                          borderTop: "2px solid #10b981",
+                          borderRadius: "50%",
+                          animation: "spin 0.8s linear infinite",
+                        }} />
+                      ) : "↑"}
+                    </div>
+                    <div>
+                      <div style={{
+                        fontSize: "0.76rem", fontWeight: 700,
+                        color: hasChanges ? "#fff" : "#333",
+                        fontFamily: "'JetBrains Mono', monospace",
+                        letterSpacing: "0.02em",
+                      }}>
+                        {publishing ? "Updating..." : "Update"}
+                      </div>
+                      <div style={{
+                        fontSize: "0.62rem",
+                        color: hasChanges ? "#2a6a50" : "#222",
+                        marginTop: "1px",
+                      }}>
+                        {hasChanges ? "Deploy latest changes" : "No new changes"}
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {/* First-time publish button */}
+                {!isPublished && (
+                  <button
+                    onClick={!publishing && newName.length >= 3 && !nameError ? handleFirstPublish : undefined}
+                    disabled={publishing || newName.length < 3 || !!nameError}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "8px",
+                      width: "100%",
+                      padding: "8px 10px",
+                      background: !publishing && newName.length >= 3 && !nameError
+                        ? "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1))"
+                        : "transparent",
+                      border: !nameError && newName.length >= 3
+                        ? "1px solid rgba(16,185,129,0.25)"
+                        : "1px solid transparent",
+                      borderRadius: "10px",
+                      cursor: publishing || newName.length < 3 || !!nameError ? "not-allowed" : "pointer",
+                      opacity: newName.length < 3 || !!nameError ? 0.38 : publishing ? 0.6 : 1,
+                      transition: "all 0.13s ease",
+                      textAlign: "left",
+                      outline: "none",
+                    }}
+                    onMouseEnter={e => {
+                      if (!publishing && newName.length >= 3 && !nameError) {
+                        e.currentTarget.style.background = "rgba(16,185,129,0.18)";
+                        e.currentTarget.style.borderColor = "rgba(16,185,129,0.4)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!publishing && newName.length >= 3 && !nameError) {
+                        e.currentTarget.style.background = "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1))";
+                        e.currentTarget.style.borderColor = "rgba(16,185,129,0.25)";
+                      }
+                    }}
+                  >
+                    <div style={{
+                      width: "28px", height: "28px", borderRadius: "8px",
+                      background: newName.length >= 3 && !nameError ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${newName.length >= 3 && !nameError ? "rgba(16,185,129,0.25)" : "#1a1a1a"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "0.85rem", flexShrink: 0,
+                    }}>
+                      {publishing ? (
+                        <div style={{
+                          width: "12px", height: "12px",
+                          border: "2px solid rgba(16,185,129,0.2)",
+                          borderTop: "2px solid #10b981",
+                          borderRadius: "50%",
+                          animation: "spin 0.8s linear infinite",
+                        }} />
+                      ) : "🌐"}
+                    </div>
+                    <div>
+                      <div style={{
+                        fontSize: "0.76rem", fontWeight: 700,
+                        color: newName.length >= 3 && !nameError ? "#fff" : "#333",
+                        fontFamily: "'JetBrains Mono', monospace",
+                        letterSpacing: "0.02em",
+                      }}>
+                        {publishing ? "Publishing..." : "Publish"}
+                      </div>
+                      <div style={{
+                        fontSize: "0.62rem",
+                        color: newName.length >= 3 && !nameError ? "#2a6a50" : "#222",
+                        marginTop: "1px",
+                      }}>
+                        Go live instantly
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {/* Change domain — only when published */}
+                {isPublished && (
+                  <button
+                    onClick={() => {
+                      setView("change_domain");
+                      setNewName("");
+                      setNameError("");
+                      setPopoverError("");
+                    }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "8px",
+                      width: "100%",
+                      padding: "8px 10px",
+                      background: "transparent",
+                      border: "1px solid transparent",
+                      borderRadius: "10px",
+                      cursor: "pointer",
+                      transition: "all 0.13s ease",
+                      textAlign: "left",
+                      outline: "none",
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                      e.currentTarget.style.borderColor = "#1e1e1e";
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.borderColor = "transparent";
+                    }}
+                  >
+                    <div style={{
+                      width: "28px", height: "28px", borderRadius: "8px",
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid #1a1a1a",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "0.85rem", flexShrink: 0,
+                    }}>
+                      ✏️
+                    </div>
+                    <div>
+                      <div style={{
+                        fontSize: "0.76rem", fontWeight: 700,
+                        color: "#888",
+                        fontFamily: "'JetBrains Mono', monospace",
+                        letterSpacing: "0.02em",
+                      }}>
+                        Change domain
+                      </div>
+                      <div style={{ fontSize: "0.62rem", color: "#2a2a2a", marginTop: "1px" }}>
+                        Pick a new address
+                      </div>
+                    </div>
+                    <svg width="7" height="7" viewBox="0 0 8 8" fill="none"
+                      style={{ marginLeft: "auto", color: "#2a2a2a", flexShrink: 0 }}>
+                      <path d="M2 1.5L5.5 4.5L2 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                )}
+
+                {/* Open live site link — only when published */}
+                {isPublished && (
+                  <a
+                    href={publishedUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: "flex", alignItems: "center", gap: "8px",
+                      padding: "8px 10px",
+                      background: "transparent",
+                      border: "1px solid transparent",
+                      borderRadius: "10px",
+                      textDecoration: "none",
+                      transition: "all 0.13s ease",
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                      e.currentTarget.style.borderColor = "#1e1e1e";
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.borderColor = "transparent";
+                    }}
+                  >
+                    <div style={{
+                      width: "28px", height: "28px", borderRadius: "8px",
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid #1a1a1a",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "0.85rem", flexShrink: 0,
+                    }}>
+                      ↗
+                    </div>
+                    <div>
+                      <div style={{
+                        fontSize: "0.76rem", fontWeight: 700,
+                        color: "#888",
+                        fontFamily: "'JetBrains Mono', monospace",
+                        letterSpacing: "0.02em",
+                      }}>
+                        Open site
+                      </div>
+                      <div style={{ fontSize: "0.62rem", color: "#2a2a2a", marginTop: "1px" }}>
+                        View in new tab
+                      </div>
+                    </div>
+                  </a>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ══ CHANGE DOMAIN VIEW ══ */}
+          {view === "change_domain" && (
+            <div style={{ padding: "4px 4px 6px" }}>
+              <div style={{
+                fontSize: "0.62rem", color: "#333",
+                marginBottom: "6px", paddingLeft: "2px",
+                fontFamily: "'JetBrains Mono', monospace",
+                textTransform: "uppercase", letterSpacing: "0.1em",
+              }}>
+                New domain
+              </div>
+              <div style={{
+                display: "flex", alignItems: "center",
+                background: "#0a0a0a",
+                border: `1px solid ${nameError ? "rgba(200,0,0,0.5)" : "#1e1e1e"}`,
+                borderRadius: "10px",
+                overflow: "hidden",
+                marginBottom: nameError ? "4px" : "8px",
+                transition: "border-color 0.2s",
+              }}>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={e => {
+                    const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
+                    setNewName(v);
+                    setNameError(validateName(v));
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !nameError && newName.length >= 3) handleChangeDomain();
+                  }}
+                  placeholder="my-new-domain"
+                  autoFocus
+                  style={{
+                    flex: 1, background: "transparent", border: "none",
+                    outline: "none", color: "#fff", fontSize: "0.78rem",
+                    padding: "9px 10px",
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                />
+                <span style={{
+                  padding: "9px 10px",
+                  color: "#2a2a2a", fontSize: "0.68rem",
+                  fontFamily: "'JetBrains Mono', monospace",
+                  borderLeft: "1px solid #1a1a1a",
+                  whiteSpace: "nowrap", flexShrink: 0,
+                }}>
+                  .thehustlerbot.com
+                </span>
+              </div>
+              {nameError && (
+                <p style={{ fontSize: "0.66rem", color: "#cc4444", margin: "0 0 6px 4px" }}>{nameError}</p>
+              )}
+              {!nameError && newName.length >= 3 && (
+                <p style={{
+                  fontSize: "0.62rem", color: "#1a5a40",
+                  margin: "0 0 8px 4px",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>
+                  https://{newName}.thehustlerbot.com
+                </p>
+              )}
+
+              {/* Warning about propagation */}
+              <div style={{
+                padding: "7px 10px",
+                background: "rgba(240,165,0,0.06)",
+                border: "1px solid rgba(240,165,0,0.15)",
+                borderRadius: "9px",
+                marginBottom: "10px",
+                fontSize: "0.67rem",
+                color: "#6a5500",
+                lineHeight: 1.5,
+              }}>
+                ⚠ After changing, allow ~90 seconds for DNS to propagate. Your old domain will be released.
+              </div>
+
+              <button
+                onClick={!publishing && newName.length >= 3 && !nameError ? handleChangeDomain : undefined}
+                disabled={publishing || newName.length < 3 || !!nameError}
+                style={{
+                  width: "100%",
+                  padding: "9px",
+                  background: !publishing && newName.length >= 3 && !nameError
+                    ? "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.15))"
+                    : "#0d0d0d",
+                  border: !nameError && newName.length >= 3 && !publishing
+                    ? "1px solid rgba(16,185,129,0.3)"
+                    : "1px solid #1a1a1a",
+                  borderRadius: "10px",
+                  color: !publishing && newName.length >= 3 && !nameError ? "#10b981" : "#2a2a2a",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: publishing || newName.length < 3 || !!nameError ? "not-allowed" : "pointer",
+                  fontFamily: "'JetBrains Mono', monospace",
+                  transition: "all 0.15s",
+                  opacity: publishing ? 0.6 : 1,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                }}
+              >
+                {publishing && (
+                  <div style={{
+                    width: "11px", height: "11px",
+                    border: "2px solid rgba(16,185,129,0.2)",
+                    borderTop: "2px solid #10b981",
+                    borderRadius: "50%",
+                    animation: "spin 0.8s linear infinite",
+                  }} />
+                )}
+                {publishing ? "Changing domain..." : "Confirm change"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -1292,10 +2080,9 @@ export default function Studio() {
 
   // Publishing
   const [publishedUrl, setPublishedUrl] = useState(null);
-  const [publishing, setPublishing] = useState(false);
-  const [showPublishModal, setShowPublishModal] = useState(false);
-  const [publishName, setPublishName] = useState("");
-  const [publishNameError, setPublishNameError] = useState("");
+  // Track last-published snapshot so we know if changes happened since
+  const [lastPublishedAt, setLastPublishedAt] = useState(null);
+  const [changesSincePublish, setChangesSincePublish] = useState(false);
 
   // File attachments for drag & drop
   const [attachedFiles, setAttachedFiles] = useState([]);
@@ -1310,17 +2097,23 @@ export default function Studio() {
   );
 
   const isRunning   = state === "running";
-
   const isRendering = state === "completed" && !previewUrl && currentJobId && codeChanged;
+
+  // When a new build completes and there's a publishedUrl, mark as having changes
+  const prevStateRef = useRef(state);
+  useEffect(() => {
+    if (prevStateRef.current === "running" && state === "completed" && publishedUrl) {
+      setChangesSincePublish(true);
+    }
+    prevStateRef.current = state;
+  }, [state, publishedUrl]);
 
   const buildPhase = (() => {
     if (isRendering) return "rendering";
     if (!isRunning) return "idle";
     if (progress.length === 0) return "thinking";
-
     const hasCodeWrites = progress.some(p => p.action === "writing" || p.action === "editing");
     const isCompiling = progress.some(p => p.action === "building");
-
     if (isCompiling) return "compiling";
     if (hasCodeWrites) return previewUrl ? "editing" : "building";
     return "thinking";
@@ -1336,7 +2129,6 @@ export default function Studio() {
   }[buildPhase] || "Thinking...";
 
   const displayPhase = phaseLabel;
-
   const progressPercent = computeProgressPercent(progress, buildPhase);
 
   useEffect(() => {
@@ -1409,7 +2201,10 @@ export default function Studio() {
               setPreviewError(false);
               setPreviewKey(k => k + 1);
             }
-            if (data.published_url) setPublishedUrl(data.published_url);
+            if (data.published_url) {
+              setPublishedUrl(data.published_url);
+              setChangesSincePublish(false);
+            }
           } catch { setMessages([]); }
           if (project.state === "running") startPolling(project.job_id);
         }
@@ -1475,24 +2270,21 @@ export default function Studio() {
         setMessages(serverMessages);
         setState(data.state);
 
-        if (data.code_changed !== undefined) {
-          setCodeChanged(data.code_changed);
-        }
-
+        if (data.code_changed !== undefined) setCodeChanged(data.code_changed);
         if (data.credits_balance !== undefined) setCredits(data.credits_balance);
         if (data.model) setSelectedModel(data.model);
         if (data.plan) {
           setUserPlan(data.plan);
           localStorage.setItem("user_plan", data.plan);
         }
-        if (data.published_url) setPublishedUrl(data.published_url);
+        if (data.published_url) {
+          setPublishedUrl(data.published_url);
+        }
 
         if (data.progress && data.progress.length > 0) {
           setProgress(data.progress);
-
-          const latestEntry = data.progress[data.progress.length - 1];
+          const latestEntry  = data.progress[data.progress.length - 1];
           const latestAction = latestEntry?.action || "";
-
           if (latestAction === "building") {
             setThinkingText("");
           } else {
@@ -1506,9 +2298,7 @@ export default function Studio() {
         if (data.preview_url) {
           setPreviewUrl(data.preview_url);
           setPreviewError(false);
-          if (data.code_changed) {
-            setPreviewKey(k => k + 1);
-          }
+          if (data.code_changed) setPreviewKey(k => k + 1);
         }
 
         setProjects(prev => prev.map(p =>
@@ -1537,7 +2327,7 @@ export default function Studio() {
 
   // ── File attachment handlers ────────────────────────────────────────────
   const ALLOWED_EXTENSIONS = ['png','jpg','jpeg','gif','webp','svg','pdf','txt','md','csv'];
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
   const addFiles = (fileList) => {
     const newFiles = Array.from(fileList).filter(f => {
@@ -1553,9 +2343,9 @@ export default function Studio() {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+  const handleDragOver  = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
   const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
-  const handleDrop = (e) => {
+  const handleDrop      = (e) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
   };
@@ -1581,7 +2371,7 @@ export default function Studio() {
       setThinkingText("");
       setCodeChanged(false);
       const filesToSend = [...attachedFiles];
-      const fileNames = filesToSend.map(f => ({ name: f.name, type: f.type }));
+      const fileNames   = filesToSend.map(f => ({ name: f.name, type: f.type }));
       setAttachedFiles([]);
       setMessages([{ role: "user", content: text, attachments: fileNames.length > 0 ? fileNames : undefined }]);
 
@@ -1591,13 +2381,14 @@ export default function Studio() {
       ]);
 
       setCurrentJobId(jobId);
+      setPublishedUrl(null);
+      setChangesSincePublish(false);
       setProjects(prev => [{
         job_id: jobId, title: smartTitle,
         state: "running", preview_url: null,
       }, ...prev]);
 
       API.patch(`/auth/job/${jobId}/title`, { title: smartTitle }).catch(() => {});
-
       startPolling(jobId);
     } catch (err) {
       const msg = err?.response?.data?.error || "Something went wrong";
@@ -1621,7 +2412,7 @@ export default function Studio() {
         setThinkingText("");
         setCodeChanged(false);
         const filesToSend = [...attachedFiles];
-        const fileNames = filesToSend.map(f => ({ name: f.name, type: f.type }));
+        const fileNames   = filesToSend.map(f => ({ name: f.name, type: f.type }));
         setAttachedFiles([]);
         setMessages(prev => [...prev, { role: "user", content: text || "(attached files)", attachments: fileNames.length > 0 ? fileNames : undefined }]);
         await sendFollowUp(currentJobId, text || "See the attached files", selectedModel, filesToSend);
@@ -1637,12 +2428,12 @@ export default function Studio() {
   const handleNewProject = () => {
     stopPolling();
     setCurrentJobId(null); setMessages([]); setPreviewUrl(null);
-    setPreviewError(false);
-    setCodeChanged(false);
+    setPreviewError(false); setCodeChanged(false);
     setState("idle"); setPrompt(""); setError("");
     setSelectedModel(userPlan === "free" ? "hb-6" : "hb-6");
     setAttachedFiles([]);
     setPublishedUrl(null);
+    setChangesSincePublish(false);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -1655,6 +2446,7 @@ export default function Studio() {
     setMessages([]);
     setAttachedFiles([]);
     setPublishedUrl(null);
+    setChangesSincePublish(false);
 
     const safePreviewUrl = _getSafePreviewUrl(project.preview_url, project.job_id);
     setPreviewUrl(safePreviewUrl);
@@ -1680,7 +2472,10 @@ export default function Studio() {
         setPreviewError(false);
         setPreviewKey(k => k + 1);
       }
-      if (data.published_url) setPublishedUrl(data.published_url);
+      if (data.published_url) {
+        setPublishedUrl(data.published_url);
+        setChangesSincePublish(false);
+      }
     } catch {
       setMessages([]);
     } finally {
@@ -1718,39 +2513,6 @@ export default function Studio() {
     fetchProjects().then(jobs => setProjects(jobs)).catch(() => {});
   };
 
-  const handlePublish = async () => {
-    if (!currentJobId || publishing) return;
-    setPublishing(true);
-    setError("");
-    try {
-      const res = await API.post(`/deploy/${currentJobId}`, { name: publishName });
-      const url = res.data.url;
-      setPublishedUrl(url);
-      setShowPublishModal(false);
-    } catch (err) {
-      const msg = err?.response?.data?.error || "Publishing failed";
-      setError(msg);
-    } finally {
-      setPublishing(false);
-    }
-  };
-
-  const openPublishModal = () => {
-    // Pre-fill with slugified project title
-    const title = projects.find(p => p.job_id === currentJobId)?.title || "my-app";
-    const slug = title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
-    setPublishName(slug);
-    setPublishNameError("");
-    setShowPublishModal(true);
-  };
-
-  const validatePublishName = (name) => {
-    if (!name || name.length < 3) return "Name must be at least 3 characters";
-    if (name.length > 40) return "Name must be under 40 characters";
-    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(name) && name.length > 2) return "Only lowercase letters, numbers, and hyphens";
-    return "";
-  };
-
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -1778,127 +2540,6 @@ export default function Studio() {
         onConfirm={confirmLogout}
         onCancel={() => setShowLogoutModal(false)}
       />
-
-      {/* ── Publish Name Modal ── */}
-      {showPublishModal && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 9999,
-          background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <div style={{
-            background: "#111", border: "1px solid #2a0000",
-            borderRadius: "16px", padding: "28px 32px",
-            maxWidth: "400px", width: "90%",
-            boxShadow: "0 0 40px rgba(16,185,129,0.15)",
-          }}>
-            <div style={{
-              width: "48px", height: "48px", margin: "0 auto 16px",
-              borderRadius: "50%",
-              background: "rgba(16,185,129,0.12)",
-              border: "1px solid rgba(16,185,129,0.3)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "1.3rem",
-            }}>
-              🌐
-            </div>
-            <h3 style={{ margin: "0 0 6px", fontSize: "1.05rem", color: "#fff", fontWeight: 700, textAlign: "center" }}>
-              Publish your app
-            </h3>
-            <p style={{ margin: "0 0 20px", fontSize: "0.78rem", color: "#666", lineHeight: 1.5, textAlign: "center" }}>
-              Choose a name for your live site
-            </p>
-
-            <div style={{ marginBottom: "8px" }}>
-              <div style={{
-                display: "flex", alignItems: "center",
-                background: "#0a0a0a",
-                border: `1px solid ${publishNameError ? "#e53935" : "#222"}`,
-                borderRadius: "10px",
-                overflow: "hidden",
-                transition: "border-color 0.2s",
-              }}>
-                <input
-                  type="text"
-                  value={publishName}
-                  onChange={e => {
-                    const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40);
-                    setPublishName(val);
-                    setPublishNameError(validatePublishName(val));
-                  }}
-                  onKeyDown={e => { if (e.key === "Enter" && !publishNameError && publishName.length >= 3) handlePublish(); }}
-                  placeholder="my-awesome-app"
-                  autoFocus
-                  style={{
-                    flex: 1,
-                    background: "transparent",
-                    border: "none",
-                    outline: "none",
-                    color: "#fff",
-                    fontSize: "0.88rem",
-                    padding: "12px 14px",
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}
-                />
-                <span style={{
-                  padding: "12px 14px",
-                  color: "#444",
-                  fontSize: "0.78rem",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  borderLeft: "1px solid #222",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                }}>
-                  .thehustlerbot.com
-                </span>
-              </div>
-              {publishNameError && (
-                <p style={{ fontSize: "0.7rem", color: "#e53935", margin: "6px 0 0 4px" }}>{publishNameError}</p>
-              )}
-              {!publishNameError && publishName.length >= 3 && (
-                <p style={{ fontSize: "0.68rem", color: "#444", margin: "6px 0 0 4px", fontFamily: "'JetBrains Mono', monospace" }}>
-                  https://{publishName}.thehustlerbot.com
-                </p>
-              )}
-            </div>
-
-            <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-              <button
-                onClick={() => setShowPublishModal(false)}
-                style={{
-                  flex: 1, padding: "10px",
-                  background: "#1a1a1a", border: "1px solid #333",
-                  borderRadius: "10px", color: "#aaa",
-                  fontSize: "0.85rem", cursor: "pointer",
-                  transition: "all 0.15s",
-                }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = "#555"}
-                onMouseLeave={e => e.currentTarget.style.borderColor = "#333"}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePublish}
-                disabled={publishing || !!publishNameError || publishName.length < 3}
-                style={{
-                  flex: 1, padding: "10px",
-                  background: (publishing || publishNameError || publishName.length < 3)
-                    ? "#1a1a1a"
-                    : "linear-gradient(135deg, #10b981, #059669)",
-                  border: "none", borderRadius: "10px",
-                  color: "#fff", fontSize: "0.85rem", fontWeight: 600,
-                  cursor: (publishing || publishNameError || publishName.length < 3) ? "default" : "pointer",
-                  boxShadow: (publishing || publishNameError || publishName.length < 3) ? "none" : "0 0 14px rgba(16,185,129,0.35)",
-                  transition: "all 0.15s",
-                  opacity: (publishing || publishNameError || publishName.length < 3) ? 0.5 : 1,
-                }}
-              >
-                {publishing ? "Publishing..." : "Publish"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <SidebarDrawer
         open={sidebarOpen}
@@ -2279,18 +2920,15 @@ export default function Studio() {
                   onClick={() => setShowPlusMenu(v => !v)}
                   disabled={isRunning}
                   style={{
-                    background: "none",
-                    border: "none",
+                    background: "none", border: "none",
                     color: showPlusMenu ? "#cc0000" : "#444",
                     cursor: isRunning ? "default" : "pointer",
-                    fontSize: "1.15rem",
-                    padding: "2px 6px",
+                    fontSize: "1.15rem", padding: "2px 6px",
                     flexShrink: 0,
                     opacity: isRunning ? 0.3 : 1,
                     transition: "color 0.15s",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontWeight: 300,
-                    lineHeight: 1,
+                    fontWeight: 300, lineHeight: 1,
                   }}
                   title="More options"
                   onMouseEnter={e => { if (!isRunning) e.currentTarget.style.color = "#cc0000"; }}
@@ -2299,7 +2937,6 @@ export default function Studio() {
                   +
                 </button>
 
-                {/* Popup menu */}
                 {showPlusMenu && (
                   <div style={{
                     position: "absolute",
@@ -2324,12 +2961,9 @@ export default function Studio() {
                         display: "flex", alignItems: "center", gap: "8px",
                         padding: "8px 12px",
                         background: "transparent",
-                        border: "none",
-                        borderRadius: "8px",
-                        color: "#aaa",
-                        fontSize: "0.78rem",
-                        cursor: "pointer",
-                        transition: "all 0.12s",
+                        border: "none", borderRadius: "8px",
+                        color: "#aaa", fontSize: "0.78rem",
+                        cursor: "pointer", transition: "all 0.12s",
                         textAlign: "left",
                         fontFamily: "Inter, Segoe UI, sans-serif",
                       }}
@@ -2354,7 +2988,7 @@ export default function Studio() {
             </div>
           </div>
 
-          {/* ── Model selector + hint below the input box ── */}
+          {/* ── Model selector + hint ── */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px", paddingLeft: "2px", paddingRight: "2px" }}>
             <ModelSelector
               selectedModel={selectedModel}
@@ -2386,6 +3020,7 @@ export default function Studio() {
       <div style={S.previewPanel}>
         <div style={S.previewTopBar}>
 
+          {/* Left: Preview / Code toggle */}
           <div style={{ display: "flex", background: "#0d0d0d", borderRadius: "8px", border: "1px solid #1a1a1a", padding: "2px", flexShrink: 0 }}>
             {["preview", "code"].map(view => (
               <button
@@ -2409,109 +3044,57 @@ export default function Studio() {
             ))}
           </div>
 
+          {/* Middle: preview URL hint */}
           {panelView === "preview" && (
-            <span style={{ color: "#333", fontSize: "0.72rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginLeft: "10px", minWidth: 0 }}>
-              {previewUrl || "Preview will appear here"}
+            <span style={{ color: "#222", fontSize: "0.72rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginLeft: "10px", minWidth: 0 }}>
+              {previewUrl || ""}
             </span>
           )}
 
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, marginLeft: "auto" }}>
+          {/* Right: action buttons — GitHub then Publish, rightmost */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, marginLeft: "auto" }}>
+
+            {/* Upgrade button for free users */}
             {userPlan === "free" && (
               <button
                 onClick={handleNavigateToSubscribe}
                 style={{
-                  padding: "6px 16px",
+                  padding: "5px 14px",
                   background: "linear-gradient(135deg, #cc0000, #8b0000)",
                   border: "none", borderRadius: "8px",
-                  color: "#fff", fontSize: "0.76rem", fontWeight: 600,
+                  color: "#fff", fontSize: "0.74rem", fontWeight: 600,
                   cursor: "pointer", letterSpacing: "0.03em",
                   boxShadow: "0 0 14px rgba(180,0,0,0.35)",
                   transition: "box-shadow 0.2s, transform 0.15s",
-                  whiteSpace: "nowrap",
+                  whiteSpace: "nowrap", height: "28px",
                 }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.boxShadow = "0 0 24px rgba(200,0,0,0.55)";
-                  e.currentTarget.style.transform = "scale(1.03)";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.boxShadow = "0 0 14px rgba(180,0,0,0.35)";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 24px rgba(200,0,0,0.55)"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 14px rgba(180,0,0,0.35)"; e.currentTarget.style.transform = "scale(1)"; }}
               >
                 Get Credits
               </button>
             )}
 
-            {/* Publish / Update / Live buttons */}
-            {currentJobId && previewUrl && !isRunning && (
-              publishedUrl ? (
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <a
-                    href={publishedUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      padding: "6px 12px",
-                      background: "rgba(16,185,129,0.1)",
-                      border: "1px solid rgba(16,185,129,0.3)",
-                      borderRadius: "8px",
-                      color: "#10b981",
-                      fontSize: "0.76rem", fontWeight: 600,
-                      textDecoration: "none",
-                      display: "flex", alignItems: "center", gap: "5px",
-                      whiteSpace: "nowrap",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#10b981"; e.currentTarget.style.boxShadow = "0 0 12px rgba(16,185,129,0.3)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(16,185,129,0.3)"; e.currentTarget.style.boxShadow = "none"; }}
-                  >
-                    ✓ Live <span style={{ fontSize: "0.68rem", opacity: 0.7 }}>↗</span>
-                  </a>
-                  <button
-                    onClick={openPublishModal}
-                    disabled={publishing}
-                    style={{
-                      padding: "6px 12px",
-                      background: publishing ? "#1a1a1a" : "#111",
-                      border: "1px solid #333",
-                      borderRadius: "8px",
-                      color: publishing ? "#555" : "#aaa",
-                      fontSize: "0.72rem", fontWeight: 600,
-                      cursor: publishing ? "wait" : "pointer",
-                      whiteSpace: "nowrap",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={e => { if (!publishing) e.currentTarget.style.borderColor = "#10b981"; }}
-                    onMouseLeave={e => { if (!publishing) e.currentTarget.style.borderColor = "#333"; }}
-                  >
-                    {publishing ? "Updating..." : "Update"}
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={openPublishModal}
-                  disabled={publishing}
-                  style={{
-                    padding: "6px 14px",
-                    background: publishing ? "#1a1a1a" : "linear-gradient(135deg, #10b981, #059669)",
-                    border: "none", borderRadius: "8px",
-                    color: "#fff", fontSize: "0.76rem", fontWeight: 600,
-                    cursor: publishing ? "wait" : "pointer",
-                    display: "flex", alignItems: "center", gap: "6px",
-                    whiteSpace: "nowrap",
-                    boxShadow: publishing ? "none" : "0 0 12px rgba(16,185,129,0.3)",
-                    transition: "all 0.15s",
-                    opacity: publishing ? 0.7 : 1,
-                  }}
-                  onMouseEnter={e => { if (!publishing) e.currentTarget.style.boxShadow = "0 0 20px rgba(16,185,129,0.5)"; }}
-                  onMouseLeave={e => { if (!publishing) e.currentTarget.style.boxShadow = "0 0 12px rgba(16,185,129,0.3)"; }}
-                >
-                  {publishing ? "Publishing..." : "Publish"}
-                </button>
-              )
+            {/* Open preview in new tab */}
+            {panelView === "preview" && previewUrl && !previewError && (
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  color: "#444", fontSize: "0.75rem",
+                  textDecoration: "none", fontWeight: "bold",
+                  transition: "color 0.15s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "#888"}
+                onMouseLeave={e => e.currentTarget.style.color = "#444"}
+              >
+                ↗
+              </a>
             )}
 
-            {(
+            {/* GitHub push button */}
+            {currentJobId && previewUrl && !isRunning && (
               <button
                 onClick={() => {
                   const project = projects.find(p => p.job_id === currentJobId);
@@ -2519,18 +3102,38 @@ export default function Studio() {
                   sessionStorage.setItem("github_push_job_title", project?.title || "project");
                   window.location.href = `https://github.com/login/oauth/authorize?client_id=Ov23liUC5tA7pNQbfiWo&scope=repo&redirect_uri=https://thehustlerbot.com/github-callback`;
                 }}
-                style={{ padding: "6px 14px", background: "#161b22", border: "1px solid #30363d", borderRadius: "8px", color: "#fff", fontSize: "0.76rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = "#58a6ff"}
-                onMouseLeave={e => e.currentTarget.style.borderColor = "#30363d"}
+                style={{
+                  padding: "5px 12px", height: "28px",
+                  background: "#161b22", border: "1px solid #30363d",
+                  borderRadius: "8px", color: "#ccc",
+                  fontSize: "0.72rem", fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: "5px",
+                  whiteSpace: "nowrap", transition: "border-color 0.15s, color 0.15s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#58a6ff"; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#30363d"; e.currentTarget.style.color = "#ccc"; }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-                Push to GitHub
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+                </svg>
+                GitHub
               </button>
             )}
-            {panelView === "preview" && previewUrl && !previewError && (
-              <a href={previewUrl} target="_blank" rel="noreferrer" style={{ color: "#8b0000", fontSize: "0.75rem", textDecoration: "none", fontWeight: "bold" }}>
-                ↗ Open
-              </a>
+
+            {/* ── Publish popover — always rightmost ── */}
+            {currentJobId && (
+              <PublishPopover
+                jobId={currentJobId}
+                previewUrl={previewUrl}
+                publishedUrl={publishedUrl}
+                hasChanges={changesSincePublish}
+                isRunning={isRunning}
+                onPublishSuccess={(url) => {
+                  setPublishedUrl(url);
+                  setChangesSincePublish(false);
+                }}
+              />
             )}
           </div>
         </div>
@@ -2613,7 +3216,7 @@ const S = {
   chatPanel:    { display: "flex", flexDirection: "column", borderRight: "1px solid #0f0f0f", overflow: "hidden", background: "#000" },
   previewPanel: { flex: 1, display: "flex", flexDirection: "column", backgroundColor: "#050505", overflow: "hidden", minWidth: 0 },
   topBar:       { padding: "0.6rem 0.75rem", background: "#000", borderBottom: "1px solid #0f0f0f", display: "flex", alignItems: "center", gap: "8px", boxShadow: "0 1px 0 rgba(140,0,0,0.15)", flexShrink: 0 },
-  previewTopBar:{ padding: "0.5rem 1rem", background: "#0a0a0a", borderBottom: "1px solid #111", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexShrink: 0 },
+  previewTopBar:{ padding: "0.5rem 1rem", background: "#0a0a0a", borderBottom: "1px solid #111", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexShrink: 0 },
   chatWindow:   { flexGrow: 1, overflowY: "auto", overflowX: "hidden", padding: "1.2rem 1rem", display: "flex", flexDirection: "column", gap: "1rem", minHeight: 0 },
   bubble:       { padding: "10px 14px", borderRadius: "14px", maxWidth: "92%", wordBreak: "break-word" },
   inputRow:     { padding: "0.6rem", borderTop: "1px solid #111", display: "flex", gap: "8px", backgroundColor: "#000" },
