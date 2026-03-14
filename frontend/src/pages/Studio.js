@@ -1854,7 +1854,7 @@ export default function Studio() {
               )}
               {!publishNameError && publishName.length >= 3 && (
                 <p style={{ fontSize: "0.68rem", color: "#444", margin: "6px 0 0 4px", fontFamily: "'JetBrains Mono', monospace" }}>
-                  https://{publishName}.pages.dev
+                  https://hb-{publishName}.pages.dev
                 </p>
               )}
             </div>
