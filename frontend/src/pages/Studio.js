@@ -1293,6 +1293,9 @@ export default function Studio() {
   // Publishing
   const [publishedUrl, setPublishedUrl] = useState(null);
   const [publishing, setPublishing] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishName, setPublishName] = useState("");
+  const [publishNameError, setPublishNameError] = useState("");
 
   // File attachments for drag & drop
   const [attachedFiles, setAttachedFiles] = useState([]);
@@ -1715,16 +1718,34 @@ export default function Studio() {
   const handlePublish = async () => {
     if (!currentJobId || publishing) return;
     setPublishing(true);
+    setError("");
     try {
-      const res = await API.post(`/deploy/${currentJobId}`);
+      const res = await API.post(`/deploy/${currentJobId}`, { name: publishName });
       const url = res.data.url;
       setPublishedUrl(url);
+      setShowPublishModal(false);
     } catch (err) {
       const msg = err?.response?.data?.error || "Publishing failed";
       setError(msg);
     } finally {
       setPublishing(false);
     }
+  };
+
+  const openPublishModal = () => {
+    // Pre-fill with slugified project title
+    const title = projects.find(p => p.job_id === currentJobId)?.title || "my-app";
+    const slug = title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+    setPublishName(slug);
+    setPublishNameError("");
+    setShowPublishModal(true);
+  };
+
+  const validatePublishName = (name) => {
+    if (!name || name.length < 3) return "Name must be at least 3 characters";
+    if (name.length > 40) return "Name must be under 40 characters";
+    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(name) && name.length > 2) return "Only lowercase letters, numbers, and hyphens";
+    return "";
   };
 
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
@@ -1754,6 +1775,127 @@ export default function Studio() {
         onConfirm={confirmLogout}
         onCancel={() => setShowLogoutModal(false)}
       />
+
+      {/* ── Publish Name Modal ── */}
+      {showPublishModal && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            background: "#111", border: "1px solid #2a0000",
+            borderRadius: "16px", padding: "28px 32px",
+            maxWidth: "400px", width: "90%",
+            boxShadow: "0 0 40px rgba(16,185,129,0.15)",
+          }}>
+            <div style={{
+              width: "48px", height: "48px", margin: "0 auto 16px",
+              borderRadius: "50%",
+              background: "rgba(16,185,129,0.12)",
+              border: "1px solid rgba(16,185,129,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "1.3rem",
+            }}>
+              🌐
+            </div>
+            <h3 style={{ margin: "0 0 6px", fontSize: "1.05rem", color: "#fff", fontWeight: 700, textAlign: "center" }}>
+              Publish your app
+            </h3>
+            <p style={{ margin: "0 0 20px", fontSize: "0.78rem", color: "#666", lineHeight: 1.5, textAlign: "center" }}>
+              Choose a name for your live site
+            </p>
+
+            <div style={{ marginBottom: "8px" }}>
+              <div style={{
+                display: "flex", alignItems: "center",
+                background: "#0a0a0a",
+                border: `1px solid ${publishNameError ? "#e53935" : "#222"}`,
+                borderRadius: "10px",
+                overflow: "hidden",
+                transition: "border-color 0.2s",
+              }}>
+                <input
+                  type="text"
+                  value={publishName}
+                  onChange={e => {
+                    const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40);
+                    setPublishName(val);
+                    setPublishNameError(validatePublishName(val));
+                  }}
+                  onKeyDown={e => { if (e.key === "Enter" && !publishNameError && publishName.length >= 3) handlePublish(); }}
+                  placeholder="my-awesome-app"
+                  autoFocus
+                  style={{
+                    flex: 1,
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    color: "#fff",
+                    fontSize: "0.88rem",
+                    padding: "12px 14px",
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                />
+                <span style={{
+                  padding: "12px 14px",
+                  color: "#444",
+                  fontSize: "0.78rem",
+                  fontFamily: "'JetBrains Mono', monospace",
+                  borderLeft: "1px solid #222",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}>
+                  .pages.dev
+                </span>
+              </div>
+              {publishNameError && (
+                <p style={{ fontSize: "0.7rem", color: "#e53935", margin: "6px 0 0 4px" }}>{publishNameError}</p>
+              )}
+              {!publishNameError && publishName.length >= 3 && (
+                <p style={{ fontSize: "0.68rem", color: "#444", margin: "6px 0 0 4px", fontFamily: "'JetBrains Mono', monospace" }}>
+                  https://{publishName}.pages.dev
+                </p>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+              <button
+                onClick={() => setShowPublishModal(false)}
+                style={{
+                  flex: 1, padding: "10px",
+                  background: "#1a1a1a", border: "1px solid #333",
+                  borderRadius: "10px", color: "#aaa",
+                  fontSize: "0.85rem", cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = "#555"}
+                onMouseLeave={e => e.currentTarget.style.borderColor = "#333"}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePublish}
+                disabled={publishing || !!publishNameError || publishName.length < 3}
+                style={{
+                  flex: 1, padding: "10px",
+                  background: (publishing || publishNameError || publishName.length < 3)
+                    ? "#1a1a1a"
+                    : "linear-gradient(135deg, #10b981, #059669)",
+                  border: "none", borderRadius: "10px",
+                  color: "#fff", fontSize: "0.85rem", fontWeight: 600,
+                  cursor: (publishing || publishNameError || publishName.length < 3) ? "default" : "pointer",
+                  boxShadow: (publishing || publishNameError || publishName.length < 3) ? "none" : "0 0 14px rgba(16,185,129,0.35)",
+                  transition: "all 0.15s",
+                  opacity: (publishing || publishNameError || publishName.length < 3) ? 0.5 : 1,
+                }}
+              >
+                {publishing ? "Publishing..." : "Publish"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <SidebarDrawer
         open={sidebarOpen}
@@ -2324,7 +2466,7 @@ export default function Studio() {
                 </a>
               ) : (
                 <button
-                  onClick={handlePublish}
+                  onClick={openPublishModal}
                   disabled={publishing}
                   style={{
                     padding: "6px 14px",
