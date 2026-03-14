@@ -3046,12 +3046,8 @@ export default function Studio() {
             ))}
           </div>
 
-          {/* Middle: preview URL hint */}
-          {panelView === "preview" && (
-            <span style={{ color: "#222", fontSize: "0.72rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, marginLeft: "10px", minWidth: 0 }}>
-              {previewUrl || ""}
-            </span>
-          )}
+          {/* Middle: spacer */}
+          <div style={{ flex: 1 }} />
 
           {/* Right: action buttons — GitHub then Publish, rightmost */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, marginLeft: "auto" }}>
