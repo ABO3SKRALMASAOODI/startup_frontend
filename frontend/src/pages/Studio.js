@@ -1410,12 +1410,12 @@ function PublishPopover({
           display: "flex", alignItems: "center", gap: "5px",
           padding: "5px 12px",
           height: "28px",
-          borderRadius: "999px",
+          borderRadius: "8px",
           border: open
             ? "1px solid rgba(16,185,129,0.5)"
             : isPublished
               ? "1px solid rgba(16,185,129,0.3)"
-              : "1px solid #222",
+              : "1px solid #30363d",
           background: open
             ? "rgba(16,185,129,0.12)"
             : isPublished
@@ -1491,7 +1491,7 @@ function PublishPopover({
             display: "flex", alignItems: "center", justifyContent: "space-between",
           }}>
             <span style={{
-              fontSize: "0.58rem", color: "#2e2e2e",
+              fontSize: "0.58rem", color: "#666",
               letterSpacing: "0.12em", textTransform: "uppercase",
               fontFamily: "'JetBrains Mono', monospace",
             }}>
@@ -1573,7 +1573,7 @@ function PublishPopover({
                   }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      fontSize: "0.62rem", color: "#2a6a50",
+  
                       textTransform: "uppercase", letterSpacing: "0.1em",
                       fontFamily: "'JetBrains Mono', monospace",
                       marginBottom: "2px",
@@ -1607,7 +1607,7 @@ function PublishPopover({
               {!isPublished && (
                 <div style={{ padding: "4px 4px 6px" }}>
                   <div style={{
-                    fontSize: "0.62rem", color: "#333",
+                    fontSize: "0.62rem", color: "#777",
                     marginBottom: "6px", paddingLeft: "2px",
                     fontFamily: "'JetBrains Mono', monospace",
                     textTransform: "uppercase", letterSpacing: "0.1em",
@@ -1645,7 +1645,7 @@ function PublishPopover({
                     />
                     <span style={{
                       padding: "9px 10px",
-                      color: "#2a2a2a", fontSize: "0.68rem",
+                      color: "#555", fontSize: "0.68rem",
                       fontFamily: "'JetBrains Mono', monospace",
                       borderLeft: "1px solid #1a1a1a",
                       whiteSpace: "nowrap", flexShrink: 0,
@@ -1658,7 +1658,7 @@ function PublishPopover({
                   )}
                   {!nameError && newName.length >= 3 && (
                     <p style={{
-                      fontSize: "0.62rem", color: "#1a5a40",
+                      fontSize: "0.62rem", color: "#10b981",
                       margin: "0 0 8px 4px",
                       fontFamily: "'JetBrains Mono', monospace",
                     }}>
@@ -1726,7 +1726,7 @@ function PublishPopover({
                     <div>
                       <div style={{
                         fontSize: "0.76rem", fontWeight: 700,
-                        color: hasChanges ? "#fff" : "#333",
+                        color: hasChanges ? "#fff" : "#666",
                         fontFamily: "'JetBrains Mono', monospace",
                         letterSpacing: "0.02em",
                       }}>
@@ -1734,7 +1734,7 @@ function PublishPopover({
                       </div>
                       <div style={{
                         fontSize: "0.62rem",
-                        color: hasChanges ? "#2a6a50" : "#222",
+                        color: hasChanges ? "#6fcfaa" : "#555",
                         marginTop: "1px",
                       }}>
                         {hasChanges ? "Deploy latest changes" : "No new changes"}
@@ -1798,7 +1798,7 @@ function PublishPopover({
                     <div>
                       <div style={{
                         fontSize: "0.76rem", fontWeight: 700,
-                        color: newName.length >= 3 && !nameError ? "#fff" : "#333",
+                        color: newName.length >= 3 && !nameError ? "#fff" : "#666",
                         fontFamily: "'JetBrains Mono', monospace",
                         letterSpacing: "0.02em",
                       }}>
@@ -1806,7 +1806,7 @@ function PublishPopover({
                       </div>
                       <div style={{
                         fontSize: "0.62rem",
-                        color: newName.length >= 3 && !nameError ? "#2a6a50" : "#222",
+                        color: newName.length >= 3 && !nameError ? "#6fcfaa" : "#555",
                         marginTop: "1px",
                       }}>
                         Go live instantly
@@ -1850,9 +1850,11 @@ function PublishPopover({
                       background: "rgba(255,255,255,0.03)",
                       border: "1px solid #1a1a1a",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "0.85rem", flexShrink: 0,
+                      flexShrink: 0,
                     }}>
-                      ✏️
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ color: "#555" }}>
+                        <path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61zm1.414 1.06a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354l-1.086-1.086zM11.19 6.25 9.75 4.81l-6.286 6.287a.25.25 0 0 0-.064.108l-.558 1.953 1.953-.558a.25.25 0 0 0 .108-.064z" fill="currentColor"/>
+                      </svg>
                     </div>
                     <div>
                       <div style={{
@@ -1863,12 +1865,12 @@ function PublishPopover({
                       }}>
                         Change domain
                       </div>
-                      <div style={{ fontSize: "0.62rem", color: "#2a2a2a", marginTop: "1px" }}>
+                      <div style={{ fontSize: "0.62rem", color: "#555", marginTop: "1px" }}>
                         Pick a new address
                       </div>
                     </div>
                     <svg width="7" height="7" viewBox="0 0 8 8" fill="none"
-                      style={{ marginLeft: "auto", color: "#2a2a2a", flexShrink: 0 }}>
+                      style={{ marginLeft: "auto", color: "#555", flexShrink: 0 }}>
                       <path d="M2 1.5L5.5 4.5L2 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
@@ -1916,7 +1918,7 @@ function PublishPopover({
                       }}>
                         Open site
                       </div>
-                      <div style={{ fontSize: "0.62rem", color: "#2a2a2a", marginTop: "1px" }}>
+                      <div style={{ fontSize: "0.62rem", color: "#555", marginTop: "1px" }}>
                         View in new tab
                       </div>
                     </div>
@@ -1930,7 +1932,7 @@ function PublishPopover({
           {view === "change_domain" && (
             <div style={{ padding: "4px 4px 6px" }}>
               <div style={{
-                fontSize: "0.62rem", color: "#333",
+                fontSize: "0.62rem", color: "#777",
                 marginBottom: "6px", paddingLeft: "2px",
                 fontFamily: "'JetBrains Mono', monospace",
                 textTransform: "uppercase", letterSpacing: "0.1em",
@@ -1968,7 +1970,7 @@ function PublishPopover({
                 />
                 <span style={{
                   padding: "9px 10px",
-                  color: "#2a2a2a", fontSize: "0.68rem",
+                  color: "#555", fontSize: "0.68rem",
                   fontFamily: "'JetBrains Mono', monospace",
                   borderLeft: "1px solid #1a1a1a",
                   whiteSpace: "nowrap", flexShrink: 0,
@@ -1981,7 +1983,7 @@ function PublishPopover({
               )}
               {!nameError && newName.length >= 3 && (
                 <p style={{
-                  fontSize: "0.62rem", color: "#1a5a40",
+                  fontSize: "0.62rem", color: "#10b981",
                   margin: "0 0 8px 4px",
                   fontFamily: "'JetBrains Mono', monospace",
                 }}>
@@ -1997,7 +1999,7 @@ function PublishPopover({
                 borderRadius: "9px",
                 marginBottom: "10px",
                 fontSize: "0.67rem",
-                color: "#6a5500",
+                color: "#b08000",
                 lineHeight: 1.5,
               }}>
                 ⚠ After changing, allow ~90 seconds for DNS to propagate. Your old domain will be released.
@@ -2016,7 +2018,7 @@ function PublishPopover({
                     ? "1px solid rgba(16,185,129,0.3)"
                     : "1px solid #1a1a1a",
                   borderRadius: "10px",
-                  color: !publishing && newName.length >= 3 && !nameError ? "#10b981" : "#2a2a2a",
+                  color: !publishing && newName.length >= 3 && !nameError ? "#10b981" : "#555",
                   fontSize: "0.78rem",
                   fontWeight: 700,
                   cursor: publishing || newName.length < 3 || !!nameError ? "not-allowed" : "pointer",
@@ -3075,23 +3077,7 @@ export default function Studio() {
               </button>
             )}
 
-            {/* Open preview in new tab */}
-            {panelView === "preview" && previewUrl && !previewError && (
-              <a
-                href={previewUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  color: "#444", fontSize: "0.75rem",
-                  textDecoration: "none", fontWeight: "bold",
-                  transition: "color 0.15s",
-                }}
-                onMouseEnter={e => e.currentTarget.style.color = "#888"}
-                onMouseLeave={e => e.currentTarget.style.color = "#444"}
-              >
-                ↗
-              </a>
-            )}
+
 
             {/* GitHub push button */}
             {currentJobId && previewUrl && !isRunning && (
