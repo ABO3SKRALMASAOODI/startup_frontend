@@ -1409,6 +1409,7 @@ export default function Studio() {
               setPreviewError(false);
               setPreviewKey(k => k + 1);
             }
+            if (data.published_url) setPublishedUrl(data.published_url);
           } catch { setMessages([]); }
           if (project.state === "running") startPolling(project.job_id);
         }
@@ -1484,6 +1485,7 @@ export default function Studio() {
           setUserPlan(data.plan);
           localStorage.setItem("user_plan", data.plan);
         }
+        if (data.published_url) setPublishedUrl(data.published_url);
 
         if (data.progress && data.progress.length > 0) {
           setProgress(data.progress);
@@ -1678,6 +1680,7 @@ export default function Studio() {
         setPreviewError(false);
         setPreviewKey(k => k + 1);
       }
+      if (data.published_url) setPublishedUrl(data.published_url);
     } catch {
       setMessages([]);
     } finally {
@@ -2439,31 +2442,51 @@ export default function Studio() {
               </button>
             )}
 
-            {/* Publish button */}
+            {/* Publish / Update / Live buttons */}
             {currentJobId && previewUrl && !isRunning && (
               publishedUrl ? (
-                <a
-                  href={publishedUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    padding: "6px 14px",
-                    background: "rgba(16,185,129,0.1)",
-                    border: "1px solid rgba(16,185,129,0.3)",
-                    borderRadius: "8px",
-                    color: "#10b981",
-                    fontSize: "0.76rem", fontWeight: 600,
-                    textDecoration: "none",
-                    display: "flex", alignItems: "center", gap: "6px",
-                    whiteSpace: "nowrap",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#10b981"; e.currentTarget.style.boxShadow = "0 0 12px rgba(16,185,129,0.3)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(16,185,129,0.3)"; e.currentTarget.style.boxShadow = "none"; }}
-                >
-                  ✓ Live
-                  <span style={{ fontSize: "0.68rem", opacity: 0.7 }}>↗</span>
-                </a>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <a
+                    href={publishedUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      padding: "6px 12px",
+                      background: "rgba(16,185,129,0.1)",
+                      border: "1px solid rgba(16,185,129,0.3)",
+                      borderRadius: "8px",
+                      color: "#10b981",
+                      fontSize: "0.76rem", fontWeight: 600,
+                      textDecoration: "none",
+                      display: "flex", alignItems: "center", gap: "5px",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#10b981"; e.currentTarget.style.boxShadow = "0 0 12px rgba(16,185,129,0.3)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(16,185,129,0.3)"; e.currentTarget.style.boxShadow = "none"; }}
+                  >
+                    ✓ Live <span style={{ fontSize: "0.68rem", opacity: 0.7 }}>↗</span>
+                  </a>
+                  <button
+                    onClick={openPublishModal}
+                    disabled={publishing}
+                    style={{
+                      padding: "6px 12px",
+                      background: publishing ? "#1a1a1a" : "#111",
+                      border: "1px solid #333",
+                      borderRadius: "8px",
+                      color: publishing ? "#555" : "#aaa",
+                      fontSize: "0.72rem", fontWeight: 600,
+                      cursor: publishing ? "wait" : "pointer",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={e => { if (!publishing) e.currentTarget.style.borderColor = "#10b981"; }}
+                    onMouseLeave={e => { if (!publishing) e.currentTarget.style.borderColor = "#333"; }}
+                  >
+                    {publishing ? "Updating..." : "Update"}
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={openPublishModal}
