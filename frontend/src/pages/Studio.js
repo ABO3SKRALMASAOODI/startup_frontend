@@ -1846,7 +1846,7 @@ export default function Studio() {
                   whiteSpace: "nowrap",
                   flexShrink: 0,
                 }}>
-                  .pages.dev
+                  .thehustlerbot.com
                 </span>
               </div>
               {publishNameError && (
@@ -1854,7 +1854,7 @@ export default function Studio() {
               )}
               {!publishNameError && publishName.length >= 3 && (
                 <p style={{ fontSize: "0.68rem", color: "#444", margin: "6px 0 0 4px", fontFamily: "'JetBrains Mono', monospace" }}>
-                  https://hb-{publishName}.pages.dev
+                  https://{publishName}.thehustlerbot.com
                 </p>
               )}
             </div>
