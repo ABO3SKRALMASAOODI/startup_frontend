@@ -1290,6 +1290,10 @@ export default function Studio() {
   const [codeChanged,  setCodeChanged]  = useState(false);
   const [selectedModel, setSelectedModel] = useState("hb-6");
 
+  // Publishing
+  const [publishedUrl, setPublishedUrl] = useState(null);
+  const [publishing, setPublishing] = useState(false);
+
   // File attachments for drag & drop
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -1633,6 +1637,7 @@ export default function Studio() {
     setState("idle"); setPrompt(""); setError("");
     setSelectedModel(userPlan === "free" ? "hb-6" : "hb-6");
     setAttachedFiles([]);
+    setPublishedUrl(null);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -1644,6 +1649,7 @@ export default function Studio() {
     setPreviewError(false);
     setMessages([]);
     setAttachedFiles([]);
+    setPublishedUrl(null);
 
     const safePreviewUrl = _getSafePreviewUrl(project.preview_url, project.job_id);
     setPreviewUrl(safePreviewUrl);
@@ -1704,6 +1710,21 @@ export default function Studio() {
       await API.post(`/auth/job/${currentJobId}/cancel`);
     } catch {}
     fetchProjects().then(jobs => setProjects(jobs)).catch(() => {});
+  };
+
+  const handlePublish = async () => {
+    if (!currentJobId || publishing) return;
+    setPublishing(true);
+    try {
+      const res = await API.post(`/deploy/${currentJobId}`);
+      const url = res.data.url;
+      setPublishedUrl(url);
+    } catch (err) {
+      const msg = err?.response?.data?.error || "Publishing failed";
+      setError(msg);
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
@@ -2274,6 +2295,55 @@ export default function Studio() {
               >
                 Get Credits
               </button>
+            )}
+
+            {/* Publish button */}
+            {currentJobId && previewUrl && !isRunning && (
+              publishedUrl ? (
+                <a
+                  href={publishedUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    padding: "6px 14px",
+                    background: "rgba(16,185,129,0.1)",
+                    border: "1px solid rgba(16,185,129,0.3)",
+                    borderRadius: "8px",
+                    color: "#10b981",
+                    fontSize: "0.76rem", fontWeight: 600,
+                    textDecoration: "none",
+                    display: "flex", alignItems: "center", gap: "6px",
+                    whiteSpace: "nowrap",
+                    transition: "all 0.15s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#10b981"; e.currentTarget.style.boxShadow = "0 0 12px rgba(16,185,129,0.3)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(16,185,129,0.3)"; e.currentTarget.style.boxShadow = "none"; }}
+                >
+                  ✓ Live
+                  <span style={{ fontSize: "0.68rem", opacity: 0.7 }}>↗</span>
+                </a>
+              ) : (
+                <button
+                  onClick={handlePublish}
+                  disabled={publishing}
+                  style={{
+                    padding: "6px 14px",
+                    background: publishing ? "#1a1a1a" : "linear-gradient(135deg, #10b981, #059669)",
+                    border: "none", borderRadius: "8px",
+                    color: "#fff", fontSize: "0.76rem", fontWeight: 600,
+                    cursor: publishing ? "wait" : "pointer",
+                    display: "flex", alignItems: "center", gap: "6px",
+                    whiteSpace: "nowrap",
+                    boxShadow: publishing ? "none" : "0 0 12px rgba(16,185,129,0.3)",
+                    transition: "all 0.15s",
+                    opacity: publishing ? 0.7 : 1,
+                  }}
+                  onMouseEnter={e => { if (!publishing) e.currentTarget.style.boxShadow = "0 0 20px rgba(16,185,129,0.5)"; }}
+                  onMouseLeave={e => { if (!publishing) e.currentTarget.style.boxShadow = "0 0 12px rgba(16,185,129,0.3)"; }}
+                >
+                  {publishing ? "Publishing..." : "Publish"}
+                </button>
+              )
             )}
 
             {(
