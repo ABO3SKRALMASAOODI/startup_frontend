@@ -1559,10 +1559,10 @@ export default function Studio() {
       setProgress([]);
       setThinkingText("");
       setCodeChanged(false);
-      setMessages([{ role: "user", content: text }]);
-
       const filesToSend = [...attachedFiles];
+      const fileNames = filesToSend.map(f => ({ name: f.name, type: f.type }));
       setAttachedFiles([]);
+      setMessages([{ role: "user", content: text, attachments: fileNames.length > 0 ? fileNames : undefined }]);
 
       const [jobId, smartTitle] = await Promise.all([
         generateProject(text, "", selectedModel, filesToSend),
@@ -1599,9 +1599,10 @@ export default function Studio() {
         setProgress([]);
         setThinkingText("");
         setCodeChanged(false);
-        setMessages(prev => [...prev, { role: "user", content: text || "(attached files)" }]);
         const filesToSend = [...attachedFiles];
+        const fileNames = filesToSend.map(f => ({ name: f.name, type: f.type }));
         setAttachedFiles([]);
+        setMessages(prev => [...prev, { role: "user", content: text || "(attached files)", attachments: fileNames.length > 0 ? fileNames : undefined }]);
         await sendFollowUp(currentJobId, text || "See the attached files", selectedModel, filesToSend);
         startPolling(currentJobId);
       }
@@ -1693,7 +1694,7 @@ export default function Studio() {
     fetchProjects().then(jobs => setProjects(jobs)).catch(() => {});
   };
 
-  const placeholder = currentJobId ? "Ask for changes... (drop images here)" : "Describe your app... (drop screenshots or images here)";
+  const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -1774,7 +1775,7 @@ export default function Studio() {
               </div>
               <p style={{ color: "#fff", fontSize: "0.95rem", fontWeight: 600, marginBottom: "6px" }}>The Hustler Bot</p>
               <p style={{ color: "#444", fontSize: "0.82rem", maxWidth: "220px", lineHeight: 1.6 }}>
-                Describe an app and I'll build it for you in seconds. Drop images or screenshots for reference.
+                Describe an app and I'll build it for you in seconds.
               </p>
             </div>
           )}
@@ -1847,6 +1848,25 @@ export default function Studio() {
                       dangerouslySetInnerHTML={{ __html: marked.parse(msg.content || "") }}
                       className="message-content"
                     />
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                        {msg.attachments.map((att, ai) => {
+                          const isImg = att.type?.startsWith("image/");
+                          return (
+                            <div key={ai} style={{
+                              display: "flex", alignItems: "center", gap: "5px",
+                              background: "rgba(255,255,255,0.06)",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              borderRadius: "6px", padding: "3px 8px",
+                              fontSize: "0.68rem", color: "rgba(255,255,255,0.5)",
+                            }}>
+                              <span>{isImg ? "🖼" : "📄"}</span>
+                              <span style={{ maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{att.name}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                     {msg.role === "assistant" && msg.credits_used !== undefined && (
                       <CostDots credits={msg.credits_used} />
                     )}
@@ -2006,19 +2026,24 @@ export default function Studio() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isRunning}
                 style={{
-                  background: "none", border: "none",
-                  color: attachedFiles.length > 0 ? "#cc0000" : "#333",
+                  background: "none",
+                  border: `1px solid ${attachedFiles.length > 0 ? "rgba(200,0,0,0.4)" : "#222"}`,
+                  color: attachedFiles.length > 0 ? "#cc0000" : "#444",
                   cursor: isRunning ? "default" : "pointer",
-                  fontSize: "1.1rem", padding: "4px",
+                  fontSize: "1rem", padding: "0",
+                  width: "28px", height: "28px",
+                  borderRadius: "50%",
                   flexShrink: 0, opacity: isRunning ? 0.3 : 1,
-                  transition: "color 0.2s",
-                  display: "flex", alignItems: "center",
+                  transition: "all 0.2s",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontWeight: 300,
+                  lineHeight: 1,
                 }}
-                title="Attach files (images, PDFs, text)"
-                onMouseEnter={e => { if (!isRunning) e.currentTarget.style.color = "#cc0000"; }}
-                onMouseLeave={e => { if (!isRunning) e.currentTarget.style.color = attachedFiles.length > 0 ? "#cc0000" : "#333"; }}
+                title="Attach files"
+                onMouseEnter={e => { if (!isRunning) { e.currentTarget.style.color = "#cc0000"; e.currentTarget.style.borderColor = "rgba(200,0,0,0.4)"; } }}
+                onMouseLeave={e => { if (!isRunning) { e.currentTarget.style.color = attachedFiles.length > 0 ? "#cc0000" : "#444"; e.currentTarget.style.borderColor = attachedFiles.length > 0 ? "rgba(200,0,0,0.4)" : "#222"; } }}
               >
-                📎
+                +
               </button>
               <input
                 ref={fileInputRef}
