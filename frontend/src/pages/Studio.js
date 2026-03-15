@@ -271,7 +271,15 @@ const fetchJobFiles = async (jobId) => {
   const res = await API.get(`/auth/job/${jobId}/files`);
   return res.data.files || [];
 };
+const enableBackend = async (jobId) => {
+  const res = await API.post(`/supabase/job/${jobId}/enable-backend`);
+  return res.data;
+};
 
+const getBackendStatus = async (jobId) => {
+  const res = await API.get(`/supabase/job/${jobId}/backend-status`);
+  return res.data;
+};
 const downloadProjectZip = async (jobId, title) => {
   const res = await API.get(`/auth/job/${jobId}/download`, { responseType: "blob" });
   const url  = URL.createObjectURL(new Blob([res.data], { type: "application/zip" }));
@@ -2092,7 +2100,8 @@ export default function Studio() {
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const fileInputRef = useRef(null);
   const plusMenuRef = useRef(null);
-
+  const [backendEnabled, setBackendEnabled] = useState(false);
+  const [backendLoading, setBackendLoading] = useState(false);
   // NameModal
   const [showNameModal, setShowNameModal] = useState(
     localStorage.getItem("show_name_modal") === "1"
@@ -2437,6 +2446,7 @@ export default function Studio() {
     setPublishedUrl(null);
     setChangesSincePublish(false);
     setTimeout(() => inputRef.current?.focus(), 100);
+    setBackendEnabled(false);
   };
 
   const handleLoadProject = async (project) => {
@@ -2483,6 +2493,10 @@ export default function Studio() {
     } finally {
       setChatLoading(false);
     }
+    try {
+      const backendData = await getBackendStatus(project.job_id);
+      setBackendEnabled(!!backendData.supabase_enabled);
+    } catch { setBackendEnabled(false); }
 
     if (project.state === "running") startPolling(project.job_id);
   };
@@ -2514,7 +2528,18 @@ export default function Studio() {
     } catch {}
     fetchProjects().then(jobs => setProjects(jobs)).catch(() => {});
   };
-
+  const handleEnableBackend = async () => {
+    if (!currentJobId || backendLoading || isRunning) return;
+    setBackendLoading(true);
+    try {
+      await enableBackend(currentJobId);
+      setBackendEnabled(true);
+    } catch (err) {
+      setError(err?.response?.data?.error || "Failed to enable backend");
+    } finally {
+      setBackendLoading(false);
+    }
+  };
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -3073,7 +3098,36 @@ export default function Studio() {
               </button>
             )}
 
+            {currentJobId && !isRunning && (
+              <button
+                onClick={backendEnabled ? undefined : handleEnableBackend}
+                disabled={backendEnabled || backendLoading || isRunning}
+                style={{
+                  display: "flex", alignItems: "center", gap: "5px",
+                  padding: "5px 12px", height: "28px",
+                  borderRadius: "8px",
+                  border: backendEnabled ? "1px solid rgba(16,185,129,0.3)" : "1px solid #30363d",
+                  background: backendEnabled ? "rgba(16,185,129,0.08)" : "transparent",
+                  color: backendEnabled ? "#10b981" : "#888",
+                  fontSize: "0.72rem", fontWeight: 600,
+                  cursor: backendEnabled ? "default" : backendLoading ? "wait" : "pointer",
+                  fontFamily: "'JetBrains Mono', monospace",
+                  transition: "all 0.15s",
+                  whiteSpace: "nowrap",
+                }}
+                onMouseEnter={e => { if (!backendEnabled && !backendLoading) { e.currentTarget.style.borderColor = "#10b981"; e.currentTarget.style.color = "#10b981"; }}}
+                onMouseLeave={e => { if (!backendEnabled && !backendLoading) { e.currentTarget.style.borderColor = "#30363d"; e.currentTarget.style.color = "#888"; }}}
+              >
+                <span style={{
+                  width: "6px", height: "6px", borderRadius: "50%",
+                  background: backendEnabled ? "#10b981" : "#333",
+                  boxShadow: backendEnabled ? "0 0 5px rgba(16,185,129,0.7)" : "none",
+                }} />
+                {backendLoading ? "Enabling..." : backendEnabled ? "Backend On" : "Enable Backend"}
+              </button>
+            )}
 
+            
 
             {/* GitHub push button */}
             {currentJobId && previewUrl && !isRunning && (
