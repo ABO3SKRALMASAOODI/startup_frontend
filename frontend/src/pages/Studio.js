@@ -965,11 +965,11 @@ function FolderNode({ name, fullPath, children, renderTree }) {
 
 // ─── Credits badge ────────────────────────────────────────────────────────────
 
-function SidebarCreditsBadge({ balance, onGetCredits }) {
-  const maxCredits = 50;
+function SidebarCreditsBadge({ balance, planLimit, onGetCredits }) {
+  const maxCredits = Math.max(planLimit || 20, balance, 20);
   const pct = Math.max(0, Math.min(100, (balance / maxCredits) * 100));
-  const isLow = balance <= 5;
-  const isMedium = balance <= 15;
+  const isLow = pct <= 10;
+  const isMedium = pct <= 30;
   const textColor = isLow ? "#e53935" : isMedium ? "#f0a500" : "#fff";
 
   return (
@@ -1074,7 +1074,7 @@ function CostDots({ credits }) {
 
 // ─── Sidebar drawer ───────────────────────────────────────────────────────────
 
-function SidebarDrawer({ open, onClose, userEmail, credits, projects, currentJobId, onNewProject, onLoadProject, onLogout, onGetCredits, onHome }) {
+function SidebarDrawer({ open, onClose, userEmail, credits, planLimit, projects, currentJobId, onNewProject, onLoadProject, onLogout, onGetCredits, onHome }) {
   const drawerRef = useRef(null);
 
   useEffect(() => {
@@ -1116,7 +1116,7 @@ function SidebarDrawer({ open, onClose, userEmail, credits, projects, currentJob
 
         <p style={{ fontSize: "0.75rem", color: "#444", marginBottom: "1rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userEmail}</p>
 
-        {credits !== null && <SidebarCreditsBadge balance={credits} onGetCredits={onGetCredits} />}
+        {credits !== null && <SidebarCreditsBadge balance={credits} planLimit={planLimit} onGetCredits={onGetCredits} />}
 
         <button
           onClick={() => { onHome(); onClose(); }}
@@ -1252,7 +1252,181 @@ function LogoutModal({ open, onConfirm, onCancel }) {
     </div>
   );
 }
-
+function StopConfirmModal({ open, onConfirm, onCancel }) {
+  if (!open) return null;
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <div style={{
+        background: "#111", border: "1px solid #2a0000",
+        borderRadius: "16px", padding: "28px 32px",
+        maxWidth: "380px", width: "90%",
+        boxShadow: "0 0 40px rgba(140,0,0,0.3)",
+        textAlign: "center",
+      }}>
+        <div style={{
+          width: "48px", height: "48px", margin: "0 auto 16px",
+          borderRadius: "50%",
+          background: "rgba(140,0,0,0.15)",
+          border: "1px solid rgba(140,0,0,0.3)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "1.3rem", color: "#cc0000",
+        }}>
+          ■
+        </div>
+        <h3 style={{ margin: "0 0 8px", fontSize: "1.05rem", color: "#fff", fontWeight: 700 }}>
+          Stop building?
+        </h3>
+        <p style={{ margin: "0 0 10px", fontSize: "0.82rem", color: "#666", lineHeight: 1.5 }}>
+          The AI agent is still working on your project. Stopping now will interrupt the build.
+        </p>
+        <p style={{ margin: "0 0 24px", fontSize: "0.75rem", color: "#f0a500", lineHeight: 1.5 }}>
+          ⚠ Credits used so far will still be charged.
+        </p>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={onCancel}
+            style={{
+              flex: 1, padding: "10px",
+              background: "#1a1a1a", border: "1px solid #333",
+              borderRadius: "10px", color: "#aaa",
+              fontSize: "0.85rem", cursor: "pointer", transition: "all 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = "#555"}
+            onMouseLeave={e => e.currentTarget.style.borderColor = "#333"}
+          >
+            Keep Building
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{
+              flex: 1, padding: "10px",
+              background: "linear-gradient(135deg, #cc0000, #8b0000)",
+              border: "none", borderRadius: "10px",
+              color: "#fff", fontSize: "0.85rem", fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 0 14px rgba(180,0,0,0.35)", transition: "all 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 24px rgba(200,0,0,0.55)"}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(180,0,0,0.35)"}
+          >
+            Stop Agent
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+function BackendPermissionModal({ open, onAllow, onDeny, isLoading }) {
+  if (!open) return null;
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <div style={{
+        background: "#0b0b0b", border: "1px solid #1e1e1e",
+        borderRadius: "16px", padding: "28px 32px",
+        maxWidth: "400px", width: "90%",
+        boxShadow: "0 0 48px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.025)",
+        textAlign: "center",
+        animation: "pubDropIn 0.15s cubic-bezier(0.2,0,0,1) forwards",
+      }}>
+        <div style={{
+          width: "52px", height: "52px", margin: "0 auto 18px",
+          borderRadius: "14px",
+          background: "rgba(16,185,129,0.1)",
+          border: "1px solid rgba(16,185,129,0.25)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "1.4rem",
+        }}>
+          🗄️
+        </div>
+        <h3 style={{
+          margin: "0 0 6px", fontSize: "1.1rem", color: "#fff", fontWeight: 700,
+          fontFamily: "'JetBrains Mono', monospace",
+        }}>
+          Enable Backend
+        </h3>
+        <p style={{ margin: "0 0 20px", fontSize: "0.82rem", color: "#666", lineHeight: 1.6 }}>
+          Your app needs a database and authentication. This will provision a backend with:
+        </p>
+        <div style={{
+          textAlign: "left", margin: "0 0 24px", padding: "14px 16px",
+          background: "rgba(16,185,129,0.04)",
+          border: "1px solid rgba(16,185,129,0.12)", borderRadius: "12px",
+        }}>
+          {[
+            ["🗃️", "PostgreSQL Database", "Tables, queries, relations"],
+            ["🔐", "Authentication", "Sign up, login, sessions"],
+            ["🛡️", "Row-Level Security", "Users only see their own data"],
+          ].map(([icon, title, desc], i) => (
+            <div key={i} style={{
+              display: "flex", alignItems: "flex-start", gap: "10px",
+              padding: "6px 0",
+              borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.04)" : "none",
+            }}>
+              <span style={{ fontSize: "0.95rem", flexShrink: 0, marginTop: "1px" }}>{icon}</span>
+              <div>
+                <div style={{ fontSize: "0.78rem", color: "#ddd", fontWeight: 600 }}>{title}</div>
+                <div style={{ fontSize: "0.66rem", color: "#555", marginTop: "1px" }}>{desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: "0 0 20px", fontSize: "0.68rem", color: "#444", lineHeight: 1.5 }}>
+          Free to enable. The agent will continue building once activated.
+        </p>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={onDeny} disabled={isLoading}
+            style={{
+              flex: 1, padding: "11px",
+              background: "#1a1a1a", border: "1px solid #333",
+              borderRadius: "10px", color: "#aaa",
+              fontSize: "0.82rem", cursor: "pointer", transition: "all 0.15s",
+              opacity: isLoading ? 0.5 : 1,
+            }}
+            onMouseEnter={e => { if (!isLoading) e.currentTarget.style.borderColor = "#555"; }}
+            onMouseLeave={e => { if (!isLoading) e.currentTarget.style.borderColor = "#333"; }}
+          >
+            Skip
+          </button>
+          <button
+            onClick={onAllow} disabled={isLoading}
+            style={{
+              flex: 1, padding: "11px",
+              background: isLoading ? "#1a1a1a" : "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.15))",
+              border: `1px solid ${isLoading ? "#333" : "rgba(16,185,129,0.3)"}`,
+              borderRadius: "10px",
+              color: isLoading ? "#666" : "#10b981",
+              fontSize: "0.82rem", fontWeight: 700,
+              cursor: isLoading ? "wait" : "pointer",
+              fontFamily: "'JetBrains Mono', monospace",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+              transition: "all 0.15s",
+            }}
+          >
+            {isLoading && (
+              <div style={{
+                width: "12px", height: "12px",
+                border: "2px solid rgba(16,185,129,0.2)",
+                borderTop: "2px solid #10b981",
+                borderRadius: "50%", animation: "spin 0.8s linear infinite",
+              }} />
+            )}
+            {isLoading ? "Setting up..." : "Allow"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+ 
 const DS = {
   btn: { width: "100%", padding: "9px 12px", borderRadius: "8px", border: "none", color: "#fff", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", textAlign: "left", transition: "all 0.2s" },
 };
@@ -2078,11 +2252,13 @@ export default function Studio() {
   const [error,        setError]        = useState("");
   const [previewKey,   setPreviewKey]   = useState(0);
   const [credits,      setCredits]      = useState(null);
+  const [planLimit,    setPlanLimit]     = useState(20);
   const [userPlan,     setUserPlan]     = useState(localStorage.getItem("user_plan") || "free");
   const [panelView,      setPanelView]      = useState("preview");
   const [progress,       setProgress]       = useState([]);
   const [thinkingText,   setThinkingText]   = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showStopModal,   setShowStopModal]   = useState(false);
   const [previewError,  setPreviewError]  = useState(false);
 
   const [codeChanged,  setCodeChanged]  = useState(false);
@@ -2102,6 +2278,8 @@ export default function Studio() {
   const plusMenuRef = useRef(null);
   const [backendEnabled, setBackendEnabled] = useState(false);
   const [backendLoading, setBackendLoading] = useState(false);
+  const [showBackendModal, setShowBackendModal] = useState(false);
+  const [pendingBackendJobId, setPendingBackendJobId] = useState(null);
   // NameModal
   const [showNameModal, setShowNameModal] = useState(
     localStorage.getItem("show_name_modal") === "1"
@@ -2157,7 +2335,10 @@ export default function Studio() {
   }, [messages]);
 
   useEffect(() => {
-    getCredits().then(d => setCredits(d.balance)).catch(() => {});
+    getCredits().then(d => {
+      setCredits(d.balance);
+      if (d.plan_limit) setPlanLimit(d.plan_limit);
+    }).catch(() => {});
     setUserPlan(localStorage.getItem("user_plan") || "free");
   }, []);
 
@@ -2283,6 +2464,11 @@ export default function Studio() {
 
         if (data.code_changed !== undefined) setCodeChanged(data.code_changed);
         if (data.credits_balance !== undefined) setCredits(data.credits_balance);
+        if (data.plan) {
+          const monthlyLimits = { free: 0, plus: 1000, pro: 2400, ultra: 5000, titan: 10000, ace: 25000 };
+          const monthly = monthlyLimits[data.plan] || 0;
+            setPlanLimit(20 + monthly);
+          }
         if (data.model) setSelectedModel(data.model);
         if (data.plan) {
           setUserPlan(data.plan);
@@ -2305,7 +2491,10 @@ export default function Studio() {
             }
           }
         }
-
+        if (data.backend_requested && !backendEnabled && !showBackendModal) {
+                     setPendingBackendJobId(jobId);
+                     setShowBackendModal(true);
+                   }
         if (data.preview_url) {
           setPreviewUrl(data.preview_url);
           setPreviewError(false);
@@ -2517,7 +2706,13 @@ export default function Studio() {
 
   const handleHome = () => navigate("/home");
 
-  const handleStop = async () => {
+  const handleStop = () => {
+    if (!currentJobId) return;
+    setShowStopModal(true);
+  };
+ 
+  const confirmStop = async () => {
+    setShowStopModal(false);
     if (!currentJobId) return;
     stopPolling();
     setState("failed");
@@ -2528,6 +2723,33 @@ export default function Studio() {
     } catch {}
     fetchProjects().then(jobs => setProjects(jobs)).catch(() => {});
   };
+  const handleBackendAllow = async () => {
+    const jobId = pendingBackendJobId || currentJobId;
+    if (!jobId) return;
+    setBackendLoading(true);
+    try {
+      await enableBackend(jobId);
+      setBackendEnabled(true);
+      setShowBackendModal(false);
+      setPendingBackendJobId(null);
+      try {
+        await API.post(`/auth/job/${jobId}/backend-ready`);
+      } catch {}
+    } catch (err) {
+      setError(err?.response?.data?.error || "Failed to enable backend");
+    } finally {
+      setBackendLoading(false);
+    }
+  };
+ 
+  const handleBackendDeny = () => {
+    setShowBackendModal(false);
+    setPendingBackendJobId(null);
+    if (pendingBackendJobId || currentJobId) {
+      API.post(`/auth/job/${pendingBackendJobId || currentJobId}/backend-denied`).catch(() => {});
+    }
+  };
+ 
   const handleEnableBackend = async () => {
     if (!currentJobId || backendLoading || isRunning) return;
     setBackendLoading(true);
@@ -2567,12 +2789,23 @@ export default function Studio() {
         onConfirm={confirmLogout}
         onCancel={() => setShowLogoutModal(false)}
       />
-
+      <StopConfirmModal
+        open={showStopModal}
+        onConfirm={confirmStop}
+        onCancel={() => setShowStopModal(false)}
+      />
+      <BackendPermissionModal
+        open={showBackendModal}
+        onAllow={handleBackendAllow}
+        onDeny={handleBackendDeny}
+        isLoading={backendLoading}
+      />
       <SidebarDrawer
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         userEmail={userEmail}
         credits={credits}
+        planLimit={planLimit}
         projects={projects}
         currentJobId={currentJobId}
         onNewProject={handleNewProject}
