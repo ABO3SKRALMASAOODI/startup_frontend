@@ -912,12 +912,27 @@ export default function Studio() {
       setTimeout(async()=>{
         try { const d=await getJobStatus(cid); setCurrentJobId(cid); setState(d.state||"completed"); setCodeChanged(true);
           if (d.preview_url) { setPreviewUrl(d.preview_url); setPreviewError(false); setPreviewKey(k=>k+1); }
-          setMessages((d.messages||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used })));
+          mergeServerMessages(d.messages);
           fetchProjects().then(j=>setProjects(j)).catch(()=>{});
         } catch(e) { console.error("Clone load failed:",e); }
       },300);
     }
   }, []); // eslint-disable-line
+
+  // ── Merge server messages with local attachment data ──
+  const mergeServerMessages = useCallback((serverMsgs) => {
+    const mapped = (serverMsgs||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used }));
+    // Preserve attachments from current messages (server doesn't store them)
+    setMessages(prev => {
+      return mapped.map((msg, i) => {
+        // Find matching existing message by index and role
+        if (prev[i] && prev[i].role === msg.role && prev[i].attachments) {
+          return { ...msg, attachments: prev[i].attachments };
+        }
+        return msg;
+      });
+    });
+  }, []);
 
   // ── Load project state helper ──
   const loadProjectState = async (project) => {
@@ -928,7 +943,7 @@ export default function Studio() {
     if (safeUrl) setPreviewKey(k=>k+1);
     try {
       const d = await getJobStatus(project.job_id);
-      setMessages((d.messages||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used })));
+      mergeServerMessages(d.messages);
       if (d.state) setState(d.state); if (d.code_changed!==undefined) setCodeChanged(d.code_changed); if (d.model) setSelectedModel(d.model);
       if (d.preview_url) { const u=_safePreview(d.preview_url); setPreviewUrl(u); setPreviewError(false); setPreviewKey(k=>k+1); }
       if (d.published_url) { setPublishedUrl(d.published_url); setChangesSincePublish(false); }
@@ -945,7 +960,7 @@ export default function Studio() {
       try {
         const d = await getJobStatus(jobId);
         if (cancelledRef.current) return; // Check again after async call
-        setMessages((d.messages||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used })));
+        mergeServerMessages(d.messages);
         setState(d.state); if (d.code_changed!==undefined) setCodeChanged(d.code_changed);
         if (d.credits_balance!==undefined) setCredits(d.credits_balance);
         if (d.plan) { const ml={free:0,plus:1000,pro:2400,ultra:5000,titan:10000,ace:25000}; setPlanLimit(20+(ml[d.plan]||0)); setUserPlan(d.plan); localStorage.setItem("user_plan",d.plan); }
@@ -1068,10 +1083,14 @@ export default function Studio() {
       <ConfirmModal open={showLogoutModal} title="Log out?" description="You'll need to sign in again." confirmLabel="Log out" onConfirm={confirmLogout} onCancel={()=>setShowLogoutModal(false)} />
       <ConfirmModal open={showStopModal} title="Stop building?" description="The AI agent is still working." warning="Credits used so far will still be charged." confirmLabel="Stop" onConfirm={confirmStop} onCancel={()=>setShowStopModal(false)} />
 
-      {/* Image preview popup */}
+      {/* File preview popup — images shown inline, docs in iframe */}
       {imagePreview && (
         <div onClick={()=>setImagePreview(null)} style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out" }}>
-          <img src={imagePreview} alt="Preview" style={{ maxWidth:"90vw",maxHeight:"85vh",borderRadius:"12px",boxShadow:"0 0 60px rgba(0,0,0,0.8)",objectFit:"contain" }} onClick={e=>e.stopPropagation()} />
+          {imagePreview.type === "doc" ? (
+            <iframe src={imagePreview.url} title="Document Preview" style={{ width:"80vw",height:"85vh",borderRadius:"12px",border:"none",boxShadow:"0 0 60px rgba(0,0,0,0.8)" }} onClick={e=>e.stopPropagation()} />
+          ) : (
+            <img src={typeof imagePreview === "string" ? imagePreview : imagePreview.url} alt="Preview" style={{ maxWidth:"90vw",maxHeight:"85vh",borderRadius:"12px",boxShadow:"0 0 60px rgba(0,0,0,0.8)",objectFit:"contain" }} onClick={e=>e.stopPropagation()} />
+          )}
           <button onClick={()=>setImagePreview(null)} style={{ position:"absolute",top:"20px",right:"20px",background:"var(--bg-3)",border:`1px solid var(--border-default)`,borderRadius:"50%",width:"32px",height:"32px",color:"var(--text-primary)",fontSize:"1rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>&times;</button>
         </div>
       )}
@@ -1142,7 +1161,7 @@ export default function Studio() {
                               onClick={() => {
                                 if (!canOpen) return;
                                 if (isImg) setImagePreview(fileUrl);
-                                else window.open(fileUrl, "_blank");
+                                else setImagePreview({ type:"doc", url:fileUrl });
                               }}
                               style={{ display:"flex",alignItems:"center",gap:"4px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"4px",padding:"2px 6px",fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor: canOpen ? "pointer" : "default",transition:"border-color 0.12s" }}
                               onMouseEnter={e=>{ if (canOpen) e.currentTarget.style.borderColor="var(--red-accent)"; }}
@@ -1235,9 +1254,9 @@ export default function Studio() {
                     >
                       {isImg
                         ? <img src={objUrl} alt="" onClick={()=>setImagePreview(objUrl)} style={{ width:"26px",height:"26px",borderRadius:"3px",objectFit:"cover",cursor:"pointer" }} />
-                        : <span onClick={()=>window.open(objUrl,"_blank")} style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor:"pointer" }}>DOC</span>
+                        : <span onClick={()=>setImagePreview({type:"doc",url:objUrl})} style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor:"pointer" }}>DOC</span>
                       }
-                      <span onClick={()=>{ if (isImg) setImagePreview(objUrl); else window.open(objUrl,"_blank"); }} style={{ fontSize:"0.65rem",color:"var(--text-secondary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"90px",cursor:"pointer" }}>{f.name}</span>
+                      <span onClick={()=>{ if (isImg) setImagePreview(objUrl); else setImagePreview({type:"doc",url:objUrl}); }} style={{ fontSize:"0.65rem",color:"var(--text-secondary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"90px",cursor:"pointer" }}>{f.name}</span>
                       <button onClick={(e)=>{e.stopPropagation();removeFile(i);}} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.75rem",padding:"0 1px",lineHeight:1,flexShrink:0 }}>×</button>
                     </div>
                   );
