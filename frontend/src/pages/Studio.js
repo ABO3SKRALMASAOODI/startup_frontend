@@ -843,7 +843,7 @@ export default function Studio() {
   const backendRespondedRef = useRef(false);
   const [showNameModal, setShowNameModal] = useState(localStorage.getItem("show_name_modal") === "1");
   const [imagePreview, setImagePreview] = useState(null); // URL string for image popup
-  const attachmentUrlsRef = useRef({}); // persist object URLs across re-renders: {msgIndex: {attIndex: url}}
+  const attachmentUrlsRef = useRef({}); // persist object URLs: {filename: url}
 
   const isRunning = state === "running";
   const isRendering = state === "completed" && !previewUrl && currentJobId && codeChanged;
@@ -979,9 +979,9 @@ export default function Studio() {
     try {
       setState("running"); setProgress([]); setThinkingText(""); setCodeChanged(false);
       const fs=[...attachedFiles];
-      const fn=fs.map((f,idx)=>{
-        const url = f.type.startsWith("image/") ? URL.createObjectURL(f) : null;
-        if (url) { if (!attachmentUrlsRef.current[0]) attachmentUrlsRef.current[0] = {}; attachmentUrlsRef.current[0][idx] = url; }
+      const fn=fs.map(f=>{
+        const url = URL.createObjectURL(f);
+        attachmentUrlsRef.current[f.name] = url;
         return {name:f.name,type:f.type};
       });
       setAttachedFiles([]);
@@ -1003,10 +1003,9 @@ export default function Studio() {
       else {
         setState("running"); setProgress([]); setThinkingText(""); setCodeChanged(false);
         const fs=[...attachedFiles];
-        const msgIdx = messages.length; // index of the new message
-        const fn=fs.map((f,idx)=>{
-          const url = f.type.startsWith("image/") ? URL.createObjectURL(f) : null;
-          if (url) { if (!attachmentUrlsRef.current[msgIdx]) attachmentUrlsRef.current[msgIdx] = {}; attachmentUrlsRef.current[msgIdx][idx] = url; }
+        const fn=fs.map(f=>{
+          const url = URL.createObjectURL(f);
+          attachmentUrlsRef.current[f.name] = url;
           return {name:f.name,type:f.type};
         });
         setAttachedFiles([]);
@@ -1136,15 +1135,20 @@ export default function Studio() {
                       <div style={{ display:"flex",gap:"4px",flexWrap:"wrap",marginTop:"6px",paddingTop:"6px",borderTop:`1px solid var(--border-subtle)` }}>
                         {msg.attachments.map((att,ai) => {
                           const isImg = att.type?.startsWith("image/");
-                          const imgUrl = attachmentUrlsRef.current[i]?.[ai];
+                          const fileUrl = attachmentUrlsRef.current[att.name];
+                          const canOpen = !!fileUrl;
                           return (
                             <span key={ai}
-                              onClick={() => { if (isImg && imgUrl) setImagePreview(imgUrl); }}
-                              style={{ display:"flex",alignItems:"center",gap:"4px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"4px",padding:"2px 6px",fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor: isImg && imgUrl ? "pointer" : "default",transition:"border-color 0.12s" }}
-                              onMouseEnter={e=>{ if (isImg&&imgUrl) e.currentTarget.style.borderColor="var(--red-accent)"; }}
+                              onClick={() => {
+                                if (!canOpen) return;
+                                if (isImg) setImagePreview(fileUrl);
+                                else window.open(fileUrl, "_blank");
+                              }}
+                              style={{ display:"flex",alignItems:"center",gap:"4px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"4px",padding:"2px 6px",fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor: canOpen ? "pointer" : "default",transition:"border-color 0.12s" }}
+                              onMouseEnter={e=>{ if (canOpen) e.currentTarget.style.borderColor="var(--red-accent)"; }}
                               onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--border-subtle)"; }}
                             >
-                              {isImg ? (imgUrl ? <img src={imgUrl} alt="" style={{ width:"18px",height:"18px",borderRadius:"2px",objectFit:"cover" }} /> : "IMG") : "DOC"}
+                              {isImg && fileUrl ? <img src={fileUrl} alt="" style={{ width:"18px",height:"18px",borderRadius:"2px",objectFit:"cover" }} /> : isImg ? "IMG" : "DOC"}
                               <span style={{ maxWidth:"80px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{att.name}</span>
                             </span>
                           );
@@ -1221,13 +1225,23 @@ export default function Studio() {
 
             {attachedFiles.length>0 && (
               <div style={{ display:"flex",gap:"6px",flexWrap:"wrap" }}>
-                {attachedFiles.map((f,i) => (
-                  <div key={i} style={{ display:"flex",alignItems:"center",gap:"5px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"6px",padding:"3px 8px",maxWidth:"140px" }}>
-                    {f.type.startsWith("image/") ? <img src={URL.createObjectURL(f)} alt="" style={{ width:"22px",height:"22px",borderRadius:"3px",objectFit:"cover" }} /> : <span style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)" }}>DOC</span>}
-                    <span style={{ fontSize:"0.65rem",color:"var(--text-secondary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"80px" }}>{f.name}</span>
-                    <button onClick={()=>removeFile(i)} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.75rem",padding:"0 1px",lineHeight:1 }}>×</button>
-                  </div>
-                ))}
+                {attachedFiles.map((f,i) => {
+                  const isImg = f.type.startsWith("image/");
+                  const objUrl = URL.createObjectURL(f);
+                  return (
+                    <div key={i} style={{ display:"flex",alignItems:"center",gap:"5px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"6px",padding:"3px 8px",maxWidth:"160px",cursor:"pointer",transition:"border-color 0.12s" }}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor="var(--red-accent)"}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor="var(--border-subtle)"}
+                    >
+                      {isImg
+                        ? <img src={objUrl} alt="" onClick={()=>setImagePreview(objUrl)} style={{ width:"26px",height:"26px",borderRadius:"3px",objectFit:"cover",cursor:"pointer" }} />
+                        : <span onClick={()=>window.open(objUrl,"_blank")} style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor:"pointer" }}>DOC</span>
+                      }
+                      <span onClick={()=>{ if (isImg) setImagePreview(objUrl); else window.open(objUrl,"_blank"); }} style={{ fontSize:"0.65rem",color:"var(--text-secondary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"90px",cursor:"pointer" }}>{f.name}</span>
+                      <button onClick={(e)=>{e.stopPropagation();removeFile(i);}} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.75rem",padding:"0 1px",lineHeight:1,flexShrink:0 }}>×</button>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
