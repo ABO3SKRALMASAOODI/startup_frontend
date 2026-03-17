@@ -86,6 +86,12 @@ function GlobalStyles() {
     tag.id = id;
     tag.textContent = GLOBAL_STYLES;
     document.head.appendChild(tag);
+
+    // Re-assert favicon to prevent iframe favicon leak
+    const existingIcon = document.querySelector("link[rel='icon']");
+    if (existingIcon) {
+      existingIcon.href = "/favicon.ico?" + Date.now();
+    }
   }, []);
   return null;
 }
@@ -1402,7 +1408,7 @@ export default function Studio() {
               <div style={{ flex:1,overflow:"hidden",background:"#fff",borderRadius:"0 0 11px 11px" }}>
                 <iframe key={previewKey} src={previewUrl} title="Preview" style={{ width:"100%",height:"100%",border:"none",display:"block" }}
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                  onError={()=>setPreviewError(true)} onLoad={()=>setPreviewError(false)} />
+                  onError={()=>setPreviewError(true)} onLoad={()=>{setPreviewError(false);const ic=document.querySelector("link[rel='icon']");if(ic)ic.href="/favicon.ico?"+Date.now();}} />
               </div>
             </div>
           )}
