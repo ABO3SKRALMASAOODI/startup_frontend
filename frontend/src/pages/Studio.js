@@ -809,6 +809,7 @@ export default function Studio() {
   const [thinkingText, setThinkingText] = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showStopModal, setShowStopModal] = useState(false);
+  const cancelledRef = useRef(false);
   const [previewError, setPreviewError] = useState(false);
   const [codeChanged, setCodeChanged] = useState(false);
   const [selectedModel, setSelectedModel] = useState("hb-6");
@@ -919,9 +920,12 @@ export default function Studio() {
   // ── Polling ──
   const startPolling = (jobId) => {
     stopPolling();
+    cancelledRef.current = false;
     pollRef.current = setInterval(async () => {
+      if (cancelledRef.current) return; // Ignore polls after cancel
       try {
         const d = await getJobStatus(jobId);
+        if (cancelledRef.current) return; // Check again after async call
         setMessages((d.messages||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used })));
         setState(d.state); if (d.code_changed!==undefined) setCodeChanged(d.code_changed);
         if (d.credits_balance!==undefined) setCredits(d.credits_balance);
@@ -1006,6 +1010,7 @@ export default function Studio() {
 
   const confirmStop = async () => {
     setShowStopModal(false); if (!currentJobId) return;
+    cancelledRef.current = true; // Prevent any in-flight polls from resurrecting
     stopPolling(); setState("failed"); setProgress([]); setThinkingText(""); setShowBackendInChat(false);
     try { await API.post(`/auth/job/${currentJobId}/cancel`); } catch {}
     // Refresh credits after cancel deduction
