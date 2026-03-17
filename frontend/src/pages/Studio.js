@@ -297,7 +297,7 @@ function CodeViewer({ jobId, title }) {
       <div style={{ width:treeOpen?"200px":"36px",flexShrink:0,borderRight:`1px solid var(--border-subtle)`,background:"var(--bg-1)",display:"flex",flexDirection:"column",overflow:"hidden",transition:"width 0.2s" }}>
         <div style={{ padding:"6px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid var(--border-subtle)` }}>
           {treeOpen && <span style={{ fontSize:"0.6rem",color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>Files</span>}
-          <button onClick={() => setTreeOpen(o=>!o)} style={{ background:"none",border:"none",color:"var(--text-tertiary)",cursor:"pointer",fontSize:"0.7rem",padding:"2px 4px",marginLeft:"auto",fontFamily:"var(--font-mono)" }}>{treeOpen ? "\u25C0" : "\u25B6"}</button>
+          <button onClick={() => setTreeOpen(o=>!o)} style={{ background:"none",border:"none",color:"var(--text-tertiary)",cursor:"pointer",fontSize:"0.7rem",padding:"2px 4px",marginLeft:"auto",fontFamily:"var(--font-mono)" }}>{treeOpen ? "◀" : "▶"}</button>
         </div>
         {treeOpen && <div className="studio-scroll" style={{ flex:1,overflowY:"auto",overflowX:"hidden",padding:"4px" }}>{renderTree(tree)}</div>}
       </div>
@@ -325,7 +325,7 @@ function FolderNode({ name, children, fullPath, renderTree }) {
     <div>
       <div onClick={() => setOpen(o=>!o)} style={{ padding:"3px 8px 3px 12px",fontSize:"0.73rem",cursor:"pointer",color:"var(--text-tertiary)",display:"flex",alignItems:"center",gap:"5px",userSelect:"none",fontFamily:"var(--font-mono)" }}
         onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-tertiary)"}>
-        <span style={{ fontSize:"0.6rem" }}>{open ? "\u25BE" : "\u25B8"}</span>{name}
+        <span style={{ fontSize:"0.6rem" }}>{open ? "▾" : "▸"}</span>{name}
       </div>
       {open && <div style={{ paddingLeft:"10px" }}>{renderTree(children,fullPath)}</div>}
     </div>
@@ -495,7 +495,7 @@ function BuildView({ progress, buildPhase, progressPercent }) {
 // ── Thinking line ────────────────────────────────────────────────────────────
 function ThinkingLine({ text }) {
   const [expanded, setExpanded] = useState(false);
-  const cleaned = text.replace(/^(plan|planning|task list|aesthetic direction)[:\s]*/i,"").replace(/^[-\u2500\u2550\u2014]+\s*/gm,"").replace(/^\[.?\]\s*/gm,"").replace(/\n+/g," ").trim();
+  const cleaned = text.replace(/^(plan|planning|task list|aesthetic direction)[:\s]*/i,"").replace(/^[-\u2500\u2550—]+\s*/gm,"").replace(/^\[.?\]\s*/gm,"").replace(/\n+/g," ").trim();
   if (!cleaned || cleaned.length < 5) return null;
   const short = cleaned.length > 70 ? cleaned.slice(0,70)+"..." : cleaned;
   return (
@@ -505,7 +505,7 @@ function ThinkingLine({ text }) {
       border:"1px solid rgba(220,38,38,0.1)",transition:"all 0.15s"
     }}>
       <p style={{ fontSize:"0.65rem",color: expanded ? "var(--text-secondary)" : "var(--text-tertiary)",lineHeight:1.5,margin:0,fontStyle:"italic",fontFamily:"var(--font-mono)" }}>
-        <span style={{ color:"var(--red-accent)",marginRight:"4px",fontSize:"0.55rem" }}>{expanded ? "\u25BE" : "\u25B8"}</span>
+        <span style={{ color:"var(--red-accent)",marginRight:"4px",fontSize:"0.55rem" }}>{expanded ? "▾" : "▸"}</span>
         <span style={{ color:"var(--text-muted)",fontStyle:"normal",marginRight:"4px",fontSize:"0.58rem",letterSpacing:"0.04em" }}>reasoning:</span>
         {expanded ? cleaned : short}
       </p>
@@ -590,7 +590,7 @@ function CostDots({ credits }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); }, [open]);
-  const display = credits != null ? (typeof credits === "number" ? credits.toFixed(2) : credits) : "\u2014";
+  const display = credits != null ? (typeof credits === "number" ? credits.toFixed(2) : credits) : "—";
   return (
     <div ref={ref} style={{ position:"relative",display:"inline-block" }}>
       <button onClick={() => setOpen(o=>!o)} style={{
@@ -772,7 +772,7 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
 
           {view === "domain" && (
             <div style={{ padding:"4px" }}>
-              <button onClick={() => { setView("main"); setNewName(""); setNameError(""); setError(""); }} style={{ background:"none",border:"none",color:"var(--text-tertiary)",cursor:"pointer",fontSize:"0.68rem",marginBottom:"6px",fontFamily:"var(--font-mono)" }}>\u2190 back</button>
+              <button onClick={() => { setView("main"); setNewName(""); setNameError(""); setError(""); }} style={{ background:"none",border:"none",color:"var(--text-tertiary)",cursor:"pointer",fontSize:"0.68rem",marginBottom:"6px",fontFamily:"var(--font-mono)" }}>← back</button>
               <div style={{ display:"flex",alignItems:"center",background:"var(--bg-0)",border:`1px solid ${nameError ? "rgba(220,38,38,0.4)" : "var(--border-subtle)"}`,borderRadius:"8px",overflow:"hidden",marginBottom:"6px" }}>
                 <input type="text" value={newName} onChange={e => { const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,40); setNewName(v); setNameError(validate(v)); }}
                   onKeyDown={e => { if (e.key==="Enter"&&!nameError&&newName.length>=3) handleAction(false); }}
