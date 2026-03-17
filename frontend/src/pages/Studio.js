@@ -877,7 +877,17 @@ export default function Studio() {
   useEffect(() => { getCredits().then(d => { setCredits(d.balance); if (d.plan_limit) setPlanLimit(d.plan_limit); }).catch(()=>{}); setUserPlan(localStorage.getItem("user_plan")||"free"); }, []);
 
   // Save session
-  useEffect(() => { if (currentJobId) sessionStorage.setItem("studio_current_job",currentJobId); else sessionStorage.removeItem("studio_current_job"); }, [currentJobId]);
+  // Save current job to session — but skip the initial null to avoid wiping before restore
+  const hasRestoredRef = useRef(false);
+  useEffect(() => {
+    if (currentJobId) {
+      sessionStorage.setItem("studio_current_job", currentJobId);
+      hasRestoredRef.current = true;
+    } else if (hasRestoredRef.current) {
+      // Only remove after we've had a real job (user clicked New Project)
+      sessionStorage.removeItem("studio_current_job");
+    }
+  }, [currentJobId]);
 
   // Restore session
   useEffect(() => {
