@@ -1400,7 +1400,7 @@ export default function Studio() {
               <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ padding:"8px 20px",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.78rem",fontWeight:600,cursor:"pointer" }}>Reload</button>
             </div>
           ) : (
-            <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:"var(--bg-0)" }}>
+            <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:`1px solid var(--border-default)`,background:"var(--bg-2)",boxShadow:"0 4px 24px rgba(0,0,0,0.4)" }}>
               {/* Single unified browser chrome — all buttons here */}
               <div style={{ flexShrink:0,padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px" }}>
                 <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
@@ -1430,7 +1430,7 @@ export default function Studio() {
                 )}
                 {currentJobId && <PublishPopover jobId={currentJobId} previewUrl={previewUrl} publishedUrl={publishedUrl} hasChanges={changesSincePublish} isRunning={isRunning} onPublishSuccess={(url,isNew)=>{setPublishedUrl(url);setChangesSincePublish(false);if(isNew){setDomainPropagating(true);setTimeout(()=>setDomainPropagating(false),300000);}}} />}
               </div>
-              <div style={{ flex:1,overflow:"hidden",background:"#fff" }}>
+              <div style={{ flex:1,overflow:"hidden",background:"#fff",borderRadius:"0 0 11px 11px" }}>
                 <iframe key={previewKey} src={previewUrl} title="Preview" style={{ width:"100%",height:"100%",border:"none",display:"block" }}
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                   onError={()=>setPreviewError(true)} onLoad={()=>{setPreviewError(false);const ic=document.querySelector("link[rel='icon']");if(ic)ic.href="/favicon.ico?"+Date.now();}} />
