@@ -519,35 +519,43 @@ function BackendApprovalCard({ onAllow, onDeny, isLoading }) {
         padding:"16px",borderRadius:"12px",
         background:"var(--bg-2)",border:"1px solid rgba(16,185,129,0.15)",
       }}>
-        <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px" }}>
-          <div style={{ width:"28px",height:"28px",borderRadius:"8px",background:"var(--green-subtle)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4z" stroke="var(--green-accent)" strokeWidth="1.5"/><path d="M2 4l6 4 6-4" stroke="var(--green-accent)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+        {isLoading ? (
+          /* Provisioning state — shown after user clicks Allow */
+          <div style={{ textAlign:"center",padding:"8px 0" }}>
+            <Spinner size={24} color="var(--green-accent)" />
+            <p style={{ fontSize:"0.78rem",fontWeight:600,color:"var(--green-accent)",marginTop:"12px",fontFamily:"var(--font-mono)" }}>Setting up backend...</p>
+            <p style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",marginTop:"4px",lineHeight:1.5 }}>Provisioning database, auth, and security. This usually takes 60-90 seconds.</p>
           </div>
-          <div>
-            <div style={{ fontSize:"0.78rem",fontWeight:700,color:"var(--text-primary)",fontFamily:"var(--font-mono)" }}>Enable Backend</div>
-            <div style={{ fontSize:"0.62rem",color:"var(--text-tertiary)" }}>Database + Auth required</div>
-          </div>
-        </div>
-        <p style={{ fontSize:"0.72rem",color:"var(--text-secondary)",lineHeight:1.5,margin:"0 0 12px" }}>
-          Your app needs a database and authentication to work properly. This will set up PostgreSQL, Auth, and Row-Level Security.
-        </p>
-        <div style={{ display:"flex",gap:"8px" }}>
-          <button onClick={onDeny} disabled={isLoading} style={{
-            flex:1,padding:"8px",background:"var(--bg-3)",border:`1px solid var(--border-default)`,borderRadius:"8px",
-            color:"var(--text-secondary)",fontSize:"0.75rem",cursor:"pointer",fontFamily:"var(--font-sans)",transition:"all 0.15s"
-          }}>Skip</button>
-          <button onClick={onAllow} disabled={isLoading} style={{
-            flex:1,padding:"8px",
-            background: isLoading ? "var(--bg-3)" : "linear-gradient(135deg,rgba(16,185,129,0.2),rgba(5,150,105,0.15))",
-            border:`1px solid ${isLoading ? "var(--border-default)" : "rgba(16,185,129,0.3)"}`,borderRadius:"8px",
-            color: isLoading ? "var(--text-tertiary)" : "var(--green-accent)",fontSize:"0.75rem",fontWeight:700,
-            cursor: isLoading ? "wait" : "pointer",fontFamily:"var(--font-mono)",
-            display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",transition:"all 0.15s"
-          }}>
-            {isLoading && <Spinner size={10} color="var(--green-accent)" />}
-            {isLoading ? "Setting up..." : "Allow"}
-          </button>
-        </div>
+        ) : (
+          /* Permission request state */
+          <>
+            <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px" }}>
+              <div style={{ width:"28px",height:"28px",borderRadius:"8px",background:"var(--green-subtle)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4z" stroke="var(--green-accent)" strokeWidth="1.5"/><path d="M2 4l6 4 6-4" stroke="var(--green-accent)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </div>
+              <div>
+                <div style={{ fontSize:"0.78rem",fontWeight:700,color:"var(--text-primary)",fontFamily:"var(--font-mono)" }}>Enable Backend</div>
+                <div style={{ fontSize:"0.62rem",color:"var(--text-tertiary)" }}>Database + Auth required</div>
+              </div>
+            </div>
+            <p style={{ fontSize:"0.72rem",color:"var(--text-secondary)",lineHeight:1.5,margin:"0 0 12px" }}>
+              Your app needs a database and authentication. This will set up PostgreSQL, Auth, and Row-Level Security.
+            </p>
+            <div style={{ display:"flex",gap:"8px" }}>
+              <button onClick={onDeny} style={{
+                flex:1,padding:"8px",background:"var(--bg-3)",border:`1px solid var(--border-default)`,borderRadius:"8px",
+                color:"var(--text-secondary)",fontSize:"0.75rem",cursor:"pointer",fontFamily:"var(--font-sans)",transition:"all 0.15s"
+              }}>Skip</button>
+              <button onClick={onAllow} style={{
+                flex:1,padding:"8px",
+                background:"linear-gradient(135deg,rgba(16,185,129,0.2),rgba(5,150,105,0.15))",
+                border:"1px solid rgba(16,185,129,0.3)",borderRadius:"8px",
+                color:"var(--green-accent)",fontSize:"0.75rem",fontWeight:700,
+                cursor:"pointer",fontFamily:"var(--font-mono)",transition:"all 0.15s"
+              }}>Allow</button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -946,7 +954,7 @@ export default function Studio() {
     if (!text||isRunning) return; setPrompt(""); setError("");
     try {
       setState("running"); setProgress([]); setThinkingText(""); setCodeChanged(false);
-      const fs=[...attachedFiles]; const fn=fs.map(f=>({name:f.name,type:f.type})); setAttachedFiles([]);
+      const fs=[...attachedFiles]; const fn=fs.map(f=>({name:f.name,type:f.type,_objectUrl:f.type.startsWith("image/")?URL.createObjectURL(f):null})); setAttachedFiles([]);
       setMessages([{ role:"user",content:text,attachments:fn.length>0?fn:undefined }]);
       const [jobId,smartTitle] = await Promise.all([generateProject(text,"",selectedModel,fs),generateTitle(text)]);
       setCurrentJobId(jobId); setPublishedUrl(null); setChangesSincePublish(false);
@@ -964,7 +972,7 @@ export default function Studio() {
       if (!currentJobId) { await handleSendWithText(text||"Build based on attached files"); }
       else {
         setState("running"); setProgress([]); setThinkingText(""); setCodeChanged(false);
-        const fs=[...attachedFiles]; const fn=fs.map(f=>({name:f.name,type:f.type})); setAttachedFiles([]);
+        const fs=[...attachedFiles]; const fn=fs.map(f=>({name:f.name,type:f.type,_objectUrl:f.type.startsWith("image/")?URL.createObjectURL(f):null})); setAttachedFiles([]);
         setMessages(prev=>[...prev,{role:"user",content:text||"(attached files)",attachments:fn.length>0?fn:undefined}]);
         await sendFollowUp(currentJobId,text||"See attached files",selectedModel,fs);
         startPolling(currentJobId);
@@ -1021,7 +1029,19 @@ export default function Studio() {
         onNewProject={handleNewProject} onLoadProject={handleLoadProject} onLogout={handleLogout} onUpgrade={handleUpgrade} onHome={()=>navigate("/home")} />
 
       {/* ── Chat panel ── */}
-      <div style={{ flex:chatFlex,display:"flex",flexDirection:"column",borderRight:`1px solid var(--border-subtle)`,overflow:"hidden",background:"var(--bg-0)" }}>
+      <div
+        onDragOver={e=>{e.preventDefault();e.stopPropagation();setIsDragging(true);}}
+        onDragLeave={e=>{e.preventDefault();e.stopPropagation();if(!e.currentTarget.contains(e.relatedTarget))setIsDragging(false);}}
+        onDrop={e=>{e.preventDefault();e.stopPropagation();setIsDragging(false);if(e.dataTransfer.files?.length)addFiles(e.dataTransfer.files);}}
+        style={{ flex:chatFlex,display:"flex",flexDirection:"column",borderRight:`1px solid var(--border-subtle)`,overflow:"hidden",background:"var(--bg-0)",position:"relative" }}>
+        {/* Drag overlay for entire chat panel */}
+        {isDragging && (
+          <div style={{ position:"absolute",inset:0,zIndex:20,background:"rgba(220,38,38,0.06)",border:"2px dashed var(--red-accent)",borderRadius:"0",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none" }}>
+            <div style={{ background:"var(--bg-2)",border:"1px solid rgba(220,38,38,0.3)",borderRadius:"12px",padding:"16px 24px",boxShadow:"0 8px 30px rgba(0,0,0,0.5)" }}>
+              <span style={{ color:"var(--red-accent)",fontSize:"0.82rem",fontWeight:600,fontFamily:"var(--font-mono)" }}>Drop files here</span>
+            </div>
+          </div>
+        )}
         {/* Top bar */}
         <div style={{ padding:"10px 12px",background:"var(--bg-0)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"8px",flexShrink:0 }}>
           <button onClick={()=>setSidebarOpen(true)} style={{ background:"none",border:"none",color:"var(--text-tertiary)",fontSize:"0.95rem",cursor:"pointer",padding:"2px 4px",flexShrink:0 }}>&#9776;</button>
@@ -1051,12 +1071,9 @@ export default function Studio() {
               <div key={i} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
                 {msg.role==="assistant" && (isLastBot ? <BotAvatar size={28} /> : <div style={{ width:"28px",flexShrink:0 }} />)}
                 <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",overflow:"hidden" }}>
-                  <div style={{ display:"flex",alignItems:"center",gap:"6px",marginBottom:"3px" }}>
-                    <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(220,38,38,0.5)":"rgba(220,38,38,0.7)",fontFamily:"var(--font-mono)" }}>
-                      {msg.role==="user"?"You":"Hustler Bot"}
-                    </span>
-                    {msg.role==="assistant" && <CopyButton text={msg.content||""} label="Copy" size="sm" />}
-                  </div>
+                  <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(220,38,38,0.5)":"rgba(220,38,38,0.7)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>
+                    {msg.role==="user"?"You":"Hustler Bot"}
+                  </span>
                   <div style={{
                     padding:"10px 14px",borderRadius: msg.role==="user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
                     background: msg.role==="user" ? "linear-gradient(135deg,#991b1b,#7f1d1d)" : "var(--bg-2)",
@@ -1066,21 +1083,29 @@ export default function Studio() {
                     <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
                     {msg.attachments?.length>0 && (
                       <div style={{ display:"flex",gap:"4px",flexWrap:"wrap",marginTop:"6px",paddingTop:"6px",borderTop:`1px solid var(--border-subtle)` }}>
-                        {msg.attachments.map((att,ai) => (
-                          <span key={ai} style={{ display:"flex",alignItems:"center",gap:"4px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"4px",padding:"2px 6px",fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)" }}>
-                            {att.type?.startsWith("image/")?"IMG":"DOC"} <span style={{ maxWidth:"80px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{att.name}</span>
-                          </span>
-                        ))}
+                        {msg.attachments.map((att,ai) => {
+                          const isImg = att.type?.startsWith("image/");
+                          return (
+                            <span key={ai} onClick={() => { if (att._objectUrl) window.open(att._objectUrl,"_blank"); }}
+                              style={{ display:"flex",alignItems:"center",gap:"4px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"4px",padding:"2px 6px",fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor:att._objectUrl?"pointer":"default" }}>
+                              {isImg?"IMG":"DOC"} <span style={{ maxWidth:"80px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{att.name}</span>
+                            </span>
+                          );
+                        })}
                       </div>
                     )}
-                    {msg.role==="assistant"&&msg.credits_used!==undefined&&<CostDots credits={msg.credits_used} />}
+                    {/* Bottom row: copy + credits */}
+                    <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop:`1px solid ${msg.role==="user"?"rgba(255,255,255,0.08)":"var(--border-subtle)"}` }}>
+                      <CopyButton text={msg.content||""} label="Copy" size="sm" />
+                      {msg.role==="assistant"&&msg.credits_used!==undefined ? <CostDots credits={msg.credits_used} /> : <div />}
+                    </div>
                   </div>
                 </div>
               </div>
             );
           })}
 
-          {/* Backend approval — inline in chat */}
+          {/* Backend approval — inline in chat (replaces thinking indicator) */}
           {showBackendInChat && isRunning && (
             <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}>
               <BotAvatar size={28} />
@@ -1088,8 +1113,8 @@ export default function Studio() {
             </div>
           )}
 
-          {/* Loading indicators */}
-          {(isRunning||isRendering) && (() => {
+          {/* Loading indicators — hidden when backend approval is showing */}
+          {(isRunning||isRendering) && !showBackendInChat && (() => {
             const last = messages.length>0?messages[messages.length-1]:null;
             const botReplied = last&&last.role==="assistant";
             if (botReplied) {
@@ -1130,16 +1155,12 @@ export default function Studio() {
         {/* Input area */}
         <div style={{ padding:"10px",borderTop:`1px solid var(--border-subtle)`,background:"var(--bg-0)",flexShrink:0 }}>
           <div className="input-area"
-            onDragOver={e=>{e.preventDefault();e.stopPropagation();setIsDragging(true);}}
-            onDragLeave={e=>{e.preventDefault();e.stopPropagation();setIsDragging(false);}}
-            onDrop={e=>{e.preventDefault();e.stopPropagation();setIsDragging(false);if(e.dataTransfer.files?.length)addFiles(e.dataTransfer.files);}}
             style={{
               display:"flex",flexDirection:"column",gap:"8px",
-              background: isDragging ? "var(--red-subtle)" : "var(--bg-1)",
-              border: isDragging ? "1px dashed var(--red-accent)" : `1px solid var(--border-subtle)`,
+              background:"var(--bg-1)",
+              border:`1px solid var(--border-subtle)`,
               borderRadius:"12px",padding:"10px",transition:"all 0.15s",position:"relative"
             }}>
-            {isDragging && <div style={{ position:"absolute",inset:0,borderRadius:"12px",display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.4)",zIndex:10,pointerEvents:"none" }}><span style={{ color:"var(--red-accent)",fontSize:"0.8rem",fontWeight:600 }}>Drop files here</span></div>}
 
             {attachedFiles.length>0 && (
               <div style={{ display:"flex",gap:"6px",flexWrap:"wrap" }}>
