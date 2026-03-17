@@ -572,7 +572,7 @@ function CreditsBadge({ balance, planLimit, onUpgrade }) {
     <div style={{ padding:"10px",background:"var(--bg-2)",borderRadius:"8px",border:`1px solid ${isLow ? "rgba(220,38,38,0.2)" : "var(--border-subtle)"}`,marginBottom:"12px" }}>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px" }}>
         <span style={{ fontSize:"0.65rem",color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"var(--font-mono)" }}>Credits</span>
-        <span style={{ fontSize:"0.85rem",fontWeight:700,color: isLow ? "var(--red-accent)" : "var(--text-primary)",fontFamily:"var(--font-mono)" }}>{typeof balance === "number" ? balance.toFixed(1) : balance}</span>
+        <span style={{ fontSize:"0.85rem",fontWeight:700,color: isLow ? "var(--red-accent)" : "var(--text-primary)",fontFamily:"var(--font-mono)" }}>{typeof balance === "number" ? balance.toFixed(2) : balance}</span>
       </div>
       <div style={{ height:"3px",background:"var(--bg-3)",borderRadius:"2px",overflow:"hidden",marginBottom:"8px" }}>
         <div style={{ height:"100%",width:`${pct}%`,background: isLow ? "var(--red-accent)" : pct <= 30 ? "var(--yellow-accent)" : "var(--green-accent)",borderRadius:"2px",transition:"width 0.4s ease" }} />
@@ -590,7 +590,7 @@ function CostDots({ credits }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); }, [open]);
-  const display = credits != null ? (typeof credits === "number" ? credits.toFixed(1) : credits) : "\u2014";
+  const display = credits != null ? (typeof credits === "number" ? credits.toFixed(2) : credits) : "\u2014";
   return (
     <div ref={ref} style={{ position:"relative",display:"inline-block" }}>
       <button onClick={() => setOpen(o=>!o)} style={{
@@ -1280,25 +1280,36 @@ export default function Studio() {
           </div>
           <div style={{ flex:1 }} />
           <div style={{ display:"flex",alignItems:"center",gap:"6px",flexShrink:0 }}>
-            {userPlan==="free" && <button onClick={handleUpgrade} style={{
-              padding:"5px 16px",height:"28px",
-              background:"linear-gradient(135deg,#dc2626,#b91c1c,#991b1b)",
+
+            {/* Subscribe / Upgrade button — always visible, different text per plan */}
+            <button onClick={handleUpgrade} style={{
+              padding:"5px 18px",height:"30px",
+              background:"linear-gradient(135deg,#dc2626 0%,#b91c1c 40%,#991b1b 100%)",
               border:"none",borderRadius:"8px",
-              color:"#fff",fontSize:"0.7rem",fontWeight:700,cursor:"pointer",
-              fontFamily:"var(--font-mono)",letterSpacing:"0.04em",
-              boxShadow:"0 0 16px rgba(220,38,38,0.3),0 2px 8px rgba(0,0,0,0.3)",
+              color:"#fff",fontSize:"0.72rem",fontWeight:700,cursor:"pointer",
+              fontFamily:"var(--font-mono)",letterSpacing:"0.05em",
+              boxShadow:"0 0 20px rgba(220,38,38,0.25),0 2px 10px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.1)",
               transition:"all 0.2s",
+              position:"relative",overflow:"hidden",
             }}
-              onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 0 24px rgba(220,38,38,0.5),0 4px 12px rgba(0,0,0,0.4)";e.currentTarget.style.transform="translateY(-1px)";}}
-              onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 0 16px rgba(220,38,38,0.3),0 2px 8px rgba(0,0,0,0.3)";e.currentTarget.style.transform="translateY(0)";}}
-            >Get Credits</button>}
+              onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 0 30px rgba(220,38,38,0.45),0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.15)";e.currentTarget.style.transform="translateY(-1px)";}}
+              onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 0 20px rgba(220,38,38,0.25),0 2px 10px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.1)";e.currentTarget.style.transform="translateY(0)";}}
+            >
+              <span style={{ position:"relative",zIndex:1 }}>
+                {userPlan === "free" ? "Subscribe" : "Upgrade"}
+              </span>
+            </button>
+
             {currentJobId&&previewUrl&&!isRunning && (
               <button onClick={()=>{
                 const p=projects.find(p=>p.job_id===currentJobId);
                 sessionStorage.setItem("github_push_job_id",currentJobId);
                 sessionStorage.setItem("github_push_job_title",p?.title||"project");
                 window.location.href=`https://github.com/login/oauth/authorize?client_id=Ov23liUC5tA7pNQbfiWo&scope=repo&redirect_uri=https://thehustlerbot.com/github-callback`;
-              }} style={{ padding:"5px 10px",height:"28px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"6px",color:"var(--text-secondary)",fontSize:"0.68rem",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"4px",fontFamily:"var(--font-mono)" }}>
+              }} style={{ padding:"5px 10px",height:"28px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"6px",color:"var(--text-secondary)",fontSize:"0.68rem",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"4px",fontFamily:"var(--font-mono)",transition:"all 0.15s" }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#58a6ff";e.currentTarget.style.color="#fff";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border-subtle)";e.currentTarget.style.color="var(--text-secondary)";}}
+              >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
                 GitHub
               </button>
@@ -1317,10 +1328,37 @@ export default function Studio() {
               <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ padding:"8px 20px",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.78rem",fontWeight:600,cursor:"pointer" }}>Reload</button>
             </div>
           ) : (
-            <div style={{ flex:1,overflow:"hidden",margin:"0",padding:"0" }}>
-              <iframe key={previewKey} src={previewUrl} title="Preview" style={{ width:"100%",height:"100%",border:"none",borderRadius:"0 0 0 0",background:"#fff" }}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                onError={()=>setPreviewError(true)} onLoad={()=>setPreviewError(false)} />
+            /* Modern browser-like preview frame */
+            <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"8px 10px 10px",borderRadius:"12px",border:`1px solid var(--border-default)`,background:"var(--bg-2)",boxShadow:"0 4px 24px rgba(0,0,0,0.4)" }}>
+              {/* Browser chrome */}
+              <div style={{ flexShrink:0,padding:"6px 12px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"8px" }}>
+                {/* Traffic lights */}
+                <div style={{ display:"flex",gap:"5px",flexShrink:0 }}>
+                  <div style={{ width:"8px",height:"8px",borderRadius:"50%",background:"#ff5f57" }} />
+                  <div style={{ width:"8px",height:"8px",borderRadius:"50%",background:"#febc2e" }} />
+                  <div style={{ width:"8px",height:"8px",borderRadius:"50%",background:"#28c840" }} />
+                </div>
+                {/* URL bar */}
+                <div style={{ flex:1,display:"flex",alignItems:"center",background:"var(--bg-0)",borderRadius:"6px",padding:"4px 10px",border:`1px solid var(--border-subtle)` }}>
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style={{ flexShrink:0,marginRight:"6px" }}>
+                    <path d="M8 1L2 4.5V11.5L8 15L14 11.5V4.5L8 1Z" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinejoin="round"/>
+                  </svg>
+                  <span style={{ fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
+                    {previewUrl?.replace("https://","").replace("http://","").split("/").slice(0,2).join("/")}
+                  </span>
+                </div>
+                {/* Reload button */}
+                <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.75rem",padding:"2px 4px",transition:"color 0.12s",flexShrink:0 }}
+                  onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"}
+                  onMouseLeave={e=>e.currentTarget.style.color="var(--text-muted)"}
+                >&#x21BB;</button>
+              </div>
+              {/* Iframe */}
+              <div style={{ flex:1,overflow:"hidden",background:"#fff",borderRadius:"0 0 11px 11px" }}>
+                <iframe key={previewKey} src={previewUrl} title="Preview" style={{ width:"100%",height:"100%",border:"none",display:"block" }}
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  onError={()=>setPreviewError(true)} onLoad={()=>setPreviewError(false)} />
+              </div>
             </div>
           )}
         </>}
