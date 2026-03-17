@@ -635,7 +635,7 @@ function Sidebar({ open, onClose, userEmail, credits, planLimit, projects, curre
       }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"4px" }}>
           <span style={{ fontSize:"0.88rem",fontWeight:700,color:"var(--text-primary)",fontFamily:"var(--font-sans)" }}>Studio</span>
-          <button onClick={onClose} style={{ background:"var(--bg-3)",border:"none",borderRadius:"50%",width:"24px",height:"24px",color:"var(--text-secondary)",fontSize:"0.85rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>\u00D7</button>
+          <button onClick={onClose} style={{ background:"var(--bg-3)",border:"none",borderRadius:"50%",width:"24px",height:"24px",color:"var(--text-secondary)",fontSize:"0.85rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
         </div>
         <p style={{ fontSize:"0.7rem",color:"var(--text-muted)",marginBottom:"12px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"var(--font-mono)" }}>{userEmail}</p>
         {credits !== null && <CreditsBadge balance={credits} planLimit={planLimit} onUpgrade={() => { onUpgrade(); onClose(); }} />}
@@ -1225,7 +1225,7 @@ export default function Studio() {
                   <div key={i} style={{ display:"flex",alignItems:"center",gap:"5px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"6px",padding:"3px 8px",maxWidth:"140px" }}>
                     {f.type.startsWith("image/") ? <img src={URL.createObjectURL(f)} alt="" style={{ width:"22px",height:"22px",borderRadius:"3px",objectFit:"cover" }} /> : <span style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)" }}>DOC</span>}
                     <span style={{ fontSize:"0.65rem",color:"var(--text-secondary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"80px" }}>{f.name}</span>
-                    <button onClick={()=>removeFile(i)} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.75rem",padding:"0 1px",lineHeight:1 }}>\u00D7</button>
+                    <button onClick={()=>removeFile(i)} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.75rem",padding:"0 1px",lineHeight:1 }}>×</button>
                   </div>
                 ))}
               </div>
