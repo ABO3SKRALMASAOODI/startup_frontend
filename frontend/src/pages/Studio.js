@@ -1333,7 +1333,7 @@ export default function Studio() {
               </span>
             </button>
 
-            {currentJobId&&previewUrl&&!isRunning && (
+            {currentJobId&&!isRunning && (
               <button onClick={()=>{
                 const p=projects.find(p=>p.job_id===currentJobId);
                 sessionStorage.setItem("github_push_job_id",currentJobId);
@@ -1377,7 +1377,9 @@ export default function Studio() {
                     <path d="M8 1L2 4.5V11.5L8 15L14 11.5V4.5L8 1Z" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinejoin="round"/>
                   </svg>
                   <span style={{ fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                    {previewUrl?.replace("https://","").replace("http://","").split("/").slice(0,2).join("/")}
+                    {publishedUrl
+                      ? publishedUrl.replace("https://","").replace(/\/$/,"")
+                      : "yourapp.thehustlerbot.com"}
                   </span>
                 </div>
                 {/* Reload button */}
