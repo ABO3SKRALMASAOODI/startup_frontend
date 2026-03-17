@@ -692,6 +692,9 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
   const [nameError, setNameError] = useState("");
   const [error, setError] = useState("");
   const [view, setView] = useState("main");
+  const [propagating, setPropagating] = useState(false);
+  const [propagateSeconds, setPropagateSeconds] = useState(0);
+  const propagateRef = useRef(null);
   const ref = useRef(null);
 
   const isPublished = !!publishedUrl;
@@ -700,6 +703,21 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
 
   useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); }, [open]);
   useEffect(() => { if (!open) setTimeout(() => { setView("main"); setNewName(""); setNameError(""); setError(""); }, 200); }, [open]);
+  useEffect(() => { return () => { if (propagateRef.current) clearInterval(propagateRef.current); }; }, []);
+
+  const startPropagationTimer = () => {
+    setPropagating(true);
+    setPropagateSeconds(300); // 5 minutes
+    if (propagateRef.current) clearInterval(propagateRef.current);
+    propagateRef.current = setInterval(() => {
+      setPropagateSeconds(s => {
+        if (s <= 1) { clearInterval(propagateRef.current); setPropagating(false); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  const formatTime = (s) => { const m = Math.floor(s/60); const sec = s%60; return `${m}:${String(sec).padStart(2,"0")}`; };
 
   const validate = v => { if (!v||v.length<3) return "Min 3 chars"; if (v.length>40) return "Max 40 chars"; if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(v)&&v.length>2) return "Lowercase, numbers, hyphens"; return ""; };
 
@@ -710,7 +728,9 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
     try {
       const body = isUpdate ? { update_only:true } : { name:newName };
       const res = await API.post(`/deploy/${jobId}`, body);
-      onPublishSuccess(res.data.url); setOpen(false);
+      onPublishSuccess(res.data.url, !isUpdate);
+      if (!isUpdate) startPropagationTimer(); // First publish or domain change
+      setOpen(false);
     } catch (err) { setError(err?.response?.data?.error || "Failed. Try again."); }
     finally { setPublishing(false); }
   };
@@ -731,6 +751,13 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
       {open && (
         <div style={{ position:"absolute",top:"calc(100% + 6px)",right:0,background:"var(--bg-2)",border:`1px solid var(--border-default)`,borderRadius:"12px",padding:"8px",width:"260px",zIndex:500,boxShadow:"0 12px 40px rgba(0,0,0,0.8)",animation:"slideIn 0.12s ease" }}>
           {error && <div style={{ margin:"0 4px 6px",padding:"6px 10px",background:"rgba(220,38,38,0.08)",border:"1px solid rgba(220,38,38,0.2)",borderRadius:"8px",fontSize:"0.68rem",color:"#ff8080" }}>{error}</div>}
+
+          {propagating && (
+            <div style={{ margin:"0 4px 6px",padding:"8px 10px",background:"rgba(16,185,129,0.06)",border:"1px solid rgba(16,185,129,0.15)",borderRadius:"8px",fontSize:"0.65rem",color:"var(--green-accent)",display:"flex",alignItems:"center",gap:"8px",lineHeight:1.4 }}>
+              <span style={{ fontSize:"0.6rem",fontFamily:"var(--font-mono)",background:"rgba(16,185,129,0.12)",padding:"2px 6px",borderRadius:"4px",flexShrink:0 }}>{formatTime(propagateSeconds)}</span>
+              <span>Domain is propagating. Your site will be live shortly.</span>
+            </div>
+          )}
 
           {view === "main" && <>
             {isPublished && (
@@ -840,6 +867,7 @@ export default function Studio() {
   const [selectedModel, setSelectedModel] = useState("hb-6");
   const [publishedUrl, setPublishedUrl] = useState(null);
   const [changesSincePublish, setChangesSincePublish] = useState(false);
+  const [domainPropagating, setDomainPropagating] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
@@ -1363,7 +1391,7 @@ export default function Studio() {
                 GitHub
               </button>
             )}
-            {currentJobId && <PublishPopover jobId={currentJobId} previewUrl={previewUrl} publishedUrl={publishedUrl} hasChanges={changesSincePublish} isRunning={isRunning} onPublishSuccess={url=>{setPublishedUrl(url);setChangesSincePublish(false);}} />}
+            {currentJobId && <PublishPopover jobId={currentJobId} previewUrl={previewUrl} publishedUrl={publishedUrl} hasChanges={changesSincePublish} isRunning={isRunning} onPublishSuccess={(url, isNew)=>{setPublishedUrl(url);setChangesSincePublish(false);if(isNew){setDomainPropagating(true);setTimeout(()=>setDomainPropagating(false),300000);}}} />}
           </div>
         </div>
 
@@ -1392,10 +1420,12 @@ export default function Studio() {
                   <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style={{ flexShrink:0,marginRight:"6px" }}>
                     <path d="M8 1L2 4.5V11.5L8 15L14 11.5V4.5L8 1Z" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinejoin="round"/>
                   </svg>
-                  <span style={{ fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                    {publishedUrl
-                      ? publishedUrl.replace("https://","").replace(/\/$/,"")
-                      : "yourapp.thehustlerbot.com"}
+                  <span style={{ fontSize:"0.62rem",color: domainPropagating ? "var(--yellow-accent)" : "var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
+                    {domainPropagating
+                      ? `${publishedUrl?.replace("https://","").replace(/\/$/,"") || "yourapp.thehustlerbot.com"} — propagating, live in ~5 min`
+                      : publishedUrl
+                        ? publishedUrl.replace("https://","").replace(/\/$/,"")
+                        : "yourapp.thehustlerbot.com"}
                   </span>
                 </div>
                 {/* Reload button */}
