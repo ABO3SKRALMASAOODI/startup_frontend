@@ -1440,20 +1440,24 @@ export default function Studio() {
         </>}
 
         {panelView==="code" && <>
-          <div style={{ padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",flexShrink:0 }}>
-            <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
-              <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
-              <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
-              <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#28c840" }} />
+          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:`1px solid var(--border-default)`,background:"var(--bg-2)",boxShadow:"0 4px 24px rgba(0,0,0,0.4)" }}>
+            <div style={{ padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",flexShrink:0,borderRadius:"12px 12px 0 0" }}>
+              <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
+                <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
+                <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
+                <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#28c840" }} />
+              </div>
+              <div style={{ display:"flex",background:"var(--bg-0)",borderRadius:"5px",border:`1px solid var(--border-subtle)`,padding:"1px",flexShrink:0 }}>
+                {["preview","code"].map(v => (
+                  <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"var(--red-accent)":"transparent",color:panelView===v?"#fff":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
+                ))}
+              </div>
             </div>
-            <div style={{ display:"flex",background:"var(--bg-0)",borderRadius:"5px",border:`1px solid var(--border-subtle)`,padding:"1px",flexShrink:0 }}>
-              {["preview","code"].map(v => (
-                <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"var(--red-accent)":"transparent",color:panelView===v?"#fff":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
-              ))}
+            <div style={{ flex:1,overflow:"hidden",borderRadius:"0 0 11px 11px" }}>
+              {!currentJobId ? <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",height:"100%" }}><span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Build a project first.</span></div> :
+              <CodeViewer jobId={currentJobId} title={projects.find(p=>p.job_id===currentJobId)?.title||currentJobId} />}
             </div>
           </div>
-          {!currentJobId ? <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center" }}><span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Build a project first.</span></div> :
-          <CodeViewer jobId={currentJobId} title={projects.find(p=>p.job_id===currentJobId)?.title||currentJobId} />}
         </>}
       </div>
     </div>
