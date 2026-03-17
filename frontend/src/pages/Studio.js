@@ -570,7 +570,7 @@ function CreditsBadge({ balance, planLimit, onUpgrade }) {
     <div style={{ padding:"10px",background:"var(--bg-2)",borderRadius:"8px",border:`1px solid ${isLow ? "rgba(220,38,38,0.2)" : "var(--border-subtle)"}`,marginBottom:"12px" }}>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px" }}>
         <span style={{ fontSize:"0.65rem",color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"var(--font-mono)" }}>Credits</span>
-        <span style={{ fontSize:"0.85rem",fontWeight:700,color: isLow ? "var(--red-accent)" : "var(--text-primary)",fontFamily:"var(--font-mono)" }}>{balance}</span>
+        <span style={{ fontSize:"0.85rem",fontWeight:700,color: isLow ? "var(--red-accent)" : "var(--text-primary)",fontFamily:"var(--font-mono)" }}>{typeof balance === "number" ? balance.toFixed(1) : balance}</span>
       </div>
       <div style={{ height:"3px",background:"var(--bg-3)",borderRadius:"2px",overflow:"hidden",marginBottom:"8px" }}>
         <div style={{ height:"100%",width:`${pct}%`,background: isLow ? "var(--red-accent)" : pct <= 30 ? "var(--yellow-accent)" : "var(--green-accent)",borderRadius:"2px",transition:"width 0.4s ease" }} />
@@ -588,15 +588,13 @@ function CostDots({ credits }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); }, [open]);
+  const display = credits != null ? (typeof credits === "number" ? credits.toFixed(1) : credits) : "\u2014";
   return (
-    <div ref={ref} style={{ position:"relative",display:"inline-block",marginTop:"4px" }}>
-      <button onClick={() => setOpen(o=>!o)} style={{ background:"none",border:"none",cursor:"pointer",color: open ? "var(--red-accent)" : "var(--text-muted)",fontSize:"0.8rem",padding:"0 2px",letterSpacing:"2px",lineHeight:1,transition:"color 0.15s",fontFamily:"var(--font-mono)" }}>...</button>
-      {open && (
-        <div style={{ position:"absolute",bottom:"calc(100% + 4px)",left:0,background:"var(--bg-3)",border:`1px solid var(--border-default)`,borderRadius:"8px",padding:"8px 14px",whiteSpace:"nowrap",zIndex:300,boxShadow:"0 4px 20px rgba(0,0,0,0.6)",fontSize:"0.75rem",animation:"slideIn 0.12s ease" }}>
-          <span style={{ color:"var(--text-tertiary)" }}>Credits: </span>
-          <span style={{ color:"var(--yellow-accent)",fontWeight:700,fontFamily:"var(--font-mono)" }}>{credits ?? "\u2014"}</span>
-        </div>
-      )}
+    <div ref={ref} style={{ position:"relative",display:"inline-flex",alignItems:"center" }}>
+      <button onClick={() => setOpen(o=>!o)} style={{ background:"none",border:"none",cursor:"pointer",color: open ? "var(--red-accent)" : "var(--text-muted)",fontSize:"0.65rem",padding:"2px 4px",lineHeight:1,transition:"color 0.15s",fontFamily:"var(--font-mono)",borderRadius:"4px" }}
+        onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>{if(!open)e.currentTarget.style.color="var(--text-muted)"}}>
+        {display} cr
+      </button>
     </div>
   );
 }
@@ -822,7 +820,10 @@ export default function Studio() {
   const [backendEnabled, setBackendEnabled] = useState(false);
   const [backendLoading, setBackendLoading] = useState(false);
   const [showBackendInChat, setShowBackendInChat] = useState(false);
+  const backendRespondedRef = useRef(false);
   const [showNameModal, setShowNameModal] = useState(localStorage.getItem("show_name_modal") === "1");
+  const [imagePreview, setImagePreview] = useState(null); // URL string for image popup
+  const attachmentUrlsRef = useRef({}); // persist object URLs across re-renders: {msgIndex: {attIndex: url}}
 
   const isRunning = state === "running";
   const isRendering = state === "completed" && !previewUrl && currentJobId && codeChanged;
@@ -932,8 +933,8 @@ export default function Studio() {
           const la = d.progress[d.progress.length-1]?.action;
           if (la==="building") setThinkingText(""); else { const te=d.progress.filter(p=>p.action==="planning"&&p.detail); if(te.length>0) setThinkingText(te[te.length-1].detail); }
         }
-        // Backend request — show inline in chat
-        if (d.backend_requested && !backendEnabled && !showBackendInChat) setShowBackendInChat(true);
+        // Backend request — show inline in chat (only if we haven't already responded)
+        if (d.backend_requested && !backendEnabled && !showBackendInChat && !backendRespondedRef.current) setShowBackendInChat(true);
         if (d.preview_url) { setPreviewUrl(d.preview_url); setPreviewError(false); if (d.code_changed) setPreviewKey(k=>k+1); }
         setProjects(prev=>prev.map(p=>p.job_id===jobId?{...p,state:d.state,preview_url:d.preview_url||p.preview_url}:p));
         if (d.state==="completed"||d.state==="failed") { stopPolling(); setProgress([]); setThinkingText(""); setShowBackendInChat(false); fetchProjects().then(j=>setProjects(j)).catch(()=>{}); }
@@ -954,7 +955,13 @@ export default function Studio() {
     if (!text||isRunning) return; setPrompt(""); setError("");
     try {
       setState("running"); setProgress([]); setThinkingText(""); setCodeChanged(false);
-      const fs=[...attachedFiles]; const fn=fs.map(f=>({name:f.name,type:f.type,_objectUrl:f.type.startsWith("image/")?URL.createObjectURL(f):null})); setAttachedFiles([]);
+      const fs=[...attachedFiles];
+      const fn=fs.map((f,idx)=>{
+        const url = f.type.startsWith("image/") ? URL.createObjectURL(f) : null;
+        if (url) { if (!attachmentUrlsRef.current[0]) attachmentUrlsRef.current[0] = {}; attachmentUrlsRef.current[0][idx] = url; }
+        return {name:f.name,type:f.type};
+      });
+      setAttachedFiles([]);
       setMessages([{ role:"user",content:text,attachments:fn.length>0?fn:undefined }]);
       const [jobId,smartTitle] = await Promise.all([generateProject(text,"",selectedModel,fs),generateTitle(text)]);
       setCurrentJobId(jobId); setPublishedUrl(null); setChangesSincePublish(false);
@@ -972,7 +979,14 @@ export default function Studio() {
       if (!currentJobId) { await handleSendWithText(text||"Build based on attached files"); }
       else {
         setState("running"); setProgress([]); setThinkingText(""); setCodeChanged(false);
-        const fs=[...attachedFiles]; const fn=fs.map(f=>({name:f.name,type:f.type,_objectUrl:f.type.startsWith("image/")?URL.createObjectURL(f):null})); setAttachedFiles([]);
+        const fs=[...attachedFiles];
+        const msgIdx = messages.length; // index of the new message
+        const fn=fs.map((f,idx)=>{
+          const url = f.type.startsWith("image/") ? URL.createObjectURL(f) : null;
+          if (url) { if (!attachmentUrlsRef.current[msgIdx]) attachmentUrlsRef.current[msgIdx] = {}; attachmentUrlsRef.current[msgIdx][idx] = url; }
+          return {name:f.name,type:f.type};
+        });
+        setAttachedFiles([]);
         setMessages(prev=>[...prev,{role:"user",content:text||"(attached files)",attachments:fn.length>0?fn:undefined}]);
         await sendFollowUp(currentJobId,text||"See attached files",selectedModel,fs);
         startPolling(currentJobId);
@@ -982,7 +996,7 @@ export default function Studio() {
 
   const handleNewProject = () => {
     stopPolling(); setCurrentJobId(null); setMessages([]); setPreviewUrl(null); setPreviewError(false); setCodeChanged(false);
-    setState("idle"); setPrompt(""); setError(""); setAttachedFiles([]); setPublishedUrl(null); setChangesSincePublish(false); setBackendEnabled(false); setShowBackendInChat(false);
+    setState("idle"); setPrompt(""); setError(""); setAttachedFiles([]); setPublishedUrl(null); setChangesSincePublish(false); setBackendEnabled(false); setShowBackendInChat(false); backendRespondedRef.current = false;
     setTimeout(()=>inputRef.current?.focus(),100);
   };
 
@@ -1000,14 +1014,19 @@ export default function Studio() {
   };
 
   const handleBackendAllow = async () => {
-    if (!currentJobId) return; setBackendLoading(true);
-    try { await enableBackend(currentJobId); setBackendEnabled(true); setShowBackendInChat(false);
+    if (!currentJobId) return;
+    backendRespondedRef.current = true;  // Prevent polling from re-showing the card
+    setBackendLoading(true);
+    try {
+      await enableBackend(currentJobId);
+      setBackendEnabled(true);
       try { await API.post(`/auth/job/${currentJobId}/backend-ready`); } catch {}
-    } catch (err) { setError(err?.response?.data?.error||"Failed to enable backend"); }
+      setShowBackendInChat(false);
+    } catch (err) { setError(err?.response?.data?.error||"Failed to enable backend"); setShowBackendInChat(false); }
     finally { setBackendLoading(false); }
   };
 
-  const handleBackendDeny = () => { setShowBackendInChat(false); if (currentJobId) API.post(`/auth/job/${currentJobId}/backend-denied`).catch(()=>{}); };
+  const handleBackendDeny = () => { backendRespondedRef.current = true; setShowBackendInChat(false); if (currentJobId) API.post(`/auth/job/${currentJobId}/backend-denied`).catch(()=>{}); };
 
   const handleLogout = () => setShowLogoutModal(true);
   const confirmLogout = () => { setShowLogoutModal(false); localStorage.removeItem("token"); localStorage.removeItem("user_email"); sessionStorage.removeItem("studio_current_job"); navigate("/home"); };
@@ -1025,6 +1044,14 @@ export default function Studio() {
       {showNameModal && <NameModal onDone={name => { localStorage.setItem("user_name",name); localStorage.removeItem("show_name_modal"); setShowNameModal(false); }} />}
       <ConfirmModal open={showLogoutModal} title="Log out?" description="You'll need to sign in again." confirmLabel="Log out" onConfirm={confirmLogout} onCancel={()=>setShowLogoutModal(false)} />
       <ConfirmModal open={showStopModal} title="Stop building?" description="The AI agent is still working." warning="Credits used so far will still be charged." confirmLabel="Stop" onConfirm={confirmStop} onCancel={()=>setShowStopModal(false)} />
+
+      {/* Image preview popup */}
+      {imagePreview && (
+        <div onClick={()=>setImagePreview(null)} style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out" }}>
+          <img src={imagePreview} alt="Preview" style={{ maxWidth:"90vw",maxHeight:"85vh",borderRadius:"12px",boxShadow:"0 0 60px rgba(0,0,0,0.8)",objectFit:"contain" }} onClick={e=>e.stopPropagation()} />
+          <button onClick={()=>setImagePreview(null)} style={{ position:"absolute",top:"20px",right:"20px",background:"var(--bg-3)",border:`1px solid var(--border-default)`,borderRadius:"50%",width:"32px",height:"32px",color:"var(--text-primary)",fontSize:"1rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>&times;</button>
+        </div>
+      )}
       <Sidebar open={sidebarOpen} onClose={()=>setSidebarOpen(false)} userEmail={userEmail} credits={credits} planLimit={planLimit} projects={projects} currentJobId={currentJobId}
         onNewProject={handleNewProject} onLoadProject={handleLoadProject} onLogout={handleLogout} onUpgrade={handleUpgrade} onHome={()=>navigate("/home")} />
 
@@ -1085,10 +1112,16 @@ export default function Studio() {
                       <div style={{ display:"flex",gap:"4px",flexWrap:"wrap",marginTop:"6px",paddingTop:"6px",borderTop:`1px solid var(--border-subtle)` }}>
                         {msg.attachments.map((att,ai) => {
                           const isImg = att.type?.startsWith("image/");
+                          const imgUrl = attachmentUrlsRef.current[i]?.[ai];
                           return (
-                            <span key={ai} onClick={() => { if (att._objectUrl) window.open(att._objectUrl,"_blank"); }}
-                              style={{ display:"flex",alignItems:"center",gap:"4px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"4px",padding:"2px 6px",fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor:att._objectUrl?"pointer":"default" }}>
-                              {isImg?"IMG":"DOC"} <span style={{ maxWidth:"80px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{att.name}</span>
+                            <span key={ai}
+                              onClick={() => { if (isImg && imgUrl) setImagePreview(imgUrl); }}
+                              style={{ display:"flex",alignItems:"center",gap:"4px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"4px",padding:"2px 6px",fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor: isImg && imgUrl ? "pointer" : "default",transition:"border-color 0.12s" }}
+                              onMouseEnter={e=>{ if (isImg&&imgUrl) e.currentTarget.style.borderColor="var(--red-accent)"; }}
+                              onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--border-subtle)"; }}
+                            >
+                              {isImg ? (imgUrl ? <img src={imgUrl} alt="" style={{ width:"18px",height:"18px",borderRadius:"2px",objectFit:"cover" }} /> : "IMG") : "DOC"}
+                              <span style={{ maxWidth:"80px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{att.name}</span>
                             </span>
                           );
                         })}
@@ -1223,7 +1256,18 @@ export default function Studio() {
           </div>
           <div style={{ flex:1 }} />
           <div style={{ display:"flex",alignItems:"center",gap:"6px",flexShrink:0 }}>
-            {userPlan==="free" && <button onClick={handleUpgrade} style={{ padding:"5px 12px",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",borderRadius:"6px",color:"#fff",fontSize:"0.68rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)",height:"28px" }}>Upgrade</button>}
+            {userPlan==="free" && <button onClick={handleUpgrade} style={{
+              padding:"5px 16px",height:"28px",
+              background:"linear-gradient(135deg,#dc2626,#b91c1c,#991b1b)",
+              border:"none",borderRadius:"8px",
+              color:"#fff",fontSize:"0.7rem",fontWeight:700,cursor:"pointer",
+              fontFamily:"var(--font-mono)",letterSpacing:"0.04em",
+              boxShadow:"0 0 16px rgba(220,38,38,0.3),0 2px 8px rgba(0,0,0,0.3)",
+              transition:"all 0.2s",
+            }}
+              onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 0 24px rgba(220,38,38,0.5),0 4px 12px rgba(0,0,0,0.4)";e.currentTarget.style.transform="translateY(-1px)";}}
+              onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 0 16px rgba(220,38,38,0.3),0 2px 8px rgba(0,0,0,0.3)";e.currentTarget.style.transform="translateY(0)";}}
+            >Get Credits</button>}
             {currentJobId&&previewUrl&&!isRunning && (
               <button onClick={()=>{
                 const p=projects.find(p=>p.job_id===currentJobId);
