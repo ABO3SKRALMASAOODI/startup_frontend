@@ -229,16 +229,18 @@ function HighlightedCode({ code, lang }) {
 function CopyButton({ text, label = "Copy", size = "sm" }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const isSmall = size === "sm";
   return (
     <button onClick={handleCopy} style={{
-      background: copied ? "rgba(16,185,129,0.12)" : "var(--bg-3)",
-      border: `1px solid ${copied ? "rgba(16,185,129,0.3)" : "var(--border-subtle)"}`,
-      color: copied ? "var(--green-accent)" : "var(--text-secondary)",
-      borderRadius:"6px", padding: isSmall ? "2px 8px" : "4px 12px",
-      fontSize: isSmall ? "0.65rem" : "0.72rem", cursor:"pointer", transition:"all 0.15s",
-      fontFamily:"var(--font-mono)", display:"flex", alignItems:"center", gap:"4px",
-    }}>
+      background: copied ? "rgba(16,185,129,0.1)" : "transparent",
+      border: "none",
+      color: copied ? "var(--green-accent)" : "var(--text-muted)",
+      borderRadius:"4px", padding:"2px 6px",
+      fontSize:"0.6rem", cursor:"pointer", transition:"all 0.15s",
+      fontFamily:"var(--font-mono)", opacity: copied ? 1 : 0.5,
+    }}
+      onMouseEnter={e=>{if(!copied)e.currentTarget.style.opacity="1";e.currentTarget.style.color="var(--text-secondary)";}}
+      onMouseLeave={e=>{if(!copied){e.currentTarget.style.opacity="0.5";e.currentTarget.style.color="var(--text-muted)";}}}
+    >
       {copied ? "Copied" : label}
     </button>
   );
@@ -590,11 +592,28 @@ function CostDots({ credits }) {
   useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); }, [open]);
   const display = credits != null ? (typeof credits === "number" ? credits.toFixed(1) : credits) : "\u2014";
   return (
-    <div ref={ref} style={{ position:"relative",display:"inline-flex",alignItems:"center" }}>
-      <button onClick={() => setOpen(o=>!o)} style={{ background:"none",border:"none",cursor:"pointer",color: open ? "var(--red-accent)" : "var(--text-muted)",fontSize:"0.65rem",padding:"2px 4px",lineHeight:1,transition:"color 0.15s",fontFamily:"var(--font-mono)",borderRadius:"4px" }}
-        onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>{if(!open)e.currentTarget.style.color="var(--text-muted)"}}>
-        {display} cr
-      </button>
+    <div ref={ref} style={{ position:"relative",display:"inline-block" }}>
+      <button onClick={() => setOpen(o=>!o)} style={{
+        background:"none",border:"none",cursor:"pointer",
+        color: open ? "var(--red-accent)" : "var(--text-muted)",
+        fontSize:"0.85rem",padding:"0 2px",letterSpacing:"2px",lineHeight:1,
+        transition:"color 0.15s",fontFamily:"var(--font-mono)",
+      }}
+        onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"}
+        onMouseLeave={e=>{if(!open)e.currentTarget.style.color="var(--text-muted)"}}
+      >···</button>
+      {open && (
+        <div style={{
+          position:"absolute",bottom:"calc(100% + 4px)",right:0,
+          background:"var(--bg-3)",border:`1px solid var(--border-default)`,
+          borderRadius:"8px",padding:"6px 12px",whiteSpace:"nowrap",zIndex:300,
+          boxShadow:"0 4px 20px rgba(0,0,0,0.6)",fontSize:"0.72rem",
+          animation:"slideIn 0.12s ease",
+        }}>
+          <span style={{ color:"var(--text-tertiary)" }}>Credits: </span>
+          <span style={{ color:"var(--yellow-accent)",fontWeight:700,fontFamily:"var(--font-mono)" }}>{display}</span>
+        </div>
+      )}
     </div>
   );
 }
