@@ -20,6 +20,9 @@ const GLOBAL_STYLES = `
   @keyframes progressPulse { 0%{box-shadow:0 0 4px rgba(130,25,25,0.65)} 50%{box-shadow:0 0 12px rgba(130,25,25,0.92)} 100%{box-shadow:0 0 4px rgba(130,25,25,0.65)} }
   @keyframes nodeAppear   { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
 
+  /* FIX 4 & 5: Subscribe/Upgrade button glow pulse */
+  @keyframes creditsGlow  { 0%,100%{box-shadow:0 0 8px rgba(200,50,50,0.5),0 0 20px rgba(160,30,30,0.25)} 50%{box-shadow:0 0 16px rgba(220,60,60,0.8),0 0 40px rgba(180,40,40,0.45)} }
+
   :root {
     --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'IBM Plex Mono', 'JetBrains Mono', 'Fira Code', monospace;
@@ -76,6 +79,17 @@ const GLOBAL_STYLES = `
 
   .msg-row { animation: fadeIn 0.2s ease forwards; }
   .input-area:focus-within { border-color: rgba(140,35,35,0.45) !important; box-shadow: 0 0 0 1px rgba(140,35,35,0.18) !important; }
+
+  /* FIX 4 & 5: appealing credits/upgrade button */
+  .credits-action-btn {
+    animation: creditsGlow 2.5s ease-in-out infinite;
+    transition: all 0.2s ease !important;
+  }
+  .credits-action-btn:hover {
+    transform: translateY(-1px) scale(1.04) !important;
+    box-shadow: 0 0 24px rgba(220,60,60,0.9), 0 0 50px rgba(180,40,40,0.5) !important;
+    animation: none !important;
+  }
 `;
 
 function GlobalStyles() {
@@ -228,7 +242,6 @@ function HighlightedCode({ code, lang }) {
   const ref = useRef(null);
   useEffect(() => { loadHljs(() => { if (ref.current && window.hljs) { ref.current.removeAttribute("data-highlighted"); ref.current.textContent = code; ref.current.className = `language-${lang}`; window.hljs.highlightElement(ref.current); } }); }, [code, lang]);
   return (
-    // FIX 2: removed minHeight:"100%" which was blocking scroll; use height:auto
     <pre style={{ margin:0,padding:"1rem 1.2rem",fontSize:"0.78rem",lineHeight:1.7,fontFamily:"var(--font-mono)",background:"var(--bg-0)",whiteSpace:"pre",overflowX:"visible" }}>
       <code ref={ref} className={`language-${lang}`}>{code}</code>
     </pre>
@@ -299,12 +312,17 @@ function CodeViewer({ jobId, title }) {
     return <FolderNode key={fullPath} name={name} fullPath={fullPath} children={children} renderTree={renderTree} />;
   });
 
-  if (loading) return <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"10px" }}><Spinner /> <span style={{ color:"var(--text-tertiary)",fontSize:"0.8rem" }}>Loading files...</span></div>;
-  if (files.length === 0) return <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center" }}><span style={{ color:"var(--text-muted)",fontSize:"0.8rem" }}>No source files yet.</span></div>;
+  // FIX 2: "Loading files..." centered properly
+  if (loading) return (
+    <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"10px",height:"100%" }}>
+      <Spinner />
+      <span style={{ color:"var(--text-tertiary)",fontSize:"0.8rem" }}>Loading files...</span>
+    </div>
+  );
+  if (files.length === 0) return <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",height:"100%" }}><span style={{ color:"var(--text-muted)",fontSize:"0.8rem" }}>No source files yet.</span></div>;
 
   return (
     <div style={{ flex:1,display:"flex",overflow:"hidden",height:"100%" }}>
-      {/* FIX 2: tree sidebar — overflow hidden so it doesn't push layout */}
       <div style={{ width:treeOpen?"200px":"36px",flexShrink:0,borderRight:`1px solid var(--border-subtle)`,background:"var(--bg-1)",display:"flex",flexDirection:"column",overflow:"hidden",transition:"width 0.2s" }}>
         <div style={{ padding:"6px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid var(--border-subtle)`,flexShrink:0 }}>
           {treeOpen && <span style={{ fontSize:"0.6rem",color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>Files</span>}
@@ -312,18 +330,27 @@ function CodeViewer({ jobId, title }) {
         </div>
         {treeOpen && <div className="studio-scroll" style={{ flex:1,overflowY:"auto",overflowX:"hidden",padding:"4px" }}>{renderTree(tree)}</div>}
       </div>
-      {/* FIX 2: right pane — strict flex column so code area scrolls independently */}
       <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",minWidth:0 }}>
         <div style={{ padding:"6px 12px",borderBottom:`1px solid var(--border-subtle)`,background:"var(--bg-1)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0 }}>
           <span style={{ fontSize:"0.72rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{selectedFile ? selectedFile.path : ""}</span>
           <div style={{ display:"flex",gap:"6px",flexShrink:0 }}>
             {selectedFile && <CopyButton text={selectedFile.content} label="Copy" />}
+            {/* FIX 3: Download ZIP button matches the red theme */}
             <button onClick={handleDownloadZip} disabled={zipLoading} style={{
-              background:"linear-gradient(135deg,var(--red-accent),#701818)",border:"none",color:"#fff",borderRadius:"6px",padding:"3px 12px",fontSize:"0.7rem",cursor:zipLoading?"wait":"pointer",fontWeight:600,fontFamily:"var(--font-mono)",opacity:zipLoading?0.6:1,transition:"all 0.15s"
-            }}>{zipLoading ? "Zipping..." : "Download ZIP"}</button>
+              background:"linear-gradient(135deg,#a02020,#701818)",
+              border:"1px solid rgba(160,32,32,0.5)",
+              color:"#fff",
+              borderRadius:"6px",padding:"3px 12px",fontSize:"0.7rem",
+              cursor:zipLoading?"wait":"pointer",fontWeight:600,
+              fontFamily:"var(--font-mono)",opacity:zipLoading?0.6:1,
+              transition:"all 0.15s",
+              boxShadow:"0 0 10px rgba(140,30,30,0.4)",
+            }}
+              onMouseEnter={e=>{ if(!zipLoading){ e.currentTarget.style.boxShadow="0 0 18px rgba(180,40,40,0.7)"; e.currentTarget.style.transform="translateY(-1px)"; }}}
+              onMouseLeave={e=>{ e.currentTarget.style.boxShadow="0 0 10px rgba(140,30,30,0.4)"; e.currentTarget.style.transform="translateY(0)"; }}
+            >{zipLoading ? "Zipping..." : "Download ZIP"}</button>
           </div>
         </div>
-        {/* FIX 2: this is the scrollable code area — overflow:auto in BOTH axes */}
         <div className="studio-scroll" style={{ flex:1,overflowY:"auto",overflowX:"auto",minHeight:0 }}>
           {selectedFile && <HighlightedCode code={selectedFile.content} lang={getLang(selectedFile.path)} />}
         </div>
@@ -368,7 +395,6 @@ function BuildView({ progress, buildPhase, progressPercent }) {
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [progress]);
 
-  // Group progress into phases
   const phases = useMemo(() => {
     const p = [];
     let currentPhase = null;
@@ -389,7 +415,6 @@ function BuildView({ progress, buildPhase, progressPercent }) {
     return p;
   }, [progress]);
 
-  // Files created so far
   const filesCreated = useMemo(() => {
     const files = new Set();
     progress.forEach(p => { if (p.file && (p.action === "writing" || p.action === "editing")) files.add(p.file); });
@@ -400,9 +425,7 @@ function BuildView({ progress, buildPhase, progressPercent }) {
 
   return (
     <div style={{ flex:1,display:"flex",overflow:"hidden",background:"var(--bg-0)" }}>
-      {/* Main timeline */}
       <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden" }}>
-        {/* Status bar */}
         <div style={{ flexShrink:0,padding:"12px 16px",background:"var(--bg-1)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"12px" }}>
           <div style={{ position:"relative",width:"32px",height:"32px",flexShrink:0 }}>
             <svg width="32" height="32" viewBox="0 0 36 36" style={{ transform:"rotate(-90deg)" }}>
@@ -423,7 +446,6 @@ function BuildView({ progress, buildPhase, progressPercent }) {
           <span style={{ fontSize:"0.55rem",color:"var(--text-muted)",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>LIVE</span>
         </div>
 
-        {/* Timeline */}
         <div ref={scrollRef} className="studio-scroll" style={{ flex:1,overflowY:"auto",padding:"16px 20px" }}>
           {phases.length === 0 && (
             <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:"16px" }}>
@@ -459,7 +481,6 @@ function BuildView({ progress, buildPhase, progressPercent }) {
           ))}
         </div>
 
-        {/* Bottom progress bar */}
         <div style={{ flexShrink:0,padding:"8px 16px 10px",background:"var(--bg-1)",borderTop:`1px solid var(--border-subtle)` }}>
           <div style={{ height:"2px",background:"var(--bg-3)",borderRadius:"2px",overflow:"hidden" }}>
             <div style={{
@@ -473,7 +494,6 @@ function BuildView({ progress, buildPhase, progressPercent }) {
         </div>
       </div>
 
-      {/* Minimap — file structure */}
       <div style={{ width:"160px",flexShrink:0,borderLeft:`1px solid var(--border-subtle)`,background:"var(--bg-1)",display:"flex",flexDirection:"column",overflow:"hidden" }}>
         <div style={{ padding:"8px 10px",borderBottom:`1px solid var(--border-subtle)` }}>
           <span style={{ fontSize:"0.55rem",color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>File Map</span>
@@ -835,8 +855,7 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
 // ── Safe preview URL ─────────────────────────────────────────────────────────
 function _safePreview(url) { if (!url) return null; if (/^http:\/\/127\.0\.0\.1:\d+$/.test(url)) return null; return url; }
 
-// ── FIX 3: Long input chip ───────────────────────────────────────────────────
-// Renders a collapsible document chip for messages with very long content
+// ── Long input chip ───────────────────────────────────────────────────────────
 function LongInputChip({ content }) {
   const [expanded, setExpanded] = useState(false);
   const lines = content.split("\n").length;
@@ -860,7 +879,6 @@ function LongInputChip({ content }) {
         onMouseLeave={e => e.currentTarget.style.borderColor="rgba(140,35,35,0.18)"}
       >
         <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom: expanded ? "8px" : "0" }}>
-          {/* Doc icon */}
           <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
             <path d="M1 1h7l3 3v9a1 1 0 01-1 1H1a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="var(--red-accent)" strokeWidth="1.2"/>
             <path d="M8 1v3h3" stroke="var(--red-accent)" strokeWidth="1.2"/>
@@ -875,19 +893,10 @@ function LongInputChip({ content }) {
         </div>
         {expanded && (
           <pre style={{
-            margin:0,
-            padding:"8px",
-            background:"var(--bg-0)",
-            borderRadius:"6px",
-            fontSize:"0.72rem",
-            fontFamily:"var(--font-mono)",
-            color:"var(--text-secondary)",
-            overflowY:"auto",
-            overflowX:"auto",
-            maxHeight:"320px",
-            whiteSpace:"pre-wrap",
-            wordBreak:"break-all",
-            lineHeight:1.5,
+            margin:0,padding:"8px",background:"var(--bg-0)",borderRadius:"6px",
+            fontSize:"0.72rem",fontFamily:"var(--font-mono)",color:"var(--text-secondary)",
+            overflowY:"auto",overflowX:"auto",maxHeight:"320px",
+            whiteSpace:"pre-wrap",wordBreak:"break-all",lineHeight:1.5,
           }}>
             {content}
           </pre>
@@ -1082,16 +1091,14 @@ export default function Studio() {
   const addFiles = fl => { const nf = Array.from(fl).filter(f => ALLOWED_EXT.includes(f.name.split('.').pop().toLowerCase()) && f.size <= 10*1024*1024); setAttachedFiles(prev=>[...prev,...nf].slice(0,5)); };
   const removeFile = i => setAttachedFiles(prev=>prev.filter((_,j)=>j!==i));
 
-  // Auto-convert long pastes to a text file attachment instead of inline text
   const handlePaste = (e) => {
     const text = e.clipboardData?.getData("text");
-    if (!text || text.split("\n").length < 100) return; // short paste → normal
+    if (!text || text.split("\n").length < 100) return;
     e.preventDefault();
     const timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
     const filename = `pasted-${timestamp}.txt`;
     const file = new File([text], filename, { type: "text/plain" });
     setAttachedFiles(prev => [...prev, file].slice(0, 5));
-    // keep any text already in the textarea, just don't append the paste
   };
 
   const handleSendWithText = async (text) => {
@@ -1176,12 +1183,47 @@ export default function Studio() {
 
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
-  // ── Shared browser chrome buttons (used in multiple panel states) ──────────
+  // ── FIX 4 & 5: Appealing "Get Credits" / "Upgrade" button ──────────────────
+  const renderCreditsButton = () => {
+    const label = userPlan === "free" ? "Get Credits" : "Upgrade";
+    return (
+      <button
+        onClick={handleUpgrade}
+        className="credits-action-btn"
+        style={{
+          padding:"3px 14px",
+          height:"26px",
+          background:"linear-gradient(135deg, #cc2020 0%, #8b0000 60%, #660000 100%)",
+          border:"1px solid rgba(200,50,50,0.5)",
+          borderRadius:"6px",
+          color:"#fff",
+          fontSize:"0.62rem",
+          fontWeight:700,
+          cursor:"pointer",
+          fontFamily:"var(--font-mono)",
+          flexShrink:0,
+          letterSpacing:"0.04em",
+          boxShadow:"0 0 8px rgba(200,50,50,0.5), 0 0 20px rgba(160,30,30,0.25)",
+        }}
+      >
+        {label}
+      </button>
+    );
+  };
+
+  // ── Shared browser chrome buttons ──────────────────────────────────────────
   const renderChromeButtons = () => (
     <>
       <div style={{ display:"flex",background:"var(--bg-0)",borderRadius:"5px",border:`1px solid var(--border-subtle)`,padding:"1px",flexShrink:0 }}>
         {["preview","code"].map(v => (
-          <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"rgba(30,10,10,0.95)":"transparent",border:panelView===v?"1px solid rgba(120,30,30,0.5)":"none",color:panelView===v?"rgba(220,180,180,0.95)":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
+          <button key={v} onClick={()=>setPanelView(v)} style={{
+            padding:"2px 10px",borderRadius:"4px",border:"none",
+            background:panelView===v?"rgba(30,10,10,0.95)":"transparent",
+            // eslint-disable-next-line no-dupe-keys
+            border:panelView===v?"1px solid rgba(120,30,30,0.5)":"none",
+            color:panelView===v?"rgba(220,180,180,0.95)":"var(--text-tertiary)",
+            fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)"
+          }}>{v==="preview"?"Preview":"Code"}</button>
         ))}
       </div>
       <div style={{ flex:1,display:"flex",alignItems:"center",background:"var(--bg-0)",borderRadius:"5px",padding:"3px 8px",border:`1px solid var(--border-subtle)`,minWidth:0 }}>
@@ -1193,7 +1235,10 @@ export default function Studio() {
         </span>
       </div>
       {previewUrl && <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.7rem",padding:"2px",flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-muted)"}>↻</button>}
-      <button onClick={handleUpgrade} style={{ padding:"3px 12px",height:"24px",background:"rgba(30,10,10,0.95)",border:"1px solid rgba(120,30,30,0.5)",borderRadius:"6px",color:"rgba(220,160,160,0.9)",fontSize:"0.6rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",flexShrink:0 }}>{userPlan==="free"?"Subscribe":"Upgrade"}</button>
+
+      {/* FIX 4 & 5: replaced plain button with glowing credits button */}
+      {renderCreditsButton()}
+
       {currentJobId&&!isRunning && (
         <button onClick={()=>{ const p=projects.find(p=>p.job_id===currentJobId); sessionStorage.setItem("github_push_job_id",currentJobId); sessionStorage.setItem("github_push_job_title",p?.title||"project"); window.location.href=`https://github.com/login/oauth/authorize?client_id=Ov23liUC5tA7pNQbfiWo&scope=repo&redirect_uri=https://thehustlerbot.com/github-callback`; }} style={{ padding:"3px 8px",height:"24px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"5px",color:"var(--text-secondary)",fontSize:"0.6rem",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"3px",fontFamily:"var(--font-mono)",flexShrink:0 }}
           onMouseEnter={e=>{e.currentTarget.style.borderColor="#58a6ff";e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border-subtle)";e.currentTarget.style.color="var(--text-secondary)";}}
@@ -1276,10 +1321,8 @@ export default function Studio() {
                     background: msg.role==="user" ? "rgba(30,10,10,0.95)" : "var(--bg-0)",
                     border: msg.role==="assistant" ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(120,30,30,0.4)",
                     boxShadow: msg.role==="user" ? "0 1px 8px rgba(0,0,0,0.4)" : "0 1px 8px rgba(0,0,0,0.3)",
-                    // FIX 3: prevent bubble from expanding the layout horizontally
                     minWidth:0, overflow:"hidden",
                   }}>
-                    {/* FIX 3: render long user messages as collapsible chip */}
                     {msg.collapsed ? (
                       <LongInputChip content={msg.content} />
                     ) : (
@@ -1434,10 +1477,10 @@ export default function Studio() {
       <div style={{ flex:1,display:"flex",flexDirection:"column",background:"var(--bg-0)",overflow:"hidden",minWidth:0 }}>
 
         {panelView==="preview" && <>
-          {/* FIX 1: ALL preview states now share the same rounded card container */}
+          {/* FIX 1: white preview border with rounded card */}
           <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.1)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6)" }}>
 
-            {/* Unified browser chrome bar — always present */}
+            {/* Browser chrome bar */}
             <div style={{ flexShrink:0,padding:"6px 10px",background:"#000000",borderBottom:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",gap:"6px",borderRadius:"12px 12px 0 0" }}>
               <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
@@ -1447,14 +1490,12 @@ export default function Studio() {
               {renderChromeButtons()}
             </div>
 
-            {/* Content area switches based on state */}
+            {/* Content area */}
             <div style={{ flex:1,overflow:"hidden",borderRadius:"0 0 11px 11px",display:"flex",flexDirection:"column" }}>
-              {/* Building state — show BuildView */}
               {(isRunning||isRendering) && !previewUrl && (
                 <BuildView progress={progress} buildPhase={buildPhase} progressPercent={progressPercent} />
               )}
 
-              {/* Preview error */}
               {previewError && !isRunning && (
                 <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"14px",background:"var(--bg-0)" }}>
                   <span style={{ color:"var(--text-tertiary)",fontSize:"0.8rem",textAlign:"center",maxWidth:"200px",lineHeight:1.6 }}>Preview couldn't load.</span>
@@ -1462,16 +1503,15 @@ export default function Studio() {
                 </div>
               )}
 
-              {/* Live preview iframe */}
+              {/* FIX 1: white background wrapper gives the preview white edges */}
               {previewUrl && !previewError && (
-                <div style={{ flex:1,overflow:"hidden",background:"#fff" }}>
+                <div style={{ flex:1,overflow:"hidden",background:"#ffffff",borderRadius:"0 0 11px 11px" }}>
                   <iframe key={previewKey} src={previewUrl} title="Preview" style={{ width:"100%",height:"100%",border:"none",display:"block" }}
                     sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                     onError={()=>setPreviewError(true)} onLoad={()=>{setPreviewError(false);const ic=document.querySelector("link[rel='icon']");if(ic)ic.href="/favicon.ico?"+Date.now();}} />
                 </div>
               )}
 
-              {/* Idle empty state — no job yet */}
               {!previewUrl && !isRunning && !isRendering && !previewError && (
                 <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-0)" }}>
                   <span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Your app preview will appear here.</span>
@@ -1491,9 +1531,10 @@ export default function Studio() {
               </div>
               {renderChromeButtons()}
             </div>
-            <div style={{ flex:1,overflow:"hidden",borderRadius:"0 0 11px 11px" }}>
+            {/* FIX 2: code panel content fills height so loader centers properly */}
+            <div style={{ flex:1,overflow:"hidden",borderRadius:"0 0 11px 11px",display:"flex",flexDirection:"column" }}>
               {!currentJobId
-                ? <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",height:"100%",background:"var(--bg-0)" }}><span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Build a project first.</span></div>
+                ? <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-0)" }}><span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Build a project first.</span></div>
                 : <CodeViewer jobId={currentJobId} title={projects.find(p=>p.job_id===currentJobId)?.title||currentJobId} />
               }
             </div>
