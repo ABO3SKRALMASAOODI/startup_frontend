@@ -589,8 +589,8 @@ function CreditsBadge({ balance, planLimit, onUpgrade }) {
         <div style={{ height:"100%",width:`${pct}%`,background: isLow ? "var(--red-accent)" : pct <= 30 ? "var(--yellow-accent)" : "var(--green-accent)",borderRadius:"2px",transition:"width 0.4s ease" }} />
       </div>
       <button onClick={onUpgrade} style={{
-        width:"100%",padding:"7px",background:"linear-gradient(135deg,var(--red-accent),#701818)",border:"none",borderRadius:"6px",
-        color:"#fff",fontSize:"0.72rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-sans)",transition:"all 0.15s"
+        width:"100%",padding:"7px",background:"rgba(30,10,10,0.95)",border:"1px solid rgba(120,30,30,0.5)",borderRadius:"6px",
+        color:"rgba(220,160,160,0.9)",fontSize:"0.72rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-sans)",transition:"all 0.15s"
       }}>Upgrade</button>
     </div>
   );
@@ -1181,7 +1181,7 @@ export default function Studio() {
     <>
       <div style={{ display:"flex",background:"var(--bg-0)",borderRadius:"5px",border:`1px solid var(--border-subtle)`,padding:"1px",flexShrink:0 }}>
         {["preview","code"].map(v => (
-          <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"var(--red-accent)":"transparent",color:panelView===v?"#fff":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
+          <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"rgba(30,10,10,0.95)":"transparent",border:panelView===v?"1px solid rgba(120,30,30,0.5)":"none",color:panelView===v?"rgba(220,180,180,0.95)":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
         ))}
       </div>
       <div style={{ flex:1,display:"flex",alignItems:"center",background:"var(--bg-0)",borderRadius:"5px",padding:"3px 8px",border:`1px solid var(--border-subtle)`,minWidth:0 }}>
@@ -1193,7 +1193,7 @@ export default function Studio() {
         </span>
       </div>
       {previewUrl && <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.7rem",padding:"2px",flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-muted)"}>↻</button>}
-      <button onClick={handleUpgrade} style={{ padding:"3px 12px",height:"24px",background:"linear-gradient(135deg,#a02020,#8a1a1a,#701818)",border:"none",borderRadius:"6px",color:"#fff",fontSize:"0.6rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",boxShadow:"0 0 12px rgba(140,35,35,0.25)",flexShrink:0 }}>{userPlan==="free"?"Subscribe":"Upgrade"}</button>
+      <button onClick={handleUpgrade} style={{ padding:"3px 12px",height:"24px",background:"rgba(30,10,10,0.95)",border:"1px solid rgba(120,30,30,0.5)",borderRadius:"6px",color:"rgba(220,160,160,0.9)",fontSize:"0.6rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",flexShrink:0 }}>{userPlan==="free"?"Subscribe":"Upgrade"}</button>
       {currentJobId&&!isRunning && (
         <button onClick={()=>{ const p=projects.find(p=>p.job_id===currentJobId); sessionStorage.setItem("github_push_job_id",currentJobId); sessionStorage.setItem("github_push_job_title",p?.title||"project"); window.location.href=`https://github.com/login/oauth/authorize?client_id=Ov23liUC5tA7pNQbfiWo&scope=repo&redirect_uri=https://thehustlerbot.com/github-callback`; }} style={{ padding:"3px 8px",height:"24px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"5px",color:"var(--text-secondary)",fontSize:"0.6rem",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"3px",fontFamily:"var(--font-mono)",flexShrink:0 }}
           onMouseEnter={e=>{e.currentTarget.style.borderColor="#58a6ff";e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border-subtle)";e.currentTarget.style.color="var(--text-secondary)";}}
@@ -1435,10 +1435,10 @@ export default function Studio() {
 
         {panelView==="preview" && <>
           {/* FIX 1: ALL preview states now share the same rounded card container */}
-          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:`1px solid var(--border-default)`,background:"var(--bg-2)",boxShadow:"0 4px 24px rgba(0,0,0,0.4)" }}>
+          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.1)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6)" }}>
 
             {/* Unified browser chrome bar — always present */}
-            <div style={{ flexShrink:0,padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",borderRadius:"12px 12px 0 0" }}>
+            <div style={{ flexShrink:0,padding:"6px 10px",background:"#000000",borderBottom:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",gap:"6px",borderRadius:"12px 12px 0 0" }}>
               <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
@@ -1482,7 +1482,7 @@ export default function Studio() {
         </>}
 
         {panelView==="code" && <>
-          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:`1px solid var(--border-default)`,background:"var(--bg-2)",boxShadow:"0 4px 24px rgba(0,0,0,0.4)" }}>
+          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.1)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6)" }}>
             <div style={{ padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",flexShrink:0,borderRadius:"12px 12px 0 0" }}>
               <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
