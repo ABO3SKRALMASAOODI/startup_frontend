@@ -20,8 +20,7 @@ const GLOBAL_STYLES = `
   @keyframes progressPulse { 0%{box-shadow:0 0 4px rgba(130,25,25,0.65)} 50%{box-shadow:0 0 12px rgba(130,25,25,0.92)} 100%{box-shadow:0 0 4px rgba(130,25,25,0.65)} }
   @keyframes nodeAppear   { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
 
-  /* FIX 4 & 5: Subscribe/Upgrade button glow pulse */
-  @keyframes creditsGlow  { 0%,100%{box-shadow:0 0 8px rgba(200,50,50,0.5),0 0 20px rgba(160,30,30,0.25)} 50%{box-shadow:0 0 16px rgba(220,60,60,0.8),0 0 40px rgba(180,40,40,0.45)} }
+
 
   :root {
     --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -80,16 +79,7 @@ const GLOBAL_STYLES = `
   .msg-row { animation: fadeIn 0.2s ease forwards; }
   .input-area:focus-within { border-color: rgba(140,35,35,0.45) !important; box-shadow: 0 0 0 1px rgba(140,35,35,0.18) !important; }
 
-  /* FIX 4 & 5: appealing credits/upgrade button */
-  .credits-action-btn {
-    animation: creditsGlow 2.5s ease-in-out infinite;
-    transition: all 0.2s ease !important;
-  }
-  .credits-action-btn:hover {
-    transform: translateY(-1px) scale(1.04) !important;
-    box-shadow: 0 0 24px rgba(220,60,60,0.9), 0 0 50px rgba(180,40,40,0.5) !important;
-    animation: none !important;
-  }
+
 `;
 
 function GlobalStyles() {
@@ -608,10 +598,16 @@ function CreditsBadge({ balance, planLimit, onUpgrade }) {
       <div style={{ height:"3px",background:"var(--bg-3)",borderRadius:"2px",overflow:"hidden",marginBottom:"8px" }}>
         <div style={{ height:"100%",width:`${pct}%`,background: isLow ? "var(--red-accent)" : pct <= 30 ? "var(--yellow-accent)" : "var(--green-accent)",borderRadius:"2px",transition:"width 0.4s ease" }} />
       </div>
-      <button onClick={onUpgrade} style={{
-        width:"100%",padding:"7px",background:"rgba(30,10,10,0.95)",border:"1px solid rgba(120,30,30,0.5)",borderRadius:"6px",
-        color:"rgba(220,160,160,0.9)",fontSize:"0.72rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-sans)",transition:"all 0.15s"
-      }}>Upgrade</button>
+      <button onClick={onUpgrade}
+        onMouseEnter={e=>{ e.currentTarget.style.background="rgba(50,10,10,0.98)"; e.currentTarget.style.borderColor="rgba(180,50,50,0.8)"; e.currentTarget.style.color="#fff"; }}
+        onMouseLeave={e=>{ e.currentTarget.style.background="rgba(30,10,10,0.95)"; e.currentTarget.style.borderColor="rgba(140,40,40,0.7)"; e.currentTarget.style.color="rgba(240,180,180,1)"; }}
+        style={{
+          width:"100%",padding:"7px",background:"rgba(30,10,10,0.95)",
+          border:"1px solid rgba(140,40,40,0.7)",borderRadius:"6px",
+          color:"rgba(240,180,180,1)",fontSize:"0.72rem",fontWeight:700,
+          cursor:"pointer",fontFamily:"var(--font-sans)",transition:"all 0.15s",
+          letterSpacing:"0.03em",
+        }}>Upgrade</button>
     </div>
   );
 }
@@ -1183,27 +1179,28 @@ export default function Studio() {
 
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
-  // ── FIX 4 & 5: Appealing "Get Credits" / "Upgrade" button ──────────────────
+  // ── Credits button — matches sidebar Upgrade style ─────────────────────────
   const renderCreditsButton = () => {
     const label = userPlan === "free" ? "Get Credits" : "Upgrade";
     return (
       <button
         onClick={handleUpgrade}
-        className="credits-action-btn"
+        onMouseEnter={e=>{ e.currentTarget.style.background="rgba(50,10,10,0.98)"; e.currentTarget.style.borderColor="rgba(180,50,50,0.8)"; e.currentTarget.style.color="#fff"; }}
+        onMouseLeave={e=>{ e.currentTarget.style.background="rgba(30,10,10,0.95)"; e.currentTarget.style.borderColor="rgba(140,40,40,0.7)"; e.currentTarget.style.color="rgba(240,180,180,1)"; }}
         style={{
           padding:"3px 14px",
           height:"26px",
-          background:"linear-gradient(135deg, #cc2020 0%, #8b0000 60%, #660000 100%)",
-          border:"1px solid rgba(200,50,50,0.5)",
+          background:"rgba(30,10,10,0.95)",
+          border:"1px solid rgba(140,40,40,0.7)",
           borderRadius:"6px",
-          color:"#fff",
+          color:"rgba(240,180,180,1)",
           fontSize:"0.62rem",
           fontWeight:700,
           cursor:"pointer",
           fontFamily:"var(--font-mono)",
           flexShrink:0,
           letterSpacing:"0.04em",
-          boxShadow:"0 0 8px rgba(200,50,50,0.5), 0 0 20px rgba(160,30,30,0.25)",
+          transition:"all 0.15s",
         }}
       >
         {label}
@@ -1319,7 +1316,7 @@ export default function Studio() {
                   <div style={{
                     padding:"10px 14px",borderRadius: msg.role==="user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
                     background: msg.role==="user" ? "rgba(30,10,10,0.95)" : "var(--bg-0)",
-                    border: msg.role==="assistant" ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(120,30,30,0.4)",
+                    border: msg.role==="assistant" ? "1px solid rgba(255,255,255,0.28)" : "1px solid rgba(120,30,30,0.4)",
                     boxShadow: msg.role==="user" ? "0 1px 8px rgba(0,0,0,0.4)" : "0 1px 8px rgba(0,0,0,0.3)",
                     minWidth:0, overflow:"hidden",
                   }}>
@@ -1478,7 +1475,7 @@ export default function Studio() {
 
         {panelView==="preview" && <>
           {/* FIX 1: white preview border with rounded card */}
-          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.1)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6)" }}>
+          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.22)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)" }}>
 
             {/* Browser chrome bar */}
             <div style={{ flexShrink:0,padding:"6px 10px",background:"#000000",borderBottom:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",gap:"6px",borderRadius:"12px 12px 0 0" }}>
@@ -1522,7 +1519,7 @@ export default function Studio() {
         </>}
 
         {panelView==="code" && <>
-          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.1)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6)" }}>
+          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.22)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)" }}>
             <div style={{ padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",flexShrink:0,borderRadius:"12px 12px 0 0" }}>
               <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
