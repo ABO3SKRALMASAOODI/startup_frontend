@@ -1085,7 +1085,7 @@ export default function Studio() {
   // Auto-convert long pastes to a text file attachment instead of inline text
   const handlePaste = (e) => {
     const text = e.clipboardData?.getData("text");
-    if (!text || text.length <= LONG_INPUT_THRESHOLD) return; // short paste → normal
+    if (!text || text.split("\n").length < 100) return; // short paste → normal
     e.preventDefault();
     const timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
     const filename = `pasted-${timestamp}.txt`;
