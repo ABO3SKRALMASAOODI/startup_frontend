@@ -47,7 +47,7 @@ const GLOBAL_STYLES = `
   .studio-scroll::-webkit-scrollbar { width: 4px; }
   .studio-scroll::-webkit-scrollbar-track { background: transparent; }
   .studio-scroll::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 4px; }
-  .studio-scroll::-webkit-scrollbar-thumb:hover { background: rgba(140,35,35,0.35); }
+  .studio-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 
   .msg-content { word-break: break-word; overflow-wrap: anywhere; min-width: 0; }
   .msg-content p  { margin: 0 0 0.5em; }
@@ -661,7 +661,8 @@ function Sidebar({ open, onClose, userEmail, credits, planLimit, projects, curre
       <div ref={ref} style={{
         position:"fixed",top:0,left:0,bottom:0,width:"260px",zIndex:500,background:"#000000",borderRight:`1px solid var(--border-subtle)`,
         transform:open?"translateX(0)":"translateX(-100%)",transition:"transform 0.25s cubic-bezier(0.4,0,0.2,1)",
-        display:"flex",flexDirection:"column",padding:"16px 12px",overflowY:"auto"
+        display:"flex",flexDirection:"column",padding:"16px 12px",overflowY:"auto",
+        scrollbarWidth:"thin",scrollbarColor:"rgba(255,255,255,0.1) transparent"
       }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"4px" }}>
           <span style={{ fontSize:"0.88rem",fontWeight:700,color:"var(--text-primary)",fontFamily:"var(--font-sans)" }}>Studio</span>
@@ -1188,12 +1189,12 @@ export default function Studio() {
     return (
       <button
         onClick={handleUpgrade}
-        onMouseEnter={e=>{ e.currentTarget.style.background="rgba(180,30,30,0.35)"; }}
-        onMouseLeave={e=>{ e.currentTarget.style.background="rgba(160,25,25,0.25)"; }}
+        onMouseEnter={e=>{ e.currentTarget.style.background="rgba(200,40,40,0.35)"; }}
+        onMouseLeave={e=>{ e.currentTarget.style.background="rgba(180,35,35,0.22)"; }}
         style={{
           padding:"3px 14px",
           height:"26px",
-          background:"rgba(160,25,25,0.25)",
+          background:"rgba(180,35,35,0.22)",
           border:"none",
           borderRadius:"6px",
           color:"#ffffff",
@@ -1221,7 +1222,7 @@ export default function Studio() {
             background:panelView===v?"rgba(30,10,10,0.95)":"transparent",
             // eslint-disable-next-line no-dupe-keys
             border:panelView===v?"1px solid rgba(120,30,30,0.5)":"none",
-            color:panelView===v?"rgba(220,180,180,0.95)":"var(--text-tertiary)",
+            color:panelView===v?"#ffffff":"var(--text-tertiary)",
             fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)"
           }}>{v==="preview"?"Preview":"Code"}</button>
         ))}
