@@ -590,7 +590,7 @@ function CreditsBadge({ balance, planLimit, onUpgrade }) {
   const pct = Math.max(0, Math.min(100, (balance / max) * 100));
   const isLow = pct <= 10;
   return (
-    <div style={{ padding:"10px",background:"var(--bg-2)",borderRadius:"8px",border:`1px solid ${isLow ? "rgba(140,35,35,0.25)" : "var(--border-subtle)"}`,marginBottom:"12px" }}>
+    <div style={{ padding:"10px",background:"#000000",borderRadius:"8px",border:`1px solid ${isLow ? "rgba(140,35,35,0.4)" : "rgba(255,255,255,0.12)"}`,marginBottom:"12px" }}>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px" }}>
         <span style={{ fontSize:"0.65rem",color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"var(--font-mono)" }}>Credits</span>
         <span style={{ fontSize:"0.85rem",fontWeight:700,color: isLow ? "var(--red-accent)" : "var(--text-primary)",fontFamily:"var(--font-mono)" }}>{typeof balance === "number" ? balance.toFixed(2) : balance}</span>
@@ -653,7 +653,7 @@ function Sidebar({ open, onClose, userEmail, credits, planLimit, projects, curre
   const ref = useRef(null);
   useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) onClose(); }; document.addEventListener("mousedown",h); return ()=>document.removeEventListener("mousedown",h); }, [open, onClose]);
 
-  const btnStyle = { width:"100%",padding:"8px 10px",borderRadius:"6px",border:`1px solid var(--border-subtle)`,background:"var(--bg-2)",color:"var(--text-secondary)",fontSize:"0.78rem",cursor:"pointer",textAlign:"left",fontFamily:"var(--font-sans)",transition:"all 0.12s",marginBottom:"4px" };
+  const btnStyle = { width:"100%",padding:"8px 10px",borderRadius:"6px",border:`1px solid rgba(255,255,255,0.1)`,background:"#000000",color:"var(--text-secondary)",fontSize:"0.78rem",cursor:"pointer",textAlign:"left",fontFamily:"var(--font-sans)",transition:"all 0.12s",marginBottom:"4px" };
 
   return (
     <>
@@ -676,8 +676,8 @@ function Sidebar({ open, onClose, userEmail, credits, planLimit, projects, curre
         {projects.length === 0 && <p style={{ color:"var(--text-muted)",fontSize:"0.72rem" }}>No projects yet.</p>}
         {projects.map(p => (
           <div key={p.job_id} onClick={() => { onLoadProject(p); onClose(); }} style={{
-            padding:"8px",borderRadius:"6px",border:`1px solid ${currentJobId===p.job_id ? "rgba(140,35,35,0.35)" : "var(--border-subtle)"}`,
-            background: currentJobId===p.job_id ? "var(--red-subtle)" : "var(--bg-2)",cursor:"pointer",marginBottom:"3px",transition:"all 0.12s"
+            padding:"8px",borderRadius:"6px",border:`1px solid ${currentJobId===p.job_id ? "rgba(140,35,35,0.35)" : "rgba(255,255,255,0.1)"}`,
+            background: currentJobId===p.job_id ? "var(--red-subtle)" : "#000000",cursor:"pointer",marginBottom:"3px",transition:"all 0.12s"
           }}>
             <span style={{ fontSize:"0.78rem",color:"var(--text-primary)",display:"block" }}>{p.title || "Untitled"}</span>
             <span style={{ fontSize:"0.6rem",color: p.state==="completed" ? "var(--green-accent)" : p.state==="running" ? "var(--yellow-accent)" : "var(--text-muted)",fontFamily:"var(--font-mono)" }}>
@@ -1182,28 +1182,28 @@ export default function Studio() {
 
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
-  // ── Credits button — transparent but bright ──────────────────────────────
+  // ── Credits button — bright transparent red, white text ──────────────────
   const renderCreditsButton = () => {
     const label = userPlan === "free" ? "Get Credits" : "Upgrade";
     return (
       <button
         onClick={handleUpgrade}
-        onMouseEnter={e=>{ e.currentTarget.style.background="rgba(60,20,20,0.98)"; e.currentTarget.style.color="#ffffff"; }}
-        onMouseLeave={e=>{ e.currentTarget.style.background="rgba(30,10,10,0.95)"; e.currentTarget.style.color="rgba(255,200,200,0.95)"; }}
+        onMouseEnter={e=>{ e.currentTarget.style.background="rgba(180,30,30,0.35)"; }}
+        onMouseLeave={e=>{ e.currentTarget.style.background="rgba(160,25,25,0.25)"; }}
         style={{
           padding:"3px 14px",
           height:"26px",
-          background:"rgba(30,10,10,0.95)",
+          background:"rgba(160,25,25,0.25)",
           border:"none",
           borderRadius:"6px",
-          color:"rgba(255,200,200,0.95)",
+          color:"#ffffff",
           fontSize:"0.62rem",
           fontWeight:700,
           cursor:"pointer",
           fontFamily:"var(--font-mono)",
           flexShrink:0,
           letterSpacing:"0.04em",
-          transition:"background 0.15s, color 0.15s",
+          transition:"background 0.15s",
         }}
       >
         {label}
