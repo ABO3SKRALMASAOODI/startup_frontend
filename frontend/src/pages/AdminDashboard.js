@@ -468,7 +468,7 @@ function BuildViewerPanel({ jobId, onClose, headers }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [iframeLoaded, setIframeLoaded] = useState(false);
-  const [activePane, setActivePane] = useState("preview");
+  const chatBottomRef = useRef(null);
 
   useEffect(() => {
     if (!jobId) return;
@@ -481,6 +481,13 @@ function BuildViewerPanel({ jobId, onClose, headers }) {
       .finally(() => setLoading(false));
   }, [jobId]);
 
+  // Auto-scroll chat to bottom when messages load
+  useEffect(() => {
+    if (data?.messages?.length) {
+      setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, [data]);
+
   if (!jobId) return null;
 
   const previewUrl = data?.preview_url
@@ -489,150 +496,220 @@ function BuildViewerPanel({ jobId, onClose, headers }) {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
+      {/* Backdrop */}
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }} />
+
+      {/* Full-screen panel — Studio-style split */}
       <div style={{
-        position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 201,
-        width: "min(1100px, 92vw)",
-        background: C.card,
-        borderLeft: `1px solid ${C.cardBorder}`,
+        position: "fixed", inset: 0, zIndex: 201,
         display: "flex", flexDirection: "column",
-        boxShadow: "-24px 0 80px rgba(0,0,0,0.8)",
-        animation: "slideInPanel 0.25s cubic-bezier(0.4,0,0.2,1)",
+        background: "var(--bg, #030303)",
+        animation: "fadeUp 0.2s ease",
       }}>
-        {/* Header */}
-        <div style={{ padding: "12px 20px", borderBottom: `1px solid ${C.cardBorder}`, display: "flex", alignItems: "center", gap: 12, flexShrink: 0, background: "rgba(3,3,3,0.9)", backdropFilter: "blur(12px)" }}>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${C.cardBorder}`, borderRadius: 8, padding: "4px 12px", color: C.textDim, fontSize: "0.74rem", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>← Close</button>
-          <div style={{ width: 1, height: 18, background: C.cardBorder }} />
+
+        {/* ── Top bar ── */}
+        <div style={{
+          padding: "10px 16px", borderBottom: `1px solid ${C.cardBorder}`,
+          display: "flex", alignItems: "center", gap: 10, flexShrink: 0,
+          background: "rgba(3,3,3,0.95)", backdropFilter: "blur(16px)", height: 48,
+        }}>
+          <button onClick={onClose} style={{
+            background: "rgba(255,255,255,0.04)", border: `1px solid ${C.cardBorder}`,
+            borderRadius: 8, padding: "4px 12px", color: C.textDim,
+            fontSize: "0.74rem", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontWeight: 600,
+            transition: "all 0.15s", flexShrink: 0,
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(220,38,38,0.4)"; e.currentTarget.style.color = "#fff"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.cardBorder; e.currentTarget.style.color = C.textDim; }}
+          >← Back</button>
+
+          <div style={{ width: 1, height: 18, background: C.cardBorder, flexShrink: 0 }} />
+
           {loading ? (
-            <span style={{ color: C.textMuted, fontSize: "0.8rem" }}>Loading...</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 14, height: 14, border: `2px solid rgba(220,38,38,0.2)`, borderTop: `2px solid ${C.red}`, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+              <span style={{ color: C.textMuted, fontSize: "0.78rem", fontFamily: "'Outfit', sans-serif" }}>Loading…</span>
+            </div>
           ) : data ? (
             <>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{data.title || "Untitled"}</span>
-                  <StateBadge state={data.state} />
-                  <PlanBadge plan={data.plan} />
-                </div>
-                <div style={{ fontSize: "0.66rem", color: C.textMuted, marginTop: 2, fontFamily: "'Space Mono', monospace" }}>
-                  {data.user_email} · {fmtTime(data.created_at)} · {data.turns} turns · {Number(data.credits_used).toFixed(2)} cr · {fmtK(data.tokens_used)} tokens
-                </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: "0.86rem", fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 280 }}>
+                  {data.title || "Untitled"}
+                </span>
+                <StateBadge state={data.state} />
+                <PlanBadge plan={data.plan} />
+                <span style={{ fontSize: "0.62rem", color: C.textMuted, fontFamily: "'Space Mono', monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {data.user_email} · {fmtTime(data.created_at)} · {data.turns} turns · {Number(data.credits_used).toFixed(2)} cr · {fmtK(data.tokens_used)} tok · {data.model}
+                </span>
               </div>
-              <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: 2, border: `1px solid ${C.cardBorder}`, flexShrink: 0 }}>
-                {["preview", "chat"].map(p => (
-                  <button key={p} onClick={() => setActivePane(p)} style={{
-                    background: activePane === p ? C.redGlow : "transparent", border: "none", borderRadius: 6,
-                    padding: "4px 14px", color: activePane === p ? "#fff" : C.textDim,
-                    fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif", transition: "all 0.15s",
-                  }}>{p === "preview" ? "🖥 Preview" : "💬 Chat"}</button>
-                ))}
-              </div>
+              <span style={{ fontSize: "0.6rem", color: C.textMuted, fontFamily: "'Space Mono', monospace", flexShrink: 0 }}>🔒 Read-only</span>
             </>
           ) : (
             <span style={{ color: C.red, fontSize: "0.8rem" }}>Failed to load</span>
           )}
         </div>
 
-        {/* Body */}
+        {/* ── Body: Chat (left) + Preview (right) ── */}
         {loading ? (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-            <div style={{ width: 28, height: 28, border: `2px solid rgba(220,38,38,0.12)`, borderTop: `2px solid ${C.red}`, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-            <span style={{ color: C.textMuted, fontSize: "0.8rem", fontFamily: "'Outfit', sans-serif" }}>Loading build data…</span>
+            <div style={{ width: 32, height: 32, border: `2px solid rgba(220,38,38,0.12)`, borderTop: `2px solid ${C.red}`, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+            <span style={{ color: C.textMuted, fontSize: "0.85rem", fontFamily: "'Outfit', sans-serif" }}>Loading build…</span>
           </div>
         ) : data ? (
           <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
 
-            {/* Preview pane */}
-            {activePane === "preview" && (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                <div style={{ padding: "6px 12px", background: "rgba(10,10,10,0.95)", borderBottom: `1px solid ${C.cardBorder}`, display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ff5f57" }} />
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#febc2e" }} />
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#28c840" }} />
-                  </div>
-                  <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", borderRadius: 5, padding: "3px 10px", border: `1px solid ${C.cardBorder}`, fontSize: "0.62rem", color: C.textMuted, fontFamily: "'Space Mono', monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {previewUrl || "No preview available"}
-                  </div>
-                  {previewUrl && (
-                    <a href={previewUrl} target="_blank" rel="noreferrer" style={{ background: C.redGlow, border: `1px solid ${C.red}25`, borderRadius: 6, padding: "3px 10px", color: C.red, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", fontFamily: "'Space Mono', monospace", textDecoration: "none", flexShrink: 0 }}>↗ Open</a>
-                  )}
-                </div>
-                <div style={{ flex: 1, overflow: "hidden", background: "#0a0a0a", position: "relative" }}>
-                  {previewUrl ? (
-                    <>
-                      {!iframeLoaded && (
-                        <div style={{ position: "absolute", inset: 0, zIndex: 1, background: "linear-gradient(110deg, #0e0e0e 30%, #1a1a1a 50%, #0e0e0e 70%)", backgroundSize: "200% 100%", animation: "skeletonShimmer 1.6s ease-in-out infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <div style={{ textAlign: "center" }}>
-                            <div style={{ width: 28, height: 28, border: `2px solid rgba(220,38,38,0.12)`, borderTop: `2px solid ${C.red}`, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 10px" }} />
-                            <span style={{ color: C.textMuted, fontSize: "0.72rem", fontFamily: "'Outfit', sans-serif" }}>Loading preview…</span>
-                          </div>
-                        </div>
-                      )}
-                      <iframe src={previewUrl} title={data.title} onLoad={() => setIframeLoaded(true)}
-                        style={{ width: "100%", height: "100%", border: "none", opacity: iframeLoaded ? 1 : 0, transition: "opacity 0.4s ease", background: "transparent" }}
-                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
-                    </>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 10 }}>
-                      <div style={{ fontSize: "2rem", opacity: 0.3 }}>🚧</div>
-                      <span style={{ color: C.textMuted, fontSize: "0.8rem", fontFamily: "'Outfit', sans-serif" }}>{data.state === "running" ? "Build in progress…" : "No preview available"}</span>
-                    </div>
-                  )}
-                </div>
+            {/* ── LEFT: Chat ── */}
+            <div style={{
+              width: 360, flexShrink: 0,
+              display: "flex", flexDirection: "column",
+              borderRight: `1px solid ${C.cardBorder}`,
+              background: "#060608",
+            }}>
+              {/* Chat top bar */}
+              <div style={{ padding: "8px 12px", borderBottom: `1px solid ${C.cardBorder}`, flexShrink: 0 }}>
+                <span style={{ fontSize: "0.64rem", color: C.textMuted, fontFamily: "'Space Mono', monospace", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Conversation · {data.messages.length} messages
+                </span>
               </div>
-            )}
 
-            {/* Chat pane */}
-            {activePane === "chat" && (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                {data.prompt && (
-                  <div style={{ padding: "10px 16px", background: "rgba(220,38,38,0.04)", borderBottom: `1px solid rgba(220,38,38,0.1)`, flexShrink: 0 }}>
-                    <div style={{ fontSize: "0.58rem", color: C.red, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4, fontFamily: "'Space Mono', monospace" }}>Initial Prompt</div>
-                    <div style={{ fontSize: "0.78rem", color: C.textDim, lineHeight: 1.5, fontFamily: "'Outfit', sans-serif", maxHeight: 80, overflow: "auto" }}>{data.prompt}</div>
-                  </div>
+              {/* Initial prompt — collapsed, expandable */}
+              {data.prompt && (
+                <PromptBanner prompt={data.prompt} />
+              )}
+
+              {/* Messages */}
+              <div className="adm-scroll" style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {data.messages.length === 0 && (
+                  <div style={{ color: C.textMuted, textAlign: "center", padding: 40, fontSize: "0.78rem", fontFamily: "'Outfit', sans-serif" }}>No messages recorded</div>
                 )}
-                <div className="adm-scroll" style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
-                  {data.messages.length === 0 && (
-                    <div style={{ color: C.textMuted, textAlign: "center", padding: 40, fontSize: "0.8rem" }}>No messages recorded for this build</div>
-                  )}
-                  {data.messages.map((msg, i) => {
-                    const isUser = msg.role === "user";
-                    return (
-                      <div key={i} style={{ display: "flex", flexDirection: isUser ? "row-reverse" : "row", alignItems: "flex-start", gap: 8 }}>
-                        <div style={{
-                          maxWidth: "80%",
-                          background: isUser ? "linear-gradient(135deg,#991b1b,#7f1d1d)" : "rgba(20,20,20,0.9)",
-                          border: isUser ? "none" : `1px solid ${C.cardBorder}`,
-                          borderRadius: isUser ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                          padding: "10px 14px",
-                          boxShadow: isUser ? "0 2px 12px rgba(220,38,38,0.15)" : "0 1px 8px rgba(0,0,0,0.3)",
-                        }}>
-                          <div style={{ fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: isUser ? "rgba(220,38,38,0.6)" : "rgba(220,38,38,0.8)", marginBottom: 4, fontFamily: "'Space Mono', monospace" }}>
-                            {isUser ? "User" : "Agent"}
-                          </div>
-                          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.6, fontFamily: "'Outfit', sans-serif", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                            {msg.text || msg.content || ""}
-                          </div>
-                          {(msg.tokens_used || msg.credits_used) && (
-                            <div style={{ marginTop: 6, paddingTop: 4, borderTop: `1px solid rgba(255,255,255,0.06)`, display: "flex", gap: 10 }}>
-                              {msg.credits_used && <span style={{ fontSize: "0.6rem", color: C.textMuted, fontFamily: "'Space Mono', monospace" }}>{Number(msg.credits_used).toFixed(2)} cr</span>}
-                              {msg.tokens_used && <span style={{ fontSize: "0.6rem", color: C.textMuted, fontFamily: "'Space Mono', monospace" }}>{fmtK(msg.tokens_used)} tok</span>}
-                            </div>
-                          )}
+                {data.messages.map((msg, i) => {
+                  const isUser = msg.role === "user";
+                  const text = msg.text || msg.content || "";
+                  const isLong = text.length > 400;
+                  return (
+                    <MessageBubble key={i} isUser={isUser} text={text} isLong={isLong}
+                      creditsUsed={msg.credits_used} tokensUsed={msg.tokens_used} />
+                  );
+                })}
+                <div ref={chatBottomRef} />
+              </div>
+            </div>
+
+            {/* ── RIGHT: Preview ── */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#0a0a0a" }}>
+              {/* Browser chrome */}
+              <div style={{ padding: "6px 12px", background: "rgba(10,10,10,0.98)", borderBottom: `1px solid ${C.cardBorder}`, display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ff5f57" }} />
+                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#febc2e" }} />
+                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#28c840" }} />
+                </div>
+                <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", borderRadius: 5, padding: "3px 10px", border: `1px solid ${C.cardBorder}`, fontSize: "0.6rem", color: C.textMuted, fontFamily: "'Space Mono', monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {previewUrl || "No preview available"}
+                </div>
+                {previewUrl && (
+                  <a href={previewUrl} target="_blank" rel="noreferrer" style={{ background: C.redGlow, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: 6, padding: "3px 10px", color: C.red, fontSize: "0.62rem", fontWeight: 700, textDecoration: "none", flexShrink: 0, fontFamily: "'Space Mono', monospace" }}>↗</a>
+                )}
+              </div>
+
+              {/* iframe */}
+              <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+                {previewUrl ? (
+                  <>
+                    {!iframeLoaded && (
+                      <div style={{ position: "absolute", inset: 0, zIndex: 1, background: "linear-gradient(110deg, #0e0e0e 30%, #1a1a1a 50%, #0e0e0e 70%)", backgroundSize: "200% 100%", animation: "skeletonShimmer 1.6s ease-in-out infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ width: 28, height: 28, border: `2px solid rgba(220,38,38,0.12)`, borderTop: `2px solid ${C.red}`, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 10px" }} />
+                          <span style={{ color: C.textMuted, fontSize: "0.72rem", fontFamily: "'Outfit', sans-serif" }}>Loading preview…</span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-                <div style={{ padding: "8px 16px", borderTop: `1px solid ${C.cardBorder}`, background: "rgba(3,3,3,0.8)", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  <span style={{ fontSize: "0.62rem", color: C.textMuted, fontFamily: "'Space Mono', monospace" }}>🔒 Read-only · {data.messages.length} messages · model: {data.model}</span>
-                </div>
+                    )}
+                    <iframe src={previewUrl} title={data.title} onLoad={() => setIframeLoaded(true)}
+                      style={{ width: "100%", height: "100%", border: "none", opacity: iframeLoaded ? 1 : 0, transition: "opacity 0.4s ease", background: "transparent" }}
+                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
+                  </>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 12 }}>
+                    <div style={{ fontSize: "2.5rem", opacity: 0.2 }}>🚧</div>
+                    <span style={{ color: C.textMuted, fontSize: "0.82rem", fontFamily: "'Outfit', sans-serif" }}>
+                      {data.state === "running" ? "Build still in progress…" : "No preview for this build"}
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         ) : null}
       </div>
     </>
+  );
+}
+
+/* ── Collapsible prompt banner ── */
+function PromptBanner({ prompt }) {
+  const [expanded, setExpanded] = useState(false);
+  const short = prompt.length > 120 ? prompt.slice(0, 120) + "…" : prompt;
+  return (
+    <div onClick={() => setExpanded(e => !e)} style={{
+      padding: "8px 12px", background: "rgba(220,38,38,0.04)",
+      borderBottom: `1px solid rgba(220,38,38,0.08)`,
+      cursor: "pointer", flexShrink: 0, transition: "background 0.15s",
+    }}
+      onMouseEnter={e => e.currentTarget.style.background = "rgba(220,38,38,0.07)"}
+      onMouseLeave={e => e.currentTarget.style.background = "rgba(220,38,38,0.04)"}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+        <span style={{ fontSize: "0.56rem", color: "rgba(220,38,38,0.7)", textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'Space Mono', monospace", fontWeight: 700 }}>Initial Prompt</span>
+        <span style={{ fontSize: "0.56rem", color: C.textMuted, fontFamily: "'Space Mono', monospace" }}>{expanded ? "▲ collapse" : "▼ expand"}</span>
+      </div>
+      <div style={{
+        fontSize: "0.72rem", color: C.textDim, lineHeight: 1.5, fontFamily: "'Outfit', sans-serif",
+        maxHeight: expanded ? "200px" : "none", overflowY: expanded ? "auto" : "hidden",
+        whiteSpace: "pre-wrap", wordBreak: "break-word",
+      }}>
+        {expanded ? prompt : short}
+      </div>
+    </div>
+  );
+}
+
+/* ── Message bubble with long-text collapse ── */
+function MessageBubble({ isUser, text, isLong, creditsUsed, tokensUsed }) {
+  const [expanded, setExpanded] = useState(false);
+  const displayText = isLong && !expanded ? text.slice(0, 400) + "…" : text;
+  return (
+    <div style={{ display: "flex", flexDirection: isUser ? "row-reverse" : "row", alignItems: "flex-start", gap: 6 }}>
+      <div style={{
+        maxWidth: "88%", minWidth: 0,
+        // user: dark background with subtle border — NOT red on red
+        background: isUser ? "rgba(30,10,10,0.95)" : "rgba(16,16,20,0.95)",
+        border: `1px solid ${isUser ? "rgba(120,30,30,0.4)" : "rgba(255,255,255,0.06)"}`,
+        borderRadius: isUser ? "12px 12px 3px 12px" : "12px 12px 12px 3px",
+        padding: "8px 12px",
+      }}>
+        <div style={{ fontSize: "0.55rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isUser ? "rgba(220,100,100,0.7)" : "rgba(220,38,38,0.7)", marginBottom: 4, fontFamily: "'Space Mono', monospace" }}>
+          {isUser ? "User" : "Agent"}
+        </div>
+        <div style={{ fontSize: "0.76rem", color: "rgba(220,220,230,0.9)", lineHeight: 1.6, fontFamily: "'Outfit', sans-serif", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {displayText}
+        </div>
+        {isLong && (
+          <button onClick={() => setExpanded(e => !e)} style={{
+            background: "none", border: "none", cursor: "pointer", marginTop: 4,
+            fontSize: "0.62rem", color: "rgba(220,38,38,0.6)", fontFamily: "'Space Mono', monospace",
+            padding: 0,
+          }}>
+            {expanded ? "▲ show less" : `▼ show all (${text.length} chars)`}
+          </button>
+        )}
+        {(creditsUsed || tokensUsed) && (
+          <div style={{ marginTop: 5, paddingTop: 4, borderTop: `1px solid rgba(255,255,255,0.04)`, display: "flex", gap: 8 }}>
+            {creditsUsed && <span style={{ fontSize: "0.58rem", color: C.textMuted, fontFamily: "'Space Mono', monospace" }}>{Number(creditsUsed).toFixed(2)} cr</span>}
+            {tokensUsed && <span style={{ fontSize: "0.58rem", color: C.textMuted, fontFamily: "'Space Mono', monospace" }}>{fmtK(tokensUsed)} tok</span>}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
