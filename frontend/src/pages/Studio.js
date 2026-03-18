@@ -210,6 +210,9 @@ const LANG_MAP = { js:"javascript",jsx:"javascript",ts:"typescript",tsx:"typescr
 const getLang = p => LANG_MAP[p.split(".").pop().toLowerCase()] || "plaintext";
 const getFileIcon = p => { const ext = p.split(".").pop().toLowerCase(); const m = { jsx:"R",tsx:"R",js:"J",ts:"T",css:"S",html:"H",json:"{",md:"M",svg:"V" }; return m[ext] || "F"; };
 
+// ── Long input threshold ─────────────────────────────────────────────────────
+const LONG_INPUT_THRESHOLD = 500;
+
 // ── Syntax highlighting ──────────────────────────────────────────────────────
 let hljsReady = false; let hljsCallbacks = [];
 function loadHljs(cb) {
@@ -225,7 +228,8 @@ function HighlightedCode({ code, lang }) {
   const ref = useRef(null);
   useEffect(() => { loadHljs(() => { if (ref.current && window.hljs) { ref.current.removeAttribute("data-highlighted"); ref.current.textContent = code; ref.current.className = `language-${lang}`; window.hljs.highlightElement(ref.current); } }); }, [code, lang]);
   return (
-    <pre style={{ margin:0,padding:"1rem 1.2rem",fontSize:"0.78rem",lineHeight:1.7,fontFamily:"var(--font-mono)",background:"var(--bg-0)",whiteSpace:"pre",minHeight:"100%",overflowX:"visible" }}>
+    // FIX 2: removed minHeight:"100%" which was blocking scroll; use height:auto
+    <pre style={{ margin:0,padding:"1rem 1.2rem",fontSize:"0.78rem",lineHeight:1.7,fontFamily:"var(--font-mono)",background:"var(--bg-0)",whiteSpace:"pre",overflowX:"visible" }}>
       <code ref={ref} className={`language-${lang}`}>{code}</code>
     </pre>
   );
@@ -299,25 +303,28 @@ function CodeViewer({ jobId, title }) {
   if (files.length === 0) return <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center" }}><span style={{ color:"var(--text-muted)",fontSize:"0.8rem" }}>No source files yet.</span></div>;
 
   return (
-    <div style={{ flex:1,display:"flex",overflow:"hidden" }}>
+    <div style={{ flex:1,display:"flex",overflow:"hidden",height:"100%" }}>
+      {/* FIX 2: tree sidebar — overflow hidden so it doesn't push layout */}
       <div style={{ width:treeOpen?"200px":"36px",flexShrink:0,borderRight:`1px solid var(--border-subtle)`,background:"var(--bg-1)",display:"flex",flexDirection:"column",overflow:"hidden",transition:"width 0.2s" }}>
-        <div style={{ padding:"6px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid var(--border-subtle)` }}>
+        <div style={{ padding:"6px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid var(--border-subtle)`,flexShrink:0 }}>
           {treeOpen && <span style={{ fontSize:"0.6rem",color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>Files</span>}
           <button onClick={() => setTreeOpen(o=>!o)} style={{ background:"none",border:"none",color:"var(--text-tertiary)",cursor:"pointer",fontSize:"0.7rem",padding:"2px 4px",marginLeft:"auto",fontFamily:"var(--font-mono)" }}>{treeOpen ? "◀" : "▶"}</button>
         </div>
         {treeOpen && <div className="studio-scroll" style={{ flex:1,overflowY:"auto",overflowX:"hidden",padding:"4px" }}>{renderTree(tree)}</div>}
       </div>
-      <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden" }}>
+      {/* FIX 2: right pane — strict flex column so code area scrolls independently */}
+      <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",minWidth:0 }}>
         <div style={{ padding:"6px 12px",borderBottom:`1px solid var(--border-subtle)`,background:"var(--bg-1)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0 }}>
-          <span style={{ fontSize:"0.72rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)" }}>{selectedFile ? selectedFile.path : ""}</span>
-          <div style={{ display:"flex",gap:"6px" }}>
+          <span style={{ fontSize:"0.72rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{selectedFile ? selectedFile.path : ""}</span>
+          <div style={{ display:"flex",gap:"6px",flexShrink:0 }}>
             {selectedFile && <CopyButton text={selectedFile.content} label="Copy" />}
             <button onClick={handleDownloadZip} disabled={zipLoading} style={{
               background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",color:"#fff",borderRadius:"6px",padding:"3px 12px",fontSize:"0.7rem",cursor:zipLoading?"wait":"pointer",fontWeight:600,fontFamily:"var(--font-mono)",opacity:zipLoading?0.6:1,transition:"all 0.15s"
             }}>{zipLoading ? "Zipping..." : "Download ZIP"}</button>
           </div>
         </div>
-        <div className="studio-scroll" style={{ flex:1,overflowY:"auto",overflowX:"auto" }}>
+        {/* FIX 2: this is the scrollable code area — overflow:auto in BOTH axes */}
+        <div className="studio-scroll" style={{ flex:1,overflowY:"auto",overflowX:"auto",minHeight:0 }}>
           {selectedFile && <HighlightedCode code={selectedFile.content} lang={getLang(selectedFile.path)} />}
         </div>
       </div>
@@ -528,14 +535,12 @@ function BackendApprovalCard({ onAllow, onDeny, isLoading }) {
         background:"var(--bg-2)",border:"1px solid rgba(16,185,129,0.15)",
       }}>
         {isLoading ? (
-          /* Provisioning state — shown after user clicks Allow */
           <div style={{ textAlign:"center",padding:"8px 0" }}>
             <Spinner size={24} color="var(--green-accent)" />
             <p style={{ fontSize:"0.78rem",fontWeight:600,color:"var(--green-accent)",marginTop:"12px",fontFamily:"var(--font-mono)" }}>Setting up backend...</p>
             <p style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",marginTop:"4px",lineHeight:1.5 }}>Provisioning database, auth, and security. This usually takes 60-90 seconds.</p>
           </div>
         ) : (
-          /* Permission request state */
           <>
             <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px" }}>
               <div style={{ width:"28px",height:"28px",borderRadius:"8px",background:"var(--green-subtle)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center" }}>
@@ -684,7 +689,7 @@ function ConfirmModal({ open, title, description, warning, confirmLabel, onConfi
   );
 }
 
-// ── Publish Popover (kept minimal — same logic, cleaner UI) ──────────────────
+// ── Publish Popover ──────────────────────────────────────────────────────────
 function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning, onPublishSuccess }) {
   const [open, setOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -707,7 +712,7 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
 
   const startPropagationTimer = () => {
     setPropagating(true);
-    setPropagateSeconds(300); // 5 minutes
+    setPropagateSeconds(300);
     if (propagateRef.current) clearInterval(propagateRef.current);
     propagateRef.current = setInterval(() => {
       setPropagateSeconds(s => {
@@ -729,7 +734,7 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
       const body = isUpdate ? { update_only:true } : { name:newName };
       const res = await API.post(`/deploy/${jobId}`, body);
       onPublishSuccess(res.data.url, !isUpdate);
-      if (!isUpdate) startPropagationTimer(); // First publish or domain change
+      if (!isUpdate) startPropagationTimer();
       setOpen(false);
     } catch (err) { setError(err?.response?.data?.error || "Failed. Try again."); }
     finally { setPublishing(false); }
@@ -830,6 +835,68 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
 // ── Safe preview URL ─────────────────────────────────────────────────────────
 function _safePreview(url) { if (!url) return null; if (/^http:\/\/127\.0\.0\.1:\d+$/.test(url)) return null; return url; }
 
+// ── FIX 3: Long input chip ───────────────────────────────────────────────────
+// Renders a collapsible document chip for messages with very long content
+function LongInputChip({ content }) {
+  const [expanded, setExpanded] = useState(false);
+  const lines = content.split("\n").length;
+  const chars = content.length;
+  const preview = content.slice(0, 120).trim() + (chars > 120 ? "…" : "");
+
+  return (
+    <div style={{ marginTop:"4px" }}>
+      <div
+        onClick={() => setExpanded(e => !e)}
+        style={{
+          background:"rgba(220,38,38,0.06)",
+          border:"1px solid rgba(220,38,38,0.15)",
+          borderRadius:"8px",
+          padding:"8px 12px",
+          cursor:"pointer",
+          transition:"all 0.15s",
+          userSelect:"none",
+        }}
+        onMouseEnter={e => e.currentTarget.style.borderColor="rgba(220,38,38,0.3)"}
+        onMouseLeave={e => e.currentTarget.style.borderColor="rgba(220,38,38,0.15)"}
+      >
+        <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom: expanded ? "8px" : "0" }}>
+          {/* Doc icon */}
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
+            <path d="M1 1h7l3 3v9a1 1 0 01-1 1H1a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="var(--red-accent)" strokeWidth="1.2"/>
+            <path d="M8 1v3h3" stroke="var(--red-accent)" strokeWidth="1.2"/>
+          </svg>
+          <span style={{ fontSize:"0.68rem",fontWeight:600,color:"var(--text-secondary)",fontFamily:"var(--font-mono)",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
+            {preview}
+          </span>
+          <span style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)",flexShrink:0,marginLeft:"4px" }}>
+            {lines} lines · {chars > 999 ? (chars/1000).toFixed(1)+"k" : chars} chars
+          </span>
+          <span style={{ fontSize:"0.6rem",color:"var(--red-accent)",flexShrink:0 }}>{expanded ? "▲" : "▼"}</span>
+        </div>
+        {expanded && (
+          <pre style={{
+            margin:0,
+            padding:"8px",
+            background:"var(--bg-0)",
+            borderRadius:"6px",
+            fontSize:"0.72rem",
+            fontFamily:"var(--font-mono)",
+            color:"var(--text-secondary)",
+            overflowY:"auto",
+            overflowX:"auto",
+            maxHeight:"320px",
+            whiteSpace:"pre-wrap",
+            wordBreak:"break-all",
+            lineHeight:1.5,
+          }}>
+            {content}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  MAIN STUDIO
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -876,13 +943,12 @@ export default function Studio() {
   const [showBackendInChat, setShowBackendInChat] = useState(false);
   const backendRespondedRef = useRef(false);
   const [showNameModal, setShowNameModal] = useState(localStorage.getItem("show_name_modal") === "1");
-  const [imagePreview, setImagePreview] = useState(null); // URL string for image popup
-  const attachmentUrlsRef = useRef({}); // persist object URLs: {filename: url}
+  const [imagePreview, setImagePreview] = useState(null);
+  const attachmentUrlsRef = useRef({});
 
   const isRunning = state === "running";
   const isRendering = state === "completed" && !previewUrl && currentJobId && codeChanged;
 
-  // Track changes since publish
   const prevStateRef = useRef(state);
   useEffect(() => { if (prevStateRef.current === "running" && state === "completed" && publishedUrl) setChangesSincePublish(true); prevStateRef.current = state; }, [state, publishedUrl]);
 
@@ -900,30 +966,23 @@ export default function Studio() {
   const phaseLabel = { thinking:"Thinking...",building:"Building...",editing:"Editing...",compiling:"Compiling...",rendering:"Rendering...",idle:"" }[buildPhase] || "Thinking...";
   const progressPercent = computeProgress(progress, buildPhase);
 
-  // Load projects
   useEffect(() => { fetchProjects().then(jobs => setProjects(jobs)).catch(()=>{}); }, []);
 
-  // Auto-scroll chat
   const prevMsgCount = useRef(0);
   useEffect(() => { if (messages.length > prevMsgCount.current) bottomRef.current?.scrollIntoView({ behavior:"smooth" }); prevMsgCount.current = messages.length; }, [messages]);
 
-  // Load credits
   useEffect(() => { getCredits().then(d => { setCredits(d.balance); if (d.plan_limit) setPlanLimit(d.plan_limit); }).catch(()=>{}); setUserPlan(localStorage.getItem("user_plan")||"free"); }, []);
 
-  // Save session
-  // Save current job to session — but skip the initial null to avoid wiping before restore
   const hasRestoredRef = useRef(false);
   useEffect(() => {
     if (currentJobId) {
       sessionStorage.setItem("studio_current_job", currentJobId);
       hasRestoredRef.current = true;
     } else if (hasRestoredRef.current) {
-      // Only remove after we've had a real job (user clicked New Project)
       sessionStorage.removeItem("studio_current_job");
     }
   }, [currentJobId]);
 
-  // Restore session
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("prompt")||params.get("cloned")) return;
@@ -940,14 +999,12 @@ export default function Studio() {
     }
   }, []); // eslint-disable-line
 
-  // Auto-send from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const up = params.get("prompt");
     if (up?.trim()) { window.history.replaceState({},"","/studio"); setTimeout(()=>handleSendWithText(decodeURIComponent(up).trim()),500); }
   }, []); // eslint-disable-line
 
-  // Auto-load cloned
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const cid = params.get("cloned");
@@ -963,13 +1020,10 @@ export default function Studio() {
     }
   }, []); // eslint-disable-line
 
-  // ── Merge server messages with local attachment data ──
   const mergeServerMessages = useCallback((serverMsgs) => {
     const mapped = (serverMsgs||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used }));
-    // Preserve attachments from current messages (server doesn't store them)
     setMessages(prev => {
       return mapped.map((msg, i) => {
-        // Find matching existing message by index and role
         if (prev[i] && prev[i].role === msg.role && prev[i].attachments) {
           return { ...msg, attachments: prev[i].attachments };
         }
@@ -978,7 +1032,6 @@ export default function Studio() {
     });
   }, []);
 
-  // ── Load project state helper ──
   const loadProjectState = async (project) => {
     setCurrentJobId(project.job_id); setError(""); setPreviewError(false); setMessages([]); setAttachedFiles([]);
     setPublishedUrl(null); setChangesSincePublish(false);
@@ -995,15 +1048,14 @@ export default function Studio() {
     try { const bd = await getBackendStatus(project.job_id); setBackendEnabled(!!bd.supabase_enabled); } catch { setBackendEnabled(false); }
   };
 
-  // ── Polling ──
   const startPolling = (jobId) => {
     stopPolling();
     cancelledRef.current = false;
     pollRef.current = setInterval(async () => {
-      if (cancelledRef.current) return; // Ignore polls after cancel
+      if (cancelledRef.current) return;
       try {
         const d = await getJobStatus(jobId);
-        if (cancelledRef.current) return; // Check again after async call
+        if (cancelledRef.current) return;
         mergeServerMessages(d.messages);
         setState(d.state); if (d.code_changed!==undefined) setCodeChanged(d.code_changed);
         if (d.credits_balance!==undefined) setCredits(d.credits_balance);
@@ -1015,7 +1067,6 @@ export default function Studio() {
           const la = d.progress[d.progress.length-1]?.action;
           if (la==="building") setThinkingText(""); else { const te=d.progress.filter(p=>p.action==="planning"&&p.detail); if(te.length>0) setThinkingText(te[te.length-1].detail); }
         }
-        // Backend request — show inline in chat (only if we haven't already responded)
         if (d.backend_requested && !backendEnabled && !showBackendInChat && !backendRespondedRef.current) setShowBackendInChat(true);
         if (d.preview_url) { setPreviewUrl(d.preview_url); setPreviewError(false); if (d.code_changed) setPreviewKey(k=>k+1); }
         setProjects(prev=>prev.map(p=>p.job_id===jobId?{...p,state:d.state,preview_url:d.preview_url||p.preview_url}:p));
@@ -1027,12 +1078,10 @@ export default function Studio() {
   const stopPolling = () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
   useEffect(() => () => stopPolling(), []);
 
-  // ── File attachments ──
   const ALLOWED_EXT = ['png','jpg','jpeg','gif','webp','svg','pdf','txt','md','csv'];
   const addFiles = fl => { const nf = Array.from(fl).filter(f => ALLOWED_EXT.includes(f.name.split('.').pop().toLowerCase()) && f.size <= 10*1024*1024); setAttachedFiles(prev=>[...prev,...nf].slice(0,5)); };
   const removeFile = i => setAttachedFiles(prev=>prev.filter((_,j)=>j!==i));
 
-  // ── Handlers ──
   const handleSendWithText = async (text) => {
     if (!text||isRunning) return; setPrompt(""); setError("");
     try {
@@ -1044,7 +1093,9 @@ export default function Studio() {
         return {name:f.name,type:f.type};
       });
       setAttachedFiles([]);
-      setMessages([{ role:"user",content:text,attachments:fn.length>0?fn:undefined }]);
+      // FIX 3: mark long inputs as collapsed
+      const isLong = text.length > LONG_INPUT_THRESHOLD;
+      setMessages([{ role:"user", content:text, collapsed:isLong, attachments:fn.length>0?fn:undefined }]);
       const [jobId,smartTitle] = await Promise.all([generateProject(text,"",selectedModel,fs),generateTitle(text)]);
       setCurrentJobId(jobId); setPublishedUrl(null); setChangesSincePublish(false);
       setProjects(prev=>[{ job_id:jobId,title:smartTitle,state:"running",preview_url:null },...prev]);
@@ -1068,7 +1119,9 @@ export default function Studio() {
           return {name:f.name,type:f.type};
         });
         setAttachedFiles([]);
-        setMessages(prev=>[...prev,{role:"user",content:text||"(attached files)",attachments:fn.length>0?fn:undefined}]);
+        // FIX 3: mark long follow-up inputs as collapsed
+        const isLong = (text||"").length > LONG_INPUT_THRESHOLD;
+        setMessages(prev=>[...prev,{role:"user",content:text||"(attached files)",collapsed:isLong&&!!text,attachments:fn.length>0?fn:undefined}]);
         await sendFollowUp(currentJobId,text||"See attached files",selectedModel,fs);
         startPolling(currentJobId);
       }
@@ -1087,17 +1140,16 @@ export default function Studio() {
 
   const confirmStop = async () => {
     setShowStopModal(false); if (!currentJobId) return;
-    cancelledRef.current = true; // Prevent any in-flight polls from resurrecting
+    cancelledRef.current = true;
     stopPolling(); setState("failed"); setProgress([]); setThinkingText(""); setShowBackendInChat(false);
     try { await API.post(`/auth/job/${currentJobId}/cancel`); } catch {}
-    // Refresh credits after cancel deduction
     try { const c = await getCredits(); setCredits(c.balance); } catch {}
     fetchProjects().then(j=>setProjects(j)).catch(()=>{});
   };
 
   const handleBackendAllow = async () => {
     if (!currentJobId) return;
-    backendRespondedRef.current = true;  // Prevent polling from re-showing the card
+    backendRespondedRef.current = true;
     setBackendLoading(true);
     try {
       await enableBackend(currentJobId);
@@ -1116,7 +1168,33 @@ export default function Studio() {
 
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
-  // ── Render ──
+  // ── Shared browser chrome buttons (used in multiple panel states) ──────────
+  const renderChromeButtons = () => (
+    <>
+      <div style={{ display:"flex",background:"var(--bg-0)",borderRadius:"5px",border:`1px solid var(--border-subtle)`,padding:"1px",flexShrink:0 }}>
+        {["preview","code"].map(v => (
+          <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"var(--red-accent)":"transparent",color:panelView===v?"#fff":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
+        ))}
+      </div>
+      <div style={{ flex:1,display:"flex",alignItems:"center",background:"var(--bg-0)",borderRadius:"5px",padding:"3px 8px",border:`1px solid var(--border-subtle)`,minWidth:0 }}>
+        <svg width="9" height="9" viewBox="0 0 16 16" fill="none" style={{ flexShrink:0,marginRight:"5px" }}><path d="M8 1L2 4.5V11.5L8 15L14 11.5V4.5L8 1Z" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinejoin="round"/></svg>
+        <span style={{ fontSize:"0.58rem",color: domainPropagating ? "var(--yellow-accent)" : "var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
+          {domainPropagating
+            ? `${publishedUrl?.replace("https://","").replace(/\/$/,"") || "yourapp.thehustlerbot.com"} — propagating`
+            : publishedUrl ? publishedUrl.replace("https://","").replace(/\/$/,"") : "yourapp.thehustlerbot.com"}
+        </span>
+      </div>
+      {previewUrl && <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.7rem",padding:"2px",flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-muted)"}>↻</button>}
+      <button onClick={handleUpgrade} style={{ padding:"3px 12px",height:"24px",background:"linear-gradient(135deg,#dc2626,#b91c1c,#991b1b)",border:"none",borderRadius:"6px",color:"#fff",fontSize:"0.6rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",boxShadow:"0 0 12px rgba(220,38,38,0.2)",flexShrink:0 }}>{userPlan==="free"?"Subscribe":"Upgrade"}</button>
+      {currentJobId&&!isRunning && (
+        <button onClick={()=>{ const p=projects.find(p=>p.job_id===currentJobId); sessionStorage.setItem("github_push_job_id",currentJobId); sessionStorage.setItem("github_push_job_title",p?.title||"project"); window.location.href=`https://github.com/login/oauth/authorize?client_id=Ov23liUC5tA7pNQbfiWo&scope=repo&redirect_uri=https://thehustlerbot.com/github-callback`; }} style={{ padding:"3px 8px",height:"24px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"5px",color:"var(--text-secondary)",fontSize:"0.6rem",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"3px",fontFamily:"var(--font-mono)",flexShrink:0 }}
+          onMouseEnter={e=>{e.currentTarget.style.borderColor="#58a6ff";e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border-subtle)";e.currentTarget.style.color="var(--text-secondary)";}}
+        ><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg></button>
+      )}
+      {currentJobId && <PublishPopover jobId={currentJobId} previewUrl={previewUrl} publishedUrl={publishedUrl} hasChanges={changesSincePublish} isRunning={isRunning} onPublishSuccess={(url,isNew)=>{setPublishedUrl(url);setChangesSincePublish(false);if(isNew){setDomainPropagating(true);setTimeout(()=>setDomainPropagating(false),300000);}}} />}
+    </>
+  );
+
   if (isMobilePortrait) return <><GlobalStyles /><RotateScreen /></>;
   const chatFlex = isMobileLandscape ? "0 0 260px" : "0 0 380px";
 
@@ -1127,7 +1205,6 @@ export default function Studio() {
       <ConfirmModal open={showLogoutModal} title="Log out?" description="You'll need to sign in again." confirmLabel="Log out" onConfirm={confirmLogout} onCancel={()=>setShowLogoutModal(false)} />
       <ConfirmModal open={showStopModal} title="Stop building?" description="The AI agent is still working." warning="Credits used so far will still be charged." confirmLabel="Stop" onConfirm={confirmStop} onCancel={()=>setShowStopModal(false)} />
 
-      {/* File preview popup — images shown inline, docs in iframe */}
       {imagePreview && (
         <div onClick={()=>setImagePreview(null)} style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out" }}>
           {imagePreview.type === "doc" ? (
@@ -1147,7 +1224,6 @@ export default function Studio() {
         onDragLeave={e=>{e.preventDefault();e.stopPropagation();if(!e.currentTarget.contains(e.relatedTarget))setIsDragging(false);}}
         onDrop={e=>{e.preventDefault();e.stopPropagation();setIsDragging(false);if(e.dataTransfer.files?.length)addFiles(e.dataTransfer.files);}}
         style={{ flex:chatFlex,display:"flex",flexDirection:"column",borderRight:`1px solid var(--border-subtle)`,overflow:"hidden",background:"var(--bg-0)",position:"relative" }}>
-        {/* Drag overlay for entire chat panel */}
         {isDragging && (
           <div style={{ position:"absolute",inset:0,zIndex:20,background:"rgba(220,38,38,0.06)",border:"2px dashed var(--red-accent)",borderRadius:"0",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none" }}>
             <div style={{ background:"var(--bg-2)",border:"1px solid rgba(220,38,38,0.3)",borderRadius:"12px",padding:"16px 24px",boxShadow:"0 8px 30px rgba(0,0,0,0.5)" }}>
@@ -1192,8 +1268,15 @@ export default function Studio() {
                     background: msg.role==="user" ? "linear-gradient(135deg,#991b1b,#7f1d1d)" : "var(--bg-2)",
                     border: msg.role==="assistant" ? `1px solid var(--border-subtle)` : "none",
                     boxShadow: msg.role==="user" ? "0 2px 12px rgba(220,38,38,0.2)" : "0 1px 8px rgba(0,0,0,0.3)",
+                    // FIX 3: prevent bubble from expanding the layout horizontally
+                    minWidth:0, overflow:"hidden",
                   }}>
-                    <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
+                    {/* FIX 3: render long user messages as collapsible chip */}
+                    {msg.collapsed ? (
+                      <LongInputChip content={msg.content} />
+                    ) : (
+                      <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
+                    )}
                     {msg.attachments?.length>0 && (
                       <div style={{ display:"flex",gap:"4px",flexWrap:"wrap",marginTop:"6px",paddingTop:"6px",borderTop:`1px solid var(--border-subtle)` }}>
                         {msg.attachments.map((att,ai) => {
@@ -1218,7 +1301,6 @@ export default function Studio() {
                         })}
                       </div>
                     )}
-                    {/* Bottom row: copy + credits */}
                     <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop:`1px solid ${msg.role==="user"?"rgba(255,255,255,0.08)":"var(--border-subtle)"}` }}>
                       <CopyButton text={msg.content||""} label="Copy" size="sm" />
                       {msg.role==="assistant"&&msg.credits_used!==undefined ? <CostDots credits={msg.credits_used} /> : <div />}
@@ -1229,7 +1311,6 @@ export default function Studio() {
             );
           })}
 
-          {/* Backend approval — inline in chat (replaces thinking indicator) */}
           {showBackendInChat && isRunning && (
             <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}>
               <BotAvatar size={28} />
@@ -1237,7 +1318,6 @@ export default function Studio() {
             </div>
           )}
 
-          {/* Loading indicators — hidden when backend approval is showing */}
           {(isRunning||isRendering) && !showBackendInChat && (() => {
             const last = messages.length>0?messages[messages.length-1]:null;
             const botReplied = last&&last.role==="assistant";
@@ -1346,97 +1426,51 @@ export default function Studio() {
       <div style={{ flex:1,display:"flex",flexDirection:"column",background:"var(--bg-0)",overflow:"hidden",minWidth:0 }}>
 
         {panelView==="preview" && <>
-          {!previewUrl ? (
-            (isRunning||isRendering) ? (
-              <>
-                {/* Minimal top bar during build */}
-                <div style={{ padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",flexShrink:0 }}>
-                  <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
-                    <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
-                    <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
-                    <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#28c840" }} />
-                  </div>
-                  <div style={{ display:"flex",background:"var(--bg-0)",borderRadius:"5px",border:`1px solid var(--border-subtle)`,padding:"1px",flexShrink:0 }}>
-                    {["preview","code"].map(v => (
-                      <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"var(--red-accent)":"transparent",color:panelView===v?"#fff":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
-                    ))}
-                  </div>
-                  <div style={{ flex:1 }} />
-                  <button onClick={handleUpgrade} style={{ padding:"3px 12px",height:"24px",background:"linear-gradient(135deg,#dc2626,#b91c1c,#991b1b)",border:"none",borderRadius:"6px",color:"#fff",fontSize:"0.6rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",boxShadow:"0 0 12px rgba(220,38,38,0.2)",flexShrink:0 }}>{userPlan==="free"?"Subscribe":"Upgrade"}</button>
-                </div>
+          {/* FIX 1: ALL preview states now share the same rounded card container */}
+          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:`1px solid var(--border-default)`,background:"var(--bg-2)",boxShadow:"0 4px 24px rgba(0,0,0,0.4)" }}>
+
+            {/* Unified browser chrome bar — always present */}
+            <div style={{ flexShrink:0,padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",borderRadius:"12px 12px 0 0" }}>
+              <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
+                <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
+                <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
+                <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#28c840" }} />
+              </div>
+              {renderChromeButtons()}
+            </div>
+
+            {/* Content area switches based on state */}
+            <div style={{ flex:1,overflow:"hidden",borderRadius:"0 0 11px 11px",display:"flex",flexDirection:"column" }}>
+              {/* Building state — show BuildView */}
+              {(isRunning||isRendering) && !previewUrl && (
                 <BuildView progress={progress} buildPhase={buildPhase} progressPercent={progressPercent} />
-              </>
-            ) : (
-              <>
-                {/* Top bar for empty/no-preview state */}
-                <div style={{ padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",flexShrink:0 }}>
-                  <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
-                    <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
-                    <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
-                    <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#28c840" }} />
-                  </div>
-                  <div style={{ display:"flex",background:"var(--bg-0)",borderRadius:"5px",border:`1px solid var(--border-subtle)`,padding:"1px",flexShrink:0 }}>
-                    {["preview","code"].map(v => (
-                      <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"var(--red-accent)":"transparent",color:panelView===v?"#fff":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
-                    ))}
-                  </div>
-                  <div style={{ flex:1,display:"flex",alignItems:"center",background:"var(--bg-0)",borderRadius:"5px",padding:"3px 8px",border:`1px solid var(--border-subtle)`,minWidth:0 }}>
-                    <span style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>yourapp.thehustlerbot.com</span>
-                  </div>
-                  <button onClick={handleUpgrade} style={{ padding:"3px 12px",height:"24px",background:"linear-gradient(135deg,#dc2626,#b91c1c,#991b1b)",border:"none",borderRadius:"6px",color:"#fff",fontSize:"0.6rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",boxShadow:"0 0 12px rgba(220,38,38,0.2)",flexShrink:0 }}>{userPlan==="free"?"Subscribe":"Upgrade"}</button>
-                  {currentJobId&&!isRunning && (
-                    <button onClick={()=>{ const p=projects.find(p=>p.job_id===currentJobId); sessionStorage.setItem("github_push_job_id",currentJobId); sessionStorage.setItem("github_push_job_title",p?.title||"project"); window.location.href=`https://github.com/login/oauth/authorize?client_id=Ov23liUC5tA7pNQbfiWo&scope=repo&redirect_uri=https://thehustlerbot.com/github-callback`; }} style={{ padding:"3px 8px",height:"24px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"5px",color:"var(--text-secondary)",fontSize:"0.6rem",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"3px",fontFamily:"var(--font-mono)",flexShrink:0 }}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor="#58a6ff";e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border-subtle)";e.currentTarget.style.color="var(--text-secondary)";}}
-                    ><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg></button>
-                  )}
-                  {currentJobId && <PublishPopover jobId={currentJobId} previewUrl={previewUrl} publishedUrl={publishedUrl} hasChanges={changesSincePublish} isRunning={isRunning} onPublishSuccess={(url,isNew)=>{setPublishedUrl(url);setChangesSincePublish(false);if(isNew){setDomainPropagating(true);setTimeout(()=>setDomainPropagating(false),300000);}}} />}
+              )}
+
+              {/* Preview error */}
+              {previewError && !isRunning && (
+                <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"14px",background:"var(--bg-0)" }}>
+                  <span style={{ color:"var(--text-tertiary)",fontSize:"0.8rem",textAlign:"center",maxWidth:"200px",lineHeight:1.6 }}>Preview couldn't load.</span>
+                  <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ padding:"8px 20px",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.78rem",fontWeight:600,cursor:"pointer" }}>Reload</button>
                 </div>
-                <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center" }}><span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Your app preview will appear here.</span></div>
-              </>
-            )
-          ) : previewError ? (
-            <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"14px" }}>
-              <span style={{ color:"var(--text-tertiary)",fontSize:"0.8rem",textAlign:"center",maxWidth:"200px",lineHeight:1.6 }}>Preview couldn't load.</span>
-              <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ padding:"8px 20px",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.78rem",fontWeight:600,cursor:"pointer" }}>Reload</button>
+              )}
+
+              {/* Live preview iframe */}
+              {previewUrl && !previewError && (
+                <div style={{ flex:1,overflow:"hidden",background:"#fff" }}>
+                  <iframe key={previewKey} src={previewUrl} title="Preview" style={{ width:"100%",height:"100%",border:"none",display:"block" }}
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                    onError={()=>setPreviewError(true)} onLoad={()=>{setPreviewError(false);const ic=document.querySelector("link[rel='icon']");if(ic)ic.href="/favicon.ico?"+Date.now();}} />
+                </div>
+              )}
+
+              {/* Idle empty state — no job yet */}
+              {!previewUrl && !isRunning && !isRendering && !previewError && (
+                <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-0)" }}>
+                  <span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Your app preview will appear here.</span>
+                </div>
+              )}
             </div>
-          ) : (
-            <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:`1px solid var(--border-default)`,background:"var(--bg-2)",boxShadow:"0 4px 24px rgba(0,0,0,0.4)" }}>
-              {/* Single unified browser chrome — all buttons here */}
-              <div style={{ flexShrink:0,padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px" }}>
-                <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
-                  <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
-                  <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
-                  <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#28c840" }} />
-                </div>
-                <div style={{ display:"flex",background:"var(--bg-0)",borderRadius:"5px",border:`1px solid var(--border-subtle)`,padding:"1px",flexShrink:0 }}>
-                  {["preview","code"].map(v => (
-                    <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"var(--red-accent)":"transparent",color:panelView===v?"#fff":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
-                  ))}
-                </div>
-                <div style={{ flex:1,display:"flex",alignItems:"center",background:"var(--bg-0)",borderRadius:"5px",padding:"3px 8px",border:`1px solid var(--border-subtle)`,minWidth:0 }}>
-                  <svg width="9" height="9" viewBox="0 0 16 16" fill="none" style={{ flexShrink:0,marginRight:"5px" }}><path d="M8 1L2 4.5V11.5L8 15L14 11.5V4.5L8 1Z" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinejoin="round"/></svg>
-                  <span style={{ fontSize:"0.58rem",color: domainPropagating ? "var(--yellow-accent)" : "var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
-                    {domainPropagating
-                      ? `${publishedUrl?.replace("https://","").replace(/\/$/,"") || "yourapp.thehustlerbot.com"} — propagating, live in ~5 min`
-                      : publishedUrl ? publishedUrl.replace("https://","").replace(/\/$/,"") : "yourapp.thehustlerbot.com"}
-                  </span>
-                </div>
-                <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.7rem",padding:"2px",flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-muted)"}>↻</button>
-                <button onClick={handleUpgrade} style={{ padding:"3px 12px",height:"24px",background:"linear-gradient(135deg,#dc2626,#b91c1c,#991b1b)",border:"none",borderRadius:"6px",color:"#fff",fontSize:"0.6rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",boxShadow:"0 0 12px rgba(220,38,38,0.2)",flexShrink:0 }}>{userPlan==="free"?"Subscribe":"Upgrade"}</button>
-                {currentJobId&&!isRunning && (
-                  <button onClick={()=>{ const p=projects.find(p=>p.job_id===currentJobId); sessionStorage.setItem("github_push_job_id",currentJobId); sessionStorage.setItem("github_push_job_title",p?.title||"project"); window.location.href=`https://github.com/login/oauth/authorize?client_id=Ov23liUC5tA7pNQbfiWo&scope=repo&redirect_uri=https://thehustlerbot.com/github-callback`; }} style={{ padding:"3px 8px",height:"24px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"5px",color:"var(--text-secondary)",fontSize:"0.6rem",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"3px",fontFamily:"var(--font-mono)",flexShrink:0 }}
-                    onMouseEnter={e=>{e.currentTarget.style.borderColor="#58a6ff";e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border-subtle)";e.currentTarget.style.color="var(--text-secondary)";}}
-                  ><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg></button>
-                )}
-                {currentJobId && <PublishPopover jobId={currentJobId} previewUrl={previewUrl} publishedUrl={publishedUrl} hasChanges={changesSincePublish} isRunning={isRunning} onPublishSuccess={(url,isNew)=>{setPublishedUrl(url);setChangesSincePublish(false);if(isNew){setDomainPropagating(true);setTimeout(()=>setDomainPropagating(false),300000);}}} />}
-              </div>
-              <div style={{ flex:1,overflow:"hidden",background:"#fff",borderRadius:"0 0 11px 11px" }}>
-                <iframe key={previewKey} src={previewUrl} title="Preview" style={{ width:"100%",height:"100%",border:"none",display:"block" }}
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                  onError={()=>setPreviewError(true)} onLoad={()=>{setPreviewError(false);const ic=document.querySelector("link[rel='icon']");if(ic)ic.href="/favicon.ico?"+Date.now();}} />
-              </div>
-            </div>
-          )}
+          </div>
         </>}
 
         {panelView==="code" && <>
@@ -1447,15 +1481,13 @@ export default function Studio() {
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#28c840" }} />
               </div>
-              <div style={{ display:"flex",background:"var(--bg-0)",borderRadius:"5px",border:`1px solid var(--border-subtle)`,padding:"1px",flexShrink:0 }}>
-                {["preview","code"].map(v => (
-                  <button key={v} onClick={()=>setPanelView(v)} style={{ padding:"2px 10px",borderRadius:"4px",border:"none",background:panelView===v?"var(--red-accent)":"transparent",color:panelView===v?"#fff":"var(--text-tertiary)",fontSize:"0.62rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{v==="preview"?"Preview":"Code"}</button>
-                ))}
-              </div>
+              {renderChromeButtons()}
             </div>
             <div style={{ flex:1,overflow:"hidden",borderRadius:"0 0 11px 11px" }}>
-              {!currentJobId ? <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",height:"100%" }}><span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Build a project first.</span></div> :
-              <CodeViewer jobId={currentJobId} title={projects.find(p=>p.job_id===currentJobId)?.title||currentJobId} />}
+              {!currentJobId
+                ? <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",height:"100%",background:"var(--bg-0)" }}><span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Build a project first.</span></div>
+                : <CodeViewer jobId={currentJobId} title={projects.find(p=>p.job_id===currentJobId)?.title||currentJobId} />
+              }
             </div>
           </div>
         </>}
