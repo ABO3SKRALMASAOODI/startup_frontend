@@ -599,14 +599,18 @@ function CreditsBadge({ balance, planLimit, onUpgrade }) {
         <div style={{ height:"100%",width:`${pct}%`,background: isLow ? "var(--red-accent)" : pct <= 30 ? "var(--yellow-accent)" : "var(--green-accent)",borderRadius:"2px",transition:"width 0.4s ease" }} />
       </div>
       <button onClick={onUpgrade}
-        onMouseEnter={e=>{ e.currentTarget.style.background="rgba(50,10,10,0.98)"; e.currentTarget.style.borderColor="rgba(180,50,50,0.8)"; e.currentTarget.style.color="#fff"; }}
-        onMouseLeave={e=>{ e.currentTarget.style.background="rgba(30,10,10,0.95)"; e.currentTarget.style.borderColor="rgba(140,40,40,0.7)"; e.currentTarget.style.color="rgba(240,180,180,1)"; }}
+        onMouseEnter={e=>{ e.currentTarget.style.background="linear-gradient(135deg,#c02828,#7a1010)"; e.currentTarget.style.boxShadow="0 2px 12px rgba(160,32,32,0.5)"; }}
+        onMouseLeave={e=>{ e.currentTarget.style.background="linear-gradient(135deg,#a02020,#6b0e0e)"; e.currentTarget.style.boxShadow="0 1px 6px rgba(120,20,20,0.35)"; }}
         style={{
-          width:"100%",padding:"7px",background:"rgba(30,10,10,0.95)",
-          border:"1px solid rgba(140,40,40,0.7)",borderRadius:"6px",
-          color:"rgba(240,180,180,1)",fontSize:"0.72rem",fontWeight:700,
+          width:"100%",padding:"8px",
+          background:"linear-gradient(135deg,#a02020,#6b0e0e)",
+          border:"1px solid rgba(180,40,40,0.6)",
+          borderRadius:"6px",
+          color:"#fff",
+          fontSize:"0.72rem",fontWeight:700,
           cursor:"pointer",fontFamily:"var(--font-sans)",transition:"all 0.15s",
-          letterSpacing:"0.03em",
+          letterSpacing:"0.04em",
+          boxShadow:"0 1px 6px rgba(120,20,20,0.35)",
         }}>Upgrade</button>
     </div>
   );
@@ -1179,21 +1183,21 @@ export default function Studio() {
 
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
-  // ── Credits button — matches sidebar Upgrade style ─────────────────────────
+  // ── Credits button — solid red, clearly visible ───────────────────────────
   const renderCreditsButton = () => {
     const label = userPlan === "free" ? "Get Credits" : "Upgrade";
     return (
       <button
         onClick={handleUpgrade}
-        onMouseEnter={e=>{ e.currentTarget.style.background="rgba(50,10,10,0.98)"; e.currentTarget.style.borderColor="rgba(180,50,50,0.8)"; e.currentTarget.style.color="#fff"; }}
-        onMouseLeave={e=>{ e.currentTarget.style.background="rgba(30,10,10,0.95)"; e.currentTarget.style.borderColor="rgba(140,40,40,0.7)"; e.currentTarget.style.color="rgba(240,180,180,1)"; }}
+        onMouseEnter={e=>{ e.currentTarget.style.background="linear-gradient(135deg,#c02828,#7a1010)"; e.currentTarget.style.boxShadow="0 2px 10px rgba(160,32,32,0.5)"; }}
+        onMouseLeave={e=>{ e.currentTarget.style.background="linear-gradient(135deg,#a02020,#6b0e0e)"; e.currentTarget.style.boxShadow="0 1px 5px rgba(120,20,20,0.3)"; }}
         style={{
           padding:"3px 14px",
           height:"26px",
-          background:"rgba(30,10,10,0.95)",
-          border:"1px solid rgba(140,40,40,0.7)",
+          background:"linear-gradient(135deg,#a02020,#6b0e0e)",
+          border:"1px solid rgba(180,40,40,0.6)",
           borderRadius:"6px",
-          color:"rgba(240,180,180,1)",
+          color:"#fff",
           fontSize:"0.62rem",
           fontWeight:700,
           cursor:"pointer",
@@ -1201,6 +1205,7 @@ export default function Studio() {
           flexShrink:0,
           letterSpacing:"0.04em",
           transition:"all 0.15s",
+          boxShadow:"0 1px 5px rgba(120,20,20,0.3)",
         }}
       >
         {label}
