@@ -1183,19 +1183,19 @@ export default function Studio() {
 
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
-  // ── Credits button — solid red, clearly visible ───────────────────────────
+  // ── Credits button — message bubble colour, no border ────────────────────
   const renderCreditsButton = () => {
     const label = userPlan === "free" ? "Get Credits" : "Upgrade";
     return (
       <button
         onClick={handleUpgrade}
-        onMouseEnter={e=>{ e.currentTarget.style.background="linear-gradient(135deg,#c02828,#7a1010)"; e.currentTarget.style.boxShadow="0 2px 10px rgba(160,32,32,0.5)"; }}
-        onMouseLeave={e=>{ e.currentTarget.style.background="linear-gradient(135deg,#a02020,#6b0e0e)"; e.currentTarget.style.boxShadow="0 1px 5px rgba(120,20,20,0.3)"; }}
+        onMouseEnter={e=>{ e.currentTarget.style.background="rgba(50,15,15,0.98)"; }}
+        onMouseLeave={e=>{ e.currentTarget.style.background="rgba(30,10,10,0.95)"; }}
         style={{
           padding:"3px 14px",
           height:"26px",
-          background:"linear-gradient(135deg,#a02020,#6b0e0e)",
-          border:"1px solid rgba(180,40,40,0.6)",
+          background:"rgba(30,10,10,0.95)",
+          border:"none",
           borderRadius:"6px",
           color:"#fff",
           fontSize:"0.62rem",
@@ -1204,8 +1204,7 @@ export default function Studio() {
           fontFamily:"var(--font-mono)",
           flexShrink:0,
           letterSpacing:"0.04em",
-          transition:"all 0.15s",
-          boxShadow:"0 1px 5px rgba(120,20,20,0.3)",
+          transition:"background 0.15s",
         }}
       >
         {label}
