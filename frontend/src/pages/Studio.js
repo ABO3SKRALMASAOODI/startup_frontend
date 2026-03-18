@@ -1273,9 +1273,9 @@ export default function Studio() {
                   </span>
                   <div style={{
                     padding:"10px 14px",borderRadius: msg.role==="user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                    background: msg.role==="user" ? "linear-gradient(135deg,#991b1b,#7f1d1d)" : "var(--bg-2)",
-                    border: msg.role==="assistant" ? `1px solid var(--border-subtle)` : "none",
-                    boxShadow: msg.role==="user" ? "0 2px 12px rgba(220,38,38,0.2)" : "0 1px 8px rgba(0,0,0,0.3)",
+                    background: msg.role==="user" ? "rgba(30,10,10,0.95)" : "var(--bg-2)",
+                    border: msg.role==="assistant" ? `1px solid var(--border-subtle)` : "1px solid rgba(120,30,30,0.4)",
+                    boxShadow: msg.role==="user" ? "0 1px 8px rgba(0,0,0,0.4)" : "0 1px 8px rgba(0,0,0,0.3)",
                     // FIX 3: prevent bubble from expanding the layout horizontally
                     minWidth:0, overflow:"hidden",
                   }}>
