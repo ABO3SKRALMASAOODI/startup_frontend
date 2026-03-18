@@ -42,21 +42,39 @@ const TEMPLATES = [
 function TemplateCard({ template, index, onUse, disabled = false }) {
   const [hovered, setHovered] = useState(false);
   const [cloning, setCloning] = useState(false);
+  const [iframeVisible, setIframeVisible] = useState(false);
+  const containerRef = useRef(null);
   const previewUrl = `https://entrepreneur-bot-backend.onrender.com/auth/preview/${template.job_id}/`;
+
+  // Lazy-load iframe only when card scrolls into view
+  useEffect(() => {
+    if (disabled) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIframeVisible(true); observer.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [disabled]);
+
   const handleClick = async () => {
     if (cloning || disabled) return;
     setCloning(true);
     try { await onUse(template); } finally { setCloning(false); }
   };
+
   return (
     <motion.div
+      ref={containerRef}
       initial={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: index * 0.1 }}
       onMouseEnter={() => !disabled && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={handleClick}
       style={{ position: "relative", borderRadius: "16px", overflow: "hidden", cursor: disabled ? "default" : cloning ? "wait" : "pointer", border: hovered ? "1px solid rgba(220,0,0,0.6)" : "1px solid rgba(40,40,40,0.8)", background: "#0a0a0a", transition: "all 0.3s ease", boxShadow: hovered ? "0 0 40px rgba(180,0,0,0.3),0 8px 32px rgba(0,0,0,0.6)" : "0 2px 16px rgba(0,0,0,0.4)", transform: hovered ? "translateY(-4px)" : "translateY(0)" }}
     >
-      <div style={{ width: "100%", height: "240px", overflow: "hidden", position: "relative", background: "#111", borderBottom: "1px solid rgba(40,40,40,0.6)" }}>
+      <div style={{ width: "100%", height: "240px", overflow: "hidden", position: "relative", background: "#0a0a0a", borderBottom: "1px solid rgba(40,40,40,0.6)" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "28px", background: "rgba(20,20,20,0.95)", display: "flex", alignItems: "center", gap: "5px", padding: "0 10px", zIndex: 2, borderBottom: "1px solid rgba(40,40,40,0.5)" }}>
           <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#ff5f57" }} />
           <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#ffbd2e" }} />
@@ -64,7 +82,16 @@ function TemplateCard({ template, index, onUse, disabled = false }) {
           <span style={{ marginLeft: "8px", flex: 1, height: "14px", background: "rgba(255,255,255,0.05)", borderRadius: "4px" }} />
         </div>
         <div style={{ position: "absolute", top: "28px", left: 0, width: "200%", height: "424px", transform: "scale(0.5)", transformOrigin: "top left", pointerEvents: "none" }}>
-          <iframe src={previewUrl} title={template.title} style={{ width: "100%", height: "100%", border: "none", background: "#fff" }} sandbox="allow-scripts allow-same-origin" loading="eager" />
+          {iframeVisible ? (
+            <iframe
+              src={previewUrl}
+              title={template.title}
+              style={{ width: "100%", height: "100%", border: "none", background: "transparent" }}
+              sandbox="allow-scripts allow-same-origin"
+            />
+          ) : (
+            <div style={{ width: "100%", height: "100%", background: "#0d0d0d" }} />
+          )}
         </div>
         <div style={{ position: "absolute", inset: 0, zIndex: 3, background: hovered ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s ease" }}>
           {hovered && !disabled && (
@@ -243,12 +270,6 @@ function LandingPage() {
 
   const badgeText = isLoggedIn ? `Welcome back · ${userName}` : "Welcome";
 
-  // The robot sits at roughly top:50%, transform: translate(-50%, -65%)
-  // meaning its center is near 50% - 65%*0.5 ≈ 17.5% from top of section.
-  // The robot div is 700px tall, so it spans roughly 0% to ~55% of the section height.
-  // We stop the beam at 55% height so no light bleeds below the robot's feet.
-  const BEAM_STOP = "55%";
-
   return (
     <>
       <StickyNavbar userName={userName} />
@@ -272,9 +293,6 @@ function LandingPage() {
           className="relative flex flex-col justify-center items-center px-6 overflow-hidden"
           style={{ minHeight: "100vh", paddingBottom: "300px", paddingTop: "60px" }}
         >
-
-
-
           <motion.div
             className="z-10 text-center w-full max-w-3xl"
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}
@@ -288,31 +306,19 @@ function LandingPage() {
             <div style={{ marginBottom: "32px" }}>
               <h1
                 className="text-6xl md:text-7xl font-extrabold leading-tight mb-4"
-                style={{
-                  color: "#ffffff",
-                  textShadow: "0 0 40px rgba(255,255,255,0.9), 0 0 80px rgba(255,255,255,0.5), 0 0 120px rgba(255,200,200,0.3)",
-                  letterSpacing: "-0.01em",
-                }}
+                style={{ color: "#ffffff", letterSpacing: "-0.01em" }}
               >
                 The Hustler Bot
               </h1>
               <p
                 className="text-xl md:text-2xl mb-3 max-w-xl mx-auto font-semibold"
-                style={{
-                  color: "#ffffff",
-                  textShadow: "0 0 40px rgba(255,255,255,0.9), 0 0 80px rgba(255,255,255,0.5), 0 0 120px rgba(255,255,255,0.3)",
-                  letterSpacing: "0.01em",
-                }}
+                style={{ color: "#ffffff", letterSpacing: "0.01em" }}
               >
                 Build any app. Just describe it.
               </p>
               <p
                 className="text-base max-w-lg mx-auto"
-                style={{
-                  color: "#ffffff",
-                  textShadow: "0 0 40px rgba(255,255,255,0.9), 0 0 80px rgba(255,255,255,0.5), 0 0 120px rgba(255,255,255,0.3)",
-                  lineHeight: 1.7,
-                }}
+                style={{ color: "rgba(255,255,255,0.65)", lineHeight: 1.7 }}
               >
                 Type what you want and the agent writes the code, builds it live, and shows you a working preview — in seconds.
               </p>
@@ -364,7 +370,7 @@ function LandingPage() {
             )}
           </motion.div>
 
-          {/* Robot — inside the spotlight */}
+          {/* Robot */}
           <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -65%)", width: "700px", height: "700px", zIndex: 1, opacity: 0.9, pointerEvents: "none" }}>
             <HeroBot style={{ width: "100%", height: "100%" }} />
           </div>
