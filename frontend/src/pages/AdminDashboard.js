@@ -572,11 +572,6 @@ function BuildViewerPanel({ jobId, onClose, headers }) {
                 </span>
               </div>
 
-              {/* Initial prompt — collapsed, expandable */}
-              {data.prompt && (
-                <PromptBanner prompt={data.prompt} />
-              )}
-
               {/* Messages */}
               <div className="adm-scroll" style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }}>
                 {data.messages.length === 0 && (
@@ -588,7 +583,8 @@ function BuildViewerPanel({ jobId, onClose, headers }) {
                   const isLong = text.length > 400;
                   return (
                     <MessageBubble key={i} isUser={isUser} text={text} isLong={isLong}
-                      creditsUsed={msg.credits_used} tokensUsed={msg.tokens_used} />
+                      creditsUsed={msg.credits_used} tokensUsed={msg.tokens_used}
+                      attachments={msg.attachments} />
                   );
                 })}
                 <div ref={chatBottomRef} />
@@ -646,42 +642,46 @@ function BuildViewerPanel({ jobId, onClose, headers }) {
 }
 
 /* ── Collapsible prompt banner ── */
-function PromptBanner({ prompt }) {
-  const [expanded, setExpanded] = useState(false);
-  const short = prompt.length > 120 ? prompt.slice(0, 120) + "…" : prompt;
+/* ── Message bubble with long-text collapse ── */
+// Detect if a message text is actually a file-paste attachment reference
+// (sent as "(attached files)" or just a filename pattern like pasted-*.txt)
+function isFileAttachmentMsg(text) {
+  return !text || text === "(attached files)" || text === "See attached files";
+}
+
+function FileChip({ filename }) {
+  const isImg = /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(filename);
   return (
-    <div onClick={() => setExpanded(e => !e)} style={{
-      padding: "8px 12px", background: "rgba(220,38,38,0.04)",
-      borderBottom: `1px solid rgba(220,38,38,0.08)`,
-      cursor: "pointer", flexShrink: 0, transition: "background 0.15s",
-    }}
-      onMouseEnter={e => e.currentTarget.style.background = "rgba(220,38,38,0.07)"}
-      onMouseLeave={e => e.currentTarget.style.background = "rgba(220,38,38,0.04)"}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-        <span style={{ fontSize: "0.56rem", color: "rgba(220,38,38,0.7)", textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'Space Mono', monospace", fontWeight: 700 }}>Initial Prompt</span>
-        <span style={{ fontSize: "0.56rem", color: C.textMuted, fontFamily: "'Space Mono', monospace" }}>{expanded ? "▲ collapse" : "▼ expand"}</span>
-      </div>
-      <div style={{
-        fontSize: "0.72rem", color: C.textDim, lineHeight: 1.5, fontFamily: "'Outfit', sans-serif",
-        maxHeight: expanded ? "200px" : "none", overflowY: expanded ? "auto" : "hidden",
-        whiteSpace: "pre-wrap", wordBreak: "break-word",
-      }}>
-        {expanded ? prompt : short}
-      </div>
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+      borderRadius: 6, padding: "3px 8px", fontSize: "0.62rem",
+      color: "rgba(200,200,210,0.7)", fontFamily: "'Space Mono', monospace",
+      maxWidth: 180, overflow: "hidden",
+    }}>
+      <svg width="10" height="12" viewBox="0 0 12 14" fill="none">
+        <path d="M1 1h7l3 3v9a1 1 0 01-1 1H1a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="rgba(220,38,38,0.6)" strokeWidth="1.2"/>
+        <path d="M8 1v3h3" stroke="rgba(220,38,38,0.6)" strokeWidth="1.2"/>
+      </svg>
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {isImg ? "📷 " : ""}{filename}
+      </span>
     </div>
   );
 }
 
-/* ── Message bubble with long-text collapse ── */
-function MessageBubble({ isUser, text, isLong, creditsUsed, tokensUsed }) {
+function MessageBubble({ isUser, text, isLong, creditsUsed, tokensUsed, attachments }) {
   const [expanded, setExpanded] = useState(false);
+
+  // File-only message — no text body, just show chips
+  const isFileOnly = isFileAttachmentMsg(text);
+
   const displayText = isLong && !expanded ? text.slice(0, 400) + "…" : text;
+
   return (
     <div style={{ display: "flex", flexDirection: isUser ? "row-reverse" : "row", alignItems: "flex-start", gap: 6 }}>
       <div style={{
         maxWidth: "88%", minWidth: 0,
-        // user: dark background with subtle border — NOT red on red
         background: isUser ? "rgba(30,10,10,0.95)" : "rgba(16,16,20,0.95)",
         border: `1px solid ${isUser ? "rgba(120,30,30,0.4)" : "rgba(255,255,255,0.06)"}`,
         borderRadius: isUser ? "12px 12px 3px 12px" : "12px 12px 12px 3px",
@@ -690,18 +690,38 @@ function MessageBubble({ isUser, text, isLong, creditsUsed, tokensUsed }) {
         <div style={{ fontSize: "0.55rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isUser ? "rgba(220,100,100,0.7)" : "rgba(220,38,38,0.7)", marginBottom: 4, fontFamily: "'Space Mono', monospace" }}>
           {isUser ? "User" : "Agent"}
         </div>
-        <div style={{ fontSize: "0.76rem", color: "rgba(220,220,230,0.9)", lineHeight: 1.6, fontFamily: "'Outfit', sans-serif", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-          {displayText}
-        </div>
-        {isLong && (
-          <button onClick={() => setExpanded(e => !e)} style={{
-            background: "none", border: "none", cursor: "pointer", marginTop: 4,
-            fontSize: "0.62rem", color: "rgba(220,38,38,0.6)", fontFamily: "'Space Mono', monospace",
-            padding: 0,
-          }}>
-            {expanded ? "▲ show less" : `▼ show all (${text.length} chars)`}
-          </button>
+
+        {/* File-only message: just chips, no text */}
+        {isFileOnly ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {attachments?.length > 0
+              ? attachments.map((a, i) => <FileChip key={i} filename={a.filename || a.name || "file"} />)
+              : <FileChip filename="attached file" />
+            }
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: "0.76rem", color: "rgba(220,220,230,0.9)", lineHeight: 1.6, fontFamily: "'Outfit', sans-serif", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+              {displayText}
+            </div>
+            {isLong && (
+              <button onClick={() => setExpanded(e => !e)} style={{
+                background: "none", border: "none", cursor: "pointer", marginTop: 4,
+                fontSize: "0.62rem", color: "rgba(220,38,38,0.6)", fontFamily: "'Space Mono', monospace", padding: 0,
+              }}>
+                {expanded ? "▲ show less" : `▼ show all (${text.length} chars)`}
+              </button>
+            )}
+          </>
         )}
+
+        {/* Attachments alongside text messages */}
+        {!isFileOnly && attachments?.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6, paddingTop: 5, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+            {attachments.map((a, i) => <FileChip key={i} filename={a.filename || a.name || "file"} />)}
+          </div>
+        )}
+
         {(creditsUsed || tokensUsed) && (
           <div style={{ marginTop: 5, paddingTop: 4, borderTop: `1px solid rgba(255,255,255,0.04)`, display: "flex", gap: 8 }}>
             {creditsUsed && <span style={{ fontSize: "0.58rem", color: C.textMuted, fontFamily: "'Space Mono', monospace" }}>{Number(creditsUsed).toFixed(2)} cr</span>}
