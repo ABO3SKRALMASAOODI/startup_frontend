@@ -1082,6 +1082,18 @@ export default function Studio() {
   const addFiles = fl => { const nf = Array.from(fl).filter(f => ALLOWED_EXT.includes(f.name.split('.').pop().toLowerCase()) && f.size <= 10*1024*1024); setAttachedFiles(prev=>[...prev,...nf].slice(0,5)); };
   const removeFile = i => setAttachedFiles(prev=>prev.filter((_,j)=>j!==i));
 
+  // Auto-convert long pastes to a text file attachment instead of inline text
+  const handlePaste = (e) => {
+    const text = e.clipboardData?.getData("text");
+    if (!text || text.length <= LONG_INPUT_THRESHOLD) return; // short paste → normal
+    e.preventDefault();
+    const timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+    const filename = `pasted-${timestamp}.txt`;
+    const file = new File([text], filename, { type: "text/plain" });
+    setAttachedFiles(prev => [...prev, file].slice(0, 5));
+    // keep any text already in the textarea, just don't append the paste
+  };
+
   const handleSendWithText = async (text) => {
     if (!text||isRunning) return; setPrompt(""); setError("");
     try {
@@ -1093,9 +1105,7 @@ export default function Studio() {
         return {name:f.name,type:f.type};
       });
       setAttachedFiles([]);
-      // FIX 3: mark long inputs as collapsed
-      const isLong = text.length > LONG_INPUT_THRESHOLD;
-      setMessages([{ role:"user", content:text, collapsed:isLong, attachments:fn.length>0?fn:undefined }]);
+      setMessages([{ role:"user", content:text, attachments:fn.length>0?fn:undefined }]);
       const [jobId,smartTitle] = await Promise.all([generateProject(text,"",selectedModel,fs),generateTitle(text)]);
       setCurrentJobId(jobId); setPublishedUrl(null); setChangesSincePublish(false);
       setProjects(prev=>[{ job_id:jobId,title:smartTitle,state:"running",preview_url:null },...prev]);
@@ -1119,9 +1129,7 @@ export default function Studio() {
           return {name:f.name,type:f.type};
         });
         setAttachedFiles([]);
-        // FIX 3: mark long follow-up inputs as collapsed
-        const isLong = (text||"").length > LONG_INPUT_THRESHOLD;
-        setMessages(prev=>[...prev,{role:"user",content:text||"(attached files)",collapsed:isLong&&!!text,attachments:fn.length>0?fn:undefined}]);
+        setMessages(prev=>[...prev,{role:"user",content:text||"(attached files)",attachments:fn.length>0?fn:undefined}]);
         await sendFollowUp(currentJobId,text||"See attached files",selectedModel,fs);
         startPolling(currentJobId);
       }
@@ -1394,7 +1402,7 @@ export default function Studio() {
               >+</button>
               <input ref={fileInputRef} type="file" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.txt,.md,.csv" style={{ display:"none" }} onChange={e=>{if(e.target.files?.length){addFiles(e.target.files);e.target.value="";}}} />
               <textarea ref={inputRef} value={prompt} onChange={e=>{setPrompt(e.target.value);const el=e.target;el.style.height="auto";el.style.height=Math.min(el.scrollHeight,140)+"px";}}
-                onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend(e);}}} placeholder={placeholder} rows={1} disabled={isRunning}
+                onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend(e);}}} onPaste={handlePaste} placeholder={placeholder} rows={1} disabled={isRunning}
                 style={{ flex:1,background:"transparent",color:"var(--text-primary)",border:"none",outline:"none",fontSize:"0.82rem",resize:"none",fontFamily:"var(--font-sans)",lineHeight:1.5,maxHeight:"140px",minHeight:"36px",overflowY:"auto",opacity:isRunning?0.4:1,padding:0,margin:0 }} />
               {isRunning ? (
                 <button onClick={handleStop} title="Stop" style={{ width:"32px",height:"32px",borderRadius:"8px",border:"none",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",color:"#fff",fontSize:"0.65rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>&#9632;</button>
