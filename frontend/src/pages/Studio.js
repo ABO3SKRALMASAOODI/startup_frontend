@@ -12,12 +12,12 @@ const GLOBAL_STYLES = `
 
   @keyframes pulse        { 0%,100%{opacity:1} 50%{opacity:0.4} }
   @keyframes spin         { to{transform:rotate(360deg)} }
-  @keyframes redPulse     { 0%,100%{filter:drop-shadow(0 0 3px rgba(200,0,0,0.9)) drop-shadow(0 0 7px rgba(160,0,0,0.6)) drop-shadow(0 0 14px rgba(120,0,0,0.3))} 50%{filter:drop-shadow(0 0 5px rgba(255,0,0,1)) drop-shadow(0 0 12px rgba(200,0,0,0.8)) drop-shadow(0 0 22px rgba(160,0,0,0.5))} }
+  @keyframes redPulse     { 0%,100%{filter:drop-shadow(0 0 3px rgba(130,25,25,0.92)) drop-shadow(0 0 7px rgba(110,20,20,0.65)) drop-shadow(0 0 14px rgba(90,15,15,0.3))} 50%{filter:drop-shadow(0 0 5px rgba(160,40,40,1)) drop-shadow(0 0 12px rgba(130,25,25,0.85)) drop-shadow(0 0 22px rgba(110,20,20,0.55))} }
   @keyframes buildingDot  { 0%,80%,100%{transform:scale(0.6);opacity:0.3} 40%{transform:scale(1);opacity:1} }
   @keyframes fadeIn        { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
   @keyframes shimmer      { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
   @keyframes slideIn      { from{opacity:0;transform:translateY(-4px) scale(0.98)} to{opacity:1;transform:translateY(0) scale(1)} }
-  @keyframes progressPulse { 0%{box-shadow:0 0 4px rgba(200,0,0,0.6)} 50%{box-shadow:0 0 12px rgba(200,0,0,0.9)} 100%{box-shadow:0 0 4px rgba(200,0,0,0.6)} }
+  @keyframes progressPulse { 0%{box-shadow:0 0 4px rgba(130,25,25,0.65)} 50%{box-shadow:0 0 12px rgba(130,25,25,0.92)} 100%{box-shadow:0 0 4px rgba(130,25,25,0.65)} }
   @keyframes nodeAppear   { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
 
   :root {
@@ -34,9 +34,9 @@ const GLOBAL_STYLES = `
     --text-secondary: #8a8a96;
     --text-tertiary: #4a4a56;
     --text-muted: #2a2a34;
-    --red-accent: #dc2626;
-    --red-glow: rgba(220,38,38,0.15);
-    --red-subtle: rgba(220,38,38,0.08);
+    --red-accent: #a02020;
+    --red-glow: rgba(140,35,35,0.18);
+    --red-subtle: rgba(140,35,35,0.1);
     --green-accent: #10b981;
     --green-subtle: rgba(16,185,129,0.08);
     --yellow-accent: #f59e0b;
@@ -45,7 +45,7 @@ const GLOBAL_STYLES = `
   .studio-scroll::-webkit-scrollbar { width: 4px; }
   .studio-scroll::-webkit-scrollbar-track { background: transparent; }
   .studio-scroll::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 4px; }
-  .studio-scroll::-webkit-scrollbar-thumb:hover { background: rgba(220,38,38,0.3); }
+  .studio-scroll::-webkit-scrollbar-thumb:hover { background: rgba(140,35,35,0.35); }
 
   .msg-content { word-break: break-word; overflow-wrap: anywhere; min-width: 0; }
   .msg-content p  { margin: 0 0 0.5em; }
@@ -75,7 +75,7 @@ const GLOBAL_STYLES = `
   }
 
   .msg-row { animation: fadeIn 0.2s ease forwards; }
-  .input-area:focus-within { border-color: rgba(220,38,38,0.4) !important; box-shadow: 0 0 0 1px rgba(220,38,38,0.15) !important; }
+  .input-area:focus-within { border-color: rgba(140,35,35,0.45) !important; box-shadow: 0 0 0 1px rgba(140,35,35,0.18) !important; }
 `;
 
 function GlobalStyles() {
@@ -145,7 +145,7 @@ function BotAvatar({ size = 30 }) {
     <div ref={ref}
       onMouseMove={e => { if (!ref.current) return; const r = ref.current.getBoundingClientRect(); setMouseX(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))); }}
       onMouseLeave={() => setMouseX(0.5)}
-      style={{ width:size,height:size,flexShrink:0,filter:"drop-shadow(0 0 3px rgba(220,38,38,0.9)) drop-shadow(0 0 8px rgba(220,38,38,0.5))",animation:"redPulse 2.4s ease-in-out infinite" }}>
+      style={{ width:size,height:size,flexShrink:0,filter:"drop-shadow(0 0 3px rgba(140,35,35,0.92)) drop-shadow(0 0 8px rgba(140,35,35,0.55))",animation:"redPulse 2.4s ease-in-out infinite" }}>
       <div style={{ position:"absolute",inset:0,zIndex:1,background:"transparent" }} />
       <RiveComponent style={{ width:"100%",height:"100%",display:"block" }} />
     </div>
@@ -319,7 +319,7 @@ function CodeViewer({ jobId, title }) {
           <div style={{ display:"flex",gap:"6px",flexShrink:0 }}>
             {selectedFile && <CopyButton text={selectedFile.content} label="Copy" />}
             <button onClick={handleDownloadZip} disabled={zipLoading} style={{
-              background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",color:"#fff",borderRadius:"6px",padding:"3px 12px",fontSize:"0.7rem",cursor:zipLoading?"wait":"pointer",fontWeight:600,fontFamily:"var(--font-mono)",opacity:zipLoading?0.6:1,transition:"all 0.15s"
+              background:"linear-gradient(135deg,var(--red-accent),#701818)",border:"none",color:"#fff",borderRadius:"6px",padding:"3px 12px",fontSize:"0.7rem",cursor:zipLoading?"wait":"pointer",fontWeight:600,fontFamily:"var(--font-mono)",opacity:zipLoading?0.6:1,transition:"all 0.15s"
             }}>{zipLoading ? "Zipping..." : "Download ZIP"}</button>
           </div>
         </div>
@@ -419,7 +419,7 @@ function BuildView({ progress, buildPhase, progressPercent }) {
               {filesCreated.length} file{filesCreated.length !== 1 ? "s" : ""} written
             </div>
           </div>
-          <div style={{ width:"6px",height:"6px",borderRadius:"50%",background:"var(--red-accent)",boxShadow:"0 0 8px rgba(220,38,38,0.8)",animation:"pulse 1.5s infinite",flexShrink:0 }} />
+          <div style={{ width:"6px",height:"6px",borderRadius:"50%",background:"var(--red-accent)",boxShadow:"0 0 8px rgba(140,35,35,0.85)",animation:"pulse 1.5s infinite",flexShrink:0 }} />
           <span style={{ fontSize:"0.55rem",color:"var(--text-muted)",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>LIVE</span>
         </div>
 
@@ -437,7 +437,7 @@ function BuildView({ progress, buildPhase, progressPercent }) {
                 <div style={{
                   width:"20px",height:"20px",borderRadius:"6px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
                   background: pi === phases.length - 1 ? "var(--red-subtle)" : "var(--bg-3)",
-                  border: `1px solid ${pi === phases.length - 1 ? "rgba(220,38,38,0.3)" : "var(--border-subtle)"}`,
+                  border: `1px solid ${pi === phases.length - 1 ? "rgba(140,35,35,0.35)" : "var(--border-subtle)"}`,
                 }}>
                   {pi === phases.length - 1
                     ? <div style={{ width:"5px",height:"5px",borderRadius:"50%",background:"var(--red-accent)",animation:"pulse 1.2s infinite" }} />
@@ -447,7 +447,7 @@ function BuildView({ progress, buildPhase, progressPercent }) {
                 <span style={{ fontSize:"0.68rem",fontWeight:700,color: pi === phases.length - 1 ? "var(--text-primary)" : "var(--text-secondary)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em",textTransform:"uppercase" }}>{phase.name}</span>
                 <span style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{phase.entries.length} step{phase.entries.length !== 1 ? "s" : ""}</span>
               </div>
-              <div style={{ marginLeft:"10px",borderLeft:`1px solid ${pi === phases.length - 1 ? "rgba(220,38,38,0.2)" : "var(--border-subtle)"}`,paddingLeft:"16px" }}>
+              <div style={{ marginLeft:"10px",borderLeft:`1px solid ${pi === phases.length - 1 ? "rgba(140,35,35,0.25)" : "var(--border-subtle)"}`,paddingLeft:"16px" }}>
                 {phase.entries.slice(-6).map((entry, ei) => (
                   <div key={ei} style={{ fontSize:"0.68rem",color:"var(--text-tertiary)",padding:"2px 0",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%" }}>
                     {entry.file && <span style={{ color:"var(--red-accent)",marginRight:"6px" }}>{entry.file.split("/").pop()}</span>}
@@ -464,10 +464,10 @@ function BuildView({ progress, buildPhase, progressPercent }) {
           <div style={{ height:"2px",background:"var(--bg-3)",borderRadius:"2px",overflow:"hidden" }}>
             <div style={{
               height:"100%",width:`${progressPercent}%`,
-              background:"linear-gradient(90deg,var(--red-accent),#ef4444)",
+              background:"linear-gradient(90deg,var(--red-accent),#c03030)",
               borderRadius:"2px",
               transition:"width 0.8s cubic-bezier(0.4,0,0.2,1)",
-              boxShadow: progressPercent > 0 ? "0 0 8px rgba(220,38,38,0.6)" : "none",
+              boxShadow: progressPercent > 0 ? "0 0 8px rgba(140,35,35,0.65)" : "none",
             }} />
           </div>
         </div>
@@ -491,7 +491,7 @@ function BuildView({ progress, buildPhase, progressPercent }) {
                 <div style={{
                   width:"4px",height:"4px",borderRadius:"50%",flexShrink:0,
                   background: isLatest ? "var(--red-accent)" : "var(--green-accent)",
-                  boxShadow: isLatest ? "0 0 6px rgba(220,38,38,0.8)" : "none",
+                  boxShadow: isLatest ? "0 0 6px rgba(140,35,35,0.85)" : "none",
                 }} />
                 <span style={{ fontSize:"0.58rem",color: isLatest ? "var(--text-primary)" : "var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
                   {file.split("/").pop()}
@@ -514,8 +514,8 @@ function ThinkingLine({ text }) {
   return (
     <div onClick={() => setExpanded(e=>!e)} style={{
       marginTop:"6px",cursor:"pointer",padding:"4px 8px",borderRadius:"6px",
-      background: expanded ? "rgba(220,38,38,0.06)" : "rgba(220,38,38,0.03)",
-      border:"1px solid rgba(220,38,38,0.1)",transition:"all 0.15s"
+      background: expanded ? "rgba(140,35,35,0.08)" : "rgba(140,35,35,0.04)",
+      border:"1px solid rgba(140,35,35,0.12)",transition:"all 0.15s"
     }}>
       <p style={{ fontSize:"0.65rem",color: expanded ? "var(--text-secondary)" : "var(--text-tertiary)",lineHeight:1.5,margin:0,fontStyle:"italic",fontFamily:"var(--font-mono)" }}>
         <span style={{ color:"var(--red-accent)",marginRight:"4px",fontSize:"0.55rem" }}>{expanded ? "▾" : "▸"}</span>
@@ -580,7 +580,7 @@ function CreditsBadge({ balance, planLimit, onUpgrade }) {
   const pct = Math.max(0, Math.min(100, (balance / max) * 100));
   const isLow = pct <= 10;
   return (
-    <div style={{ padding:"10px",background:"var(--bg-2)",borderRadius:"8px",border:`1px solid ${isLow ? "rgba(220,38,38,0.2)" : "var(--border-subtle)"}`,marginBottom:"12px" }}>
+    <div style={{ padding:"10px",background:"var(--bg-2)",borderRadius:"8px",border:`1px solid ${isLow ? "rgba(140,35,35,0.25)" : "var(--border-subtle)"}`,marginBottom:"12px" }}>
       <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px" }}>
         <span style={{ fontSize:"0.65rem",color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"var(--font-mono)" }}>Credits</span>
         <span style={{ fontSize:"0.85rem",fontWeight:700,color: isLow ? "var(--red-accent)" : "var(--text-primary)",fontFamily:"var(--font-mono)" }}>{typeof balance === "number" ? balance.toFixed(2) : balance}</span>
@@ -589,7 +589,7 @@ function CreditsBadge({ balance, planLimit, onUpgrade }) {
         <div style={{ height:"100%",width:`${pct}%`,background: isLow ? "var(--red-accent)" : pct <= 30 ? "var(--yellow-accent)" : "var(--green-accent)",borderRadius:"2px",transition:"width 0.4s ease" }} />
       </div>
       <button onClick={onUpgrade} style={{
-        width:"100%",padding:"7px",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",borderRadius:"6px",
+        width:"100%",padding:"7px",background:"linear-gradient(135deg,var(--red-accent),#701818)",border:"none",borderRadius:"6px",
         color:"#fff",fontSize:"0.72rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-sans)",transition:"all 0.15s"
       }}>Upgrade</button>
     </div>
@@ -657,7 +657,7 @@ function Sidebar({ open, onClose, userEmail, credits, planLimit, projects, curre
         {projects.length === 0 && <p style={{ color:"var(--text-muted)",fontSize:"0.72rem" }}>No projects yet.</p>}
         {projects.map(p => (
           <div key={p.job_id} onClick={() => { onLoadProject(p); onClose(); }} style={{
-            padding:"8px",borderRadius:"6px",border:`1px solid ${currentJobId===p.job_id ? "rgba(220,38,38,0.3)" : "var(--border-subtle)"}`,
+            padding:"8px",borderRadius:"6px",border:`1px solid ${currentJobId===p.job_id ? "rgba(140,35,35,0.35)" : "var(--border-subtle)"}`,
             background: currentJobId===p.job_id ? "var(--red-subtle)" : "var(--bg-2)",cursor:"pointer",marginBottom:"3px",transition:"all 0.12s"
           }}>
             <span style={{ fontSize:"0.78rem",color:"var(--text-primary)",display:"block" }}>{p.title || "Untitled"}</span>
@@ -682,7 +682,7 @@ function ConfirmModal({ open, title, description, warning, confirmLabel, onConfi
         {warning && <p style={{ margin:"0 0 16px",fontSize:"0.72rem",color:"var(--yellow-accent)",lineHeight:1.5 }}>{warning}</p>}
         <div style={{ display:"flex",gap:"8px" }}>
           <button onClick={onCancel} style={{ flex:1,padding:"9px",background:"var(--bg-3)",border:`1px solid var(--border-default)`,borderRadius:"8px",color:"var(--text-secondary)",fontSize:"0.82rem",cursor:"pointer",fontFamily:"var(--font-sans)" }}>Cancel</button>
-          <button onClick={onConfirm} style={{ flex:1,padding:"9px",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.82rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-sans)" }}>{confirmLabel}</button>
+          <button onClick={onConfirm} style={{ flex:1,padding:"9px",background:"linear-gradient(135deg,var(--red-accent),#701818)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.82rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-sans)" }}>{confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -755,7 +755,7 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
 
       {open && (
         <div style={{ position:"absolute",top:"calc(100% + 6px)",right:0,background:"var(--bg-2)",border:`1px solid var(--border-default)`,borderRadius:"12px",padding:"8px",width:"260px",zIndex:500,boxShadow:"0 12px 40px rgba(0,0,0,0.8)",animation:"slideIn 0.12s ease" }}>
-          {error && <div style={{ margin:"0 4px 6px",padding:"6px 10px",background:"rgba(220,38,38,0.08)",border:"1px solid rgba(220,38,38,0.2)",borderRadius:"8px",fontSize:"0.68rem",color:"#ff8080" }}>{error}</div>}
+          {error && <div style={{ margin:"0 4px 6px",padding:"6px 10px",background:"rgba(140,35,35,0.1)",border:"1px solid rgba(140,35,35,0.25)",borderRadius:"8px",fontSize:"0.68rem",color:"#ff8080" }}>{error}</div>}
 
           {propagating && (
             <div style={{ margin:"0 4px 6px",padding:"8px 10px",background:"rgba(16,185,129,0.06)",border:"1px solid rgba(16,185,129,0.15)",borderRadius:"8px",fontSize:"0.65rem",color:"var(--green-accent)",display:"flex",alignItems:"center",gap:"8px",lineHeight:1.4 }}>
@@ -773,7 +773,7 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
             )}
             {!isPublished && (
               <div style={{ padding:"4px 4px 6px" }}>
-                <div style={{ display:"flex",alignItems:"center",background:"var(--bg-0)",border:`1px solid ${nameError ? "rgba(220,38,38,0.4)" : "var(--border-subtle)"}`,borderRadius:"8px",overflow:"hidden",marginBottom:"4px" }}>
+                <div style={{ display:"flex",alignItems:"center",background:"var(--bg-0)",border:`1px solid ${nameError ? "rgba(140,35,35,0.45)" : "var(--border-subtle)"}`,borderRadius:"8px",overflow:"hidden",marginBottom:"4px" }}>
                   <input type="text" value={newName} onChange={e => { const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,40); setNewName(v); setNameError(validate(v)); }}
                     onKeyDown={e => { if (e.key==="Enter"&&!nameError&&newName.length>=3) handleAction(false); }}
                     placeholder="my-app" autoFocus style={{ flex:1,background:"transparent",border:"none",outline:"none",color:"var(--text-primary)",fontSize:"0.75rem",padding:"8px 10px",fontFamily:"var(--font-mono)" }} />
@@ -811,7 +811,7 @@ function PublishPopover({ jobId, previewUrl, publishedUrl, hasChanges, isRunning
           {view === "domain" && (
             <div style={{ padding:"4px" }}>
               <button onClick={() => { setView("main"); setNewName(""); setNameError(""); setError(""); }} style={{ background:"none",border:"none",color:"var(--text-tertiary)",cursor:"pointer",fontSize:"0.68rem",marginBottom:"6px",fontFamily:"var(--font-mono)" }}>← back</button>
-              <div style={{ display:"flex",alignItems:"center",background:"var(--bg-0)",border:`1px solid ${nameError ? "rgba(220,38,38,0.4)" : "var(--border-subtle)"}`,borderRadius:"8px",overflow:"hidden",marginBottom:"6px" }}>
+              <div style={{ display:"flex",alignItems:"center",background:"var(--bg-0)",border:`1px solid ${nameError ? "rgba(140,35,35,0.45)" : "var(--border-subtle)"}`,borderRadius:"8px",overflow:"hidden",marginBottom:"6px" }}>
                 <input type="text" value={newName} onChange={e => { const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,40); setNewName(v); setNameError(validate(v)); }}
                   onKeyDown={e => { if (e.key==="Enter"&&!nameError&&newName.length>=3) handleAction(false); }}
                   placeholder="new-domain" autoFocus style={{ flex:1,background:"transparent",border:"none",outline:"none",color:"var(--text-primary)",fontSize:"0.75rem",padding:"8px 10px",fontFamily:"var(--font-mono)" }} />
@@ -848,16 +848,16 @@ function LongInputChip({ content }) {
       <div
         onClick={() => setExpanded(e => !e)}
         style={{
-          background:"rgba(220,38,38,0.06)",
-          border:"1px solid rgba(220,38,38,0.15)",
+          background:"rgba(140,35,35,0.08)",
+          border:"1px solid rgba(140,35,35,0.18)",
           borderRadius:"8px",
           padding:"8px 12px",
           cursor:"pointer",
           transition:"all 0.15s",
           userSelect:"none",
         }}
-        onMouseEnter={e => e.currentTarget.style.borderColor="rgba(220,38,38,0.3)"}
-        onMouseLeave={e => e.currentTarget.style.borderColor="rgba(220,38,38,0.15)"}
+        onMouseEnter={e => e.currentTarget.style.borderColor="rgba(140,35,35,0.35)"}
+        onMouseLeave={e => e.currentTarget.style.borderColor="rgba(140,35,35,0.18)"}
       >
         <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom: expanded ? "8px" : "0" }}>
           {/* Doc icon */}
@@ -1193,7 +1193,7 @@ export default function Studio() {
         </span>
       </div>
       {previewUrl && <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.7rem",padding:"2px",flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-muted)"}>↻</button>}
-      <button onClick={handleUpgrade} style={{ padding:"3px 12px",height:"24px",background:"linear-gradient(135deg,#dc2626,#b91c1c,#991b1b)",border:"none",borderRadius:"6px",color:"#fff",fontSize:"0.6rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",boxShadow:"0 0 12px rgba(220,38,38,0.2)",flexShrink:0 }}>{userPlan==="free"?"Subscribe":"Upgrade"}</button>
+      <button onClick={handleUpgrade} style={{ padding:"3px 12px",height:"24px",background:"linear-gradient(135deg,#a02020,#8a1a1a,#701818)",border:"none",borderRadius:"6px",color:"#fff",fontSize:"0.6rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",boxShadow:"0 0 12px rgba(140,35,35,0.25)",flexShrink:0 }}>{userPlan==="free"?"Subscribe":"Upgrade"}</button>
       {currentJobId&&!isRunning && (
         <button onClick={()=>{ const p=projects.find(p=>p.job_id===currentJobId); sessionStorage.setItem("github_push_job_id",currentJobId); sessionStorage.setItem("github_push_job_title",p?.title||"project"); window.location.href=`https://github.com/login/oauth/authorize?client_id=Ov23liUC5tA7pNQbfiWo&scope=repo&redirect_uri=https://thehustlerbot.com/github-callback`; }} style={{ padding:"3px 8px",height:"24px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"5px",color:"var(--text-secondary)",fontSize:"0.6rem",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"3px",fontFamily:"var(--font-mono)",flexShrink:0 }}
           onMouseEnter={e=>{e.currentTarget.style.borderColor="#58a6ff";e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border-subtle)";e.currentTarget.style.color="var(--text-secondary)";}}
@@ -1233,8 +1233,8 @@ export default function Studio() {
         onDrop={e=>{e.preventDefault();e.stopPropagation();setIsDragging(false);if(e.dataTransfer.files?.length)addFiles(e.dataTransfer.files);}}
         style={{ flex:chatFlex,display:"flex",flexDirection:"column",borderRight:`1px solid var(--border-subtle)`,overflow:"hidden",background:"var(--bg-0)",position:"relative" }}>
         {isDragging && (
-          <div style={{ position:"absolute",inset:0,zIndex:20,background:"rgba(220,38,38,0.06)",border:"2px dashed var(--red-accent)",borderRadius:"0",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none" }}>
-            <div style={{ background:"var(--bg-2)",border:"1px solid rgba(220,38,38,0.3)",borderRadius:"12px",padding:"16px 24px",boxShadow:"0 8px 30px rgba(0,0,0,0.5)" }}>
+          <div style={{ position:"absolute",inset:0,zIndex:20,background:"rgba(140,35,35,0.08)",border:"2px dashed var(--red-accent)",borderRadius:"0",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none" }}>
+            <div style={{ background:"var(--bg-2)",border:"1px solid rgba(140,35,35,0.35)",borderRadius:"12px",padding:"16px 24px",boxShadow:"0 8px 30px rgba(0,0,0,0.5)" }}>
               <span style={{ color:"var(--red-accent)",fontSize:"0.82rem",fontWeight:600,fontFamily:"var(--font-mono)" }}>Drop files here</span>
             </div>
           </div>
@@ -1268,13 +1268,13 @@ export default function Studio() {
               <div key={i} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
                 {msg.role==="assistant" && (isLastBot ? <BotAvatar size={28} /> : <div style={{ width:"28px",flexShrink:0 }} />)}
                 <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",overflow:"hidden" }}>
-                  <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(220,38,38,0.5)":"rgba(220,38,38,0.7)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>
+                  <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(140,35,35,0.55)":"rgba(140,35,35,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>
                     {msg.role==="user"?"You":"Hustler Bot"}
                   </span>
                   <div style={{
                     padding:"10px 14px",borderRadius: msg.role==="user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                    background: msg.role==="user" ? "rgba(30,10,10,0.95)" : "var(--bg-2)",
-                    border: msg.role==="assistant" ? `1px solid var(--border-subtle)` : "1px solid rgba(120,30,30,0.4)",
+                    background: msg.role==="user" ? "rgba(30,10,10,0.95)" : "var(--bg-0)",
+                    border: msg.role==="assistant" ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(120,30,30,0.4)",
                     boxShadow: msg.role==="user" ? "0 1px 8px rgba(0,0,0,0.4)" : "0 1px 8px rgba(0,0,0,0.3)",
                     // FIX 3: prevent bubble from expanding the layout horizontally
                     minWidth:0, overflow:"hidden",
@@ -1340,7 +1340,7 @@ export default function Studio() {
                       {isRendering?"Rendering...":buildPhase==="compiling"?"Compiling...":"Building..."}
                     </span>
                     <div style={{ height:"2px",background:"var(--bg-3)",borderRadius:"2px",overflow:"hidden" }}>
-                      <div style={{ height:"100%",width:`${progressPercent}%`,background:"linear-gradient(90deg,var(--red-accent),#ef4444)",borderRadius:"2px",transition:"width 0.8s cubic-bezier(0.4,0,0.2,1)",boxShadow:"0 0 6px rgba(220,38,38,0.6)" }} />
+                      <div style={{ height:"100%",width:`${progressPercent}%`,background:"linear-gradient(90deg,var(--red-accent),#c03030)",borderRadius:"2px",transition:"width 0.8s cubic-bezier(0.4,0,0.2,1)",boxShadow:"0 0 6px rgba(140,35,35,0.65)" }} />
                     </div>
                   </div>
                 </div>
@@ -1405,11 +1405,11 @@ export default function Studio() {
                 onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend(e);}}} onPaste={handlePaste} placeholder={placeholder} rows={1} disabled={isRunning}
                 style={{ flex:1,background:"transparent",color:"var(--text-primary)",border:"none",outline:"none",fontSize:"0.82rem",resize:"none",fontFamily:"var(--font-sans)",lineHeight:1.5,maxHeight:"140px",minHeight:"36px",overflowY:"auto",opacity:isRunning?0.4:1,padding:0,margin:0 }} />
               {isRunning ? (
-                <button onClick={handleStop} title="Stop" style={{ width:"32px",height:"32px",borderRadius:"8px",border:"none",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",color:"#fff",fontSize:"0.65rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>&#9632;</button>
+                <button onClick={handleStop} title="Stop" style={{ width:"32px",height:"32px",borderRadius:"8px",border:"none",background:"linear-gradient(135deg,var(--red-accent),#701818)",color:"#fff",fontSize:"0.65rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>&#9632;</button>
               ) : (
                 <button onClick={handleSend} disabled={!prompt.trim()&&attachedFiles.length===0} style={{
                   width:"32px",height:"32px",borderRadius:"8px",border:"none",
-                  background:(!prompt.trim()&&attachedFiles.length===0)?"var(--bg-3)":"linear-gradient(135deg,var(--red-accent),#991b1b)",
+                  background:(!prompt.trim()&&attachedFiles.length===0)?"var(--bg-3)":"linear-gradient(135deg,var(--red-accent),#701818)",
                   color:(!prompt.trim()&&attachedFiles.length===0)?"var(--text-muted)":"#fff",fontSize:"0.85rem",
                   cursor:(!prompt.trim()&&attachedFiles.length===0)?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"
                 }}>&#10148;</button>
@@ -1423,7 +1423,7 @@ export default function Studio() {
         </div>
 
         {error && (
-          <div style={{ padding:"8px 12px",color:"#ff8080",background:"rgba(220,38,38,0.06)",fontSize:"0.78rem",display:"flex",alignItems:"center",borderTop:`1px solid rgba(220,38,38,0.15)`,flexShrink:0,gap:"8px" }}>
+          <div style={{ padding:"8px 12px",color:"#ff8080",background:"rgba(140,35,35,0.08)",fontSize:"0.78rem",display:"flex",alignItems:"center",borderTop:`1px solid rgba(140,35,35,0.18)`,flexShrink:0,gap:"8px" }}>
             <span style={{ flex:1 }}>{error}</span>
             {error.toLowerCase().includes("credits") && <button onClick={handleUpgrade} style={{ background:"var(--red-accent)",border:"none",color:"#fff",borderRadius:"6px",padding:"3px 10px",cursor:"pointer",fontSize:"0.72rem",fontWeight:600,whiteSpace:"nowrap" }}>Get Credits</button>}
           </div>
@@ -1458,7 +1458,7 @@ export default function Studio() {
               {previewError && !isRunning && (
                 <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"14px",background:"var(--bg-0)" }}>
                   <span style={{ color:"var(--text-tertiary)",fontSize:"0.8rem",textAlign:"center",maxWidth:"200px",lineHeight:1.6 }}>Preview couldn't load.</span>
-                  <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ padding:"8px 20px",background:"linear-gradient(135deg,var(--red-accent),#991b1b)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.78rem",fontWeight:600,cursor:"pointer" }}>Reload</button>
+                  <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ padding:"8px 20px",background:"linear-gradient(135deg,var(--red-accent),#701818)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.78rem",fontWeight:600,cursor:"pointer" }}>Reload</button>
                 </div>
               )}
 
