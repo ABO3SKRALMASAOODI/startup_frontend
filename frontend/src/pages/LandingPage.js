@@ -42,22 +42,8 @@ const TEMPLATES = [
 function TemplateCard({ template, index, onUse, disabled = false }) {
   const [hovered, setHovered] = useState(false);
   const [cloning, setCloning] = useState(false);
-  const [iframeVisible, setIframeVisible] = useState(false);
-  const containerRef = useRef(null);
+  const [loaded, setLoaded] = useState(false);
   const previewUrl = `https://entrepreneur-bot-backend.onrender.com/auth/preview/${template.job_id}/`;
-
-  // Lazy-load iframe only when card scrolls into view
-  useEffect(() => {
-    if (disabled) return;
-    const el = containerRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setIframeVisible(true); observer.disconnect(); } },
-      { threshold: 0.1 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [disabled]);
 
   const handleClick = async () => {
     if (cloning || disabled) return;
@@ -67,7 +53,6 @@ function TemplateCard({ template, index, onUse, disabled = false }) {
 
   return (
     <motion.div
-      ref={containerRef}
       initial={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: index * 0.1 }}
       onMouseEnter={() => !disabled && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -82,16 +67,27 @@ function TemplateCard({ template, index, onUse, disabled = false }) {
           <span style={{ marginLeft: "8px", flex: 1, height: "14px", background: "rgba(255,255,255,0.05)", borderRadius: "4px" }} />
         </div>
         <div style={{ position: "absolute", top: "28px", left: 0, width: "200%", height: "424px", transform: "scale(0.5)", transformOrigin: "top left", pointerEvents: "none" }}>
-          {iframeVisible ? (
-            <iframe
-              src={previewUrl}
-              title={template.title}
-              style={{ width: "100%", height: "100%", border: "none", background: "transparent" }}
-              sandbox="allow-scripts allow-same-origin"
-            />
-          ) : (
-            <div style={{ width: "100%", height: "100%", background: "#0d0d0d" }} />
+          {/* Dark shimmer shown until iframe fully paints — hides white flash */}
+          {!loaded && (
+            <div style={{
+              position: "absolute", inset: 0, zIndex: 1,
+              background: "linear-gradient(110deg, #0e0e0e 30%, #1a1a1a 50%, #0e0e0e 70%)",
+              backgroundSize: "200% 100%",
+              animation: "skeletonShimmer 1.6s ease-in-out infinite",
+            }} />
           )}
+          <iframe
+            src={previewUrl}
+            title={template.title}
+            onLoad={() => setLoaded(true)}
+            style={{
+              width: "100%", height: "100%", border: "none",
+              // opacity 0 until loaded so the white parse-flash is invisible
+              opacity: loaded ? 1 : 0,
+              transition: "opacity 0.4s ease",
+            }}
+            sandbox="allow-scripts allow-same-origin"
+          />
         </div>
         <div style={{ position: "absolute", inset: 0, zIndex: 3, background: hovered ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s ease" }}>
           {hovered && !disabled && (
@@ -286,6 +282,7 @@ function LandingPage() {
           @keyframes templateArrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
           .template-arrow { animation: templateArrowBounce 1.8s ease-in-out infinite; }
           @keyframes templateShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+          @keyframes skeletonShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
         `}</style>
 
         {/* ── HERO ── */}
