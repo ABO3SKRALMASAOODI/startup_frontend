@@ -243,10 +243,10 @@ function CopyButton({ text, label = "Copy", size = "sm" }) {
     <button onClick={handleCopy} style={{
       background: copied ? "rgba(16,185,129,0.1)" : "transparent",
       border: "none",
-      color: copied ? "var(--green-accent)" : "var(--text-muted)",
+      color: copied ? "var(--green-accent)" : "var(--text-secondary)",
       borderRadius:"4px", padding:"2px 6px",
       fontSize:"0.6rem", cursor:"pointer", transition:"all 0.15s",
-      fontFamily:"var(--font-mono)", opacity: copied ? 1 : 0.5,
+      fontFamily:"var(--font-mono)", opacity: copied ? 1 : 0.75,
     }}
       onMouseEnter={e=>{if(!copied)e.currentTarget.style.opacity="1";e.currentTarget.style.color="var(--text-secondary)";}}
       onMouseLeave={e=>{if(!copied){e.currentTarget.style.opacity="0.5";e.currentTarget.style.color="var(--text-muted)";}}}
@@ -1309,7 +1309,7 @@ export default function Studio() {
                         })}
                       </div>
                     )}
-                    <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop:`1px solid ${msg.role==="user"?"rgba(255,255,255,0.08)":"var(--border-subtle)"}` }}>
+                    <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop: msg.role==="assistant" ? `1px solid var(--border-subtle)` : "none" }}>
                       <CopyButton text={msg.content||""} label="Copy" size="sm" />
                       {msg.role==="assistant"&&msg.credits_used!==undefined ? <CostDots credits={msg.credits_used} /> : <div />}
                     </div>
