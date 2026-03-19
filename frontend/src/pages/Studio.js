@@ -202,6 +202,17 @@ const fetchProjects = async () => { const res = await API.get("/auth/jobs"); ret
 const fetchJobFiles = async (jobId) => { const res = await API.get(`/auth/job/${jobId}/files`); return res.data.files || []; };
 const enableBackend = async (jobId) => { const res = await API.post(`/supabase/job/${jobId}/enable-backend`); return res.data; };
 const getBackendStatus = async (jobId) => { const res = await API.get(`/supabase/job/${jobId}/backend-status`); return res.data; };
+const enableStripe = async (jobId, publishableKey, secretKey) => {
+  const res = await API.post(`/stripe/job/${jobId}/enable-stripe`, {
+    publishable_key: publishableKey,
+    secret_key: secretKey,
+  });
+  return res.data;
+};
+const getStripeStatus = async (jobId) => {
+  const res = await API.get(`/stripe/job/${jobId}/stripe-status`);
+  return res.data;
+};
 const downloadProjectZip = async (jobId, title) => {
   const res = await API.get(`/auth/job/${jobId}/download`, { responseType:"blob" });
   const url = URL.createObjectURL(new Blob([res.data], { type:"application/zip" }));
@@ -302,7 +313,6 @@ function CodeViewer({ jobId, title }) {
     return <FolderNode key={fullPath} name={name} fullPath={fullPath} children={children} renderTree={renderTree} />;
   });
 
-  // FIX 2: "Loading files..." centered properly
   if (loading) return (
     <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"10px",height:"100%" }}>
       <Spinner />
@@ -325,7 +335,6 @@ function CodeViewer({ jobId, title }) {
           <span style={{ fontSize:"0.72rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{selectedFile ? selectedFile.path : ""}</span>
           <div style={{ display:"flex",gap:"6px",flexShrink:0 }}>
             {selectedFile && <CopyButton text={selectedFile.content} label="Copy" />}
-            {/* FIX 3: Download ZIP button matches the red theme */}
             <button onClick={handleDownloadZip} disabled={zipLoading} style={{
               background:"linear-gradient(135deg,#a02020,#701818)",
               border:"1px solid rgba(160,32,32,0.5)",
@@ -395,6 +404,8 @@ function BuildView({ progress, buildPhase, progressPercent }) {
                     entry.action === "building" ? "Compiling" :
                     entry.action === "generating image" || entry.action === "editing image" ? "Assets" :
                     entry.action === "requesting backend" ? "Backend" :
+                    entry.action === "requesting stripe" ? "Payments" :
+                    entry.action === "requesting ai" ? "AI Setup" :
                     entry.action === "scanning" || entry.action === "reading" || entry.action === "searching" ? "Analyzing" : "Processing";
       if (!currentPhase || currentPhase.name !== phase) {
         currentPhase = { name: phase, entries: [] };
@@ -576,6 +587,85 @@ function BackendApprovalCard({ onAllow, onDeny, isLoading }) {
                 color:"var(--green-accent)",fontSize:"0.75rem",fontWeight:700,
                 cursor:"pointer",fontFamily:"var(--font-mono)",transition:"all 0.15s"
               }}>Allow</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Stripe approval — INLINE in chat ─────────────────────────────────────────
+function StripeApprovalCard({ onSubmit, onDeny, isLoading }) {
+  const [pubKey, setPubKey] = useState("");
+  const [secKey, setSecKey] = useState("");
+  const [err, setErr] = useState("");
+
+  const handleSubmit = () => {
+    if (!pubKey.startsWith("pk_")) { setErr("Publishable key must start with pk_"); return; }
+    if (!secKey.startsWith("sk_")) { setErr("Secret key must start with sk_"); return; }
+    setErr("");
+    onSubmit(pubKey.trim(), secKey.trim());
+  };
+
+  return (
+    <div style={{ animation:"fadeIn 0.2s ease forwards", maxWidth:"360px" }}>
+      <div style={{
+        padding:"16px", borderRadius:"12px",
+        background:"var(--bg-2)", border:"1px solid rgba(99,102,241,0.2)",
+      }}>
+        {isLoading ? (
+          <div style={{ textAlign:"center", padding:"8px 0" }}>
+            <Spinner size={24} color="#6366f1" />
+            <p style={{ fontSize:"0.78rem", fontWeight:600, color:"#6366f1", marginTop:"12px", fontFamily:"var(--font-mono)" }}>
+              Activating Stripe...
+            </p>
+          </div>
+        ) : (
+          <>
+            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"10px" }}>
+              <div style={{ width:"28px", height:"28px", borderRadius:"8px", background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.2)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <rect x="2" y="5" width="20" height="14" rx="2" stroke="#6366f1" strokeWidth="1.5"/>
+                  <path d="M2 10h20" stroke="#6366f1" strokeWidth="1.5"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize:"0.78rem", fontWeight:700, color:"var(--text-primary)", fontFamily:"var(--font-mono)" }}>Enable Stripe Payments</div>
+                <div style={{ fontSize:"0.62rem", color:"var(--text-tertiary)" }}>Your keys stay server-side</div>
+              </div>
+            </div>
+            <p style={{ fontSize:"0.72rem", color:"var(--text-secondary)", lineHeight:1.5, margin:"0 0 10px" }}>
+              Your app needs payment processing. Enter your Stripe API keys — they're stored securely and never exposed in your app's code.
+            </p>
+            <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noreferrer"
+              style={{ fontSize:"0.65rem", color:"#6366f1", display:"block", marginBottom:"10px", textDecoration:"none", opacity:0.8 }}>
+              → Get keys from Stripe Dashboard
+            </a>
+            {err && <p style={{ fontSize:"0.65rem", color:"var(--red-accent)", marginBottom:"6px", margin:"0 0 6px" }}>{err}</p>}
+            <input
+              type="text" placeholder="pk_test_... or pk_live_..."
+              value={pubKey} onChange={e => setPubKey(e.target.value)}
+              style={{ width:"100%", background:"var(--bg-0)", border:`1px solid var(--border-subtle)`, borderRadius:"6px", padding:"7px 10px", color:"var(--text-primary)", fontSize:"0.72rem", fontFamily:"var(--font-mono)", outline:"none", marginBottom:"6px", boxSizing:"border-box" }}
+            />
+            <input
+              type="password" placeholder="sk_test_... or sk_live_..."
+              value={secKey} onChange={e => setSecKey(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleSubmit(); }}
+              style={{ width:"100%", background:"var(--bg-0)", border:`1px solid var(--border-subtle)`, borderRadius:"6px", padding:"7px 10px", color:"var(--text-primary)", fontSize:"0.72rem", fontFamily:"var(--font-mono)", outline:"none", marginBottom:"10px", boxSizing:"border-box" }}
+            />
+            <div style={{ display:"flex", gap:"8px" }}>
+              <button onClick={onDeny} style={{
+                flex:1, padding:"8px", background:"var(--bg-3)", border:`1px solid var(--border-default)`,
+                borderRadius:"8px", color:"var(--text-secondary)", fontSize:"0.75rem", cursor:"pointer", fontFamily:"var(--font-sans)"
+              }}>Skip</button>
+              <button onClick={handleSubmit} style={{
+                flex:1, padding:"8px",
+                background:"linear-gradient(135deg,rgba(99,102,241,0.2),rgba(79,70,229,0.15))",
+                border:"1px solid rgba(99,102,241,0.3)", borderRadius:"8px",
+                color:"#6366f1", fontSize:"0.75rem", fontWeight:700,
+                cursor:"pointer", fontFamily:"var(--font-mono)"
+              }}>Activate</button>
             </div>
           </>
         )}
@@ -951,6 +1041,11 @@ export default function Studio() {
   const [backendLoading, setBackendLoading] = useState(false);
   const [showBackendInChat, setShowBackendInChat] = useState(false);
   const backendRespondedRef = useRef(false);
+  // ── Stripe state ─────────────────────────────────────────────────────────
+  const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [showStripeInChat, setShowStripeInChat] = useState(false);
+  const stripeRespondedRef = useRef(false);
   const [showNameModal, setShowNameModal] = useState(localStorage.getItem("show_name_modal") === "1");
   const [imagePreview, setImagePreview] = useState(null);
   const attachmentUrlsRef = useRef({});
@@ -1044,6 +1139,7 @@ export default function Studio() {
   const loadProjectState = async (project) => {
     setCurrentJobId(project.job_id); setError(""); setPreviewError(false); setMessages([]); setAttachedFiles([]);
     setPublishedUrl(null); setChangesSincePublish(false);
+    setStripeEnabled(false); setShowStripeInChat(false); stripeRespondedRef.current = false;
     const safeUrl = _safePreview(project.preview_url);
     setPreviewUrl(safeUrl); setState(project.state||"completed"); setCodeChanged(!!safeUrl);
     if (safeUrl) setPreviewKey(k=>k+1);
@@ -1055,6 +1151,7 @@ export default function Studio() {
       if (d.published_url) { setPublishedUrl(d.published_url); setChangesSincePublish(false); }
     } catch { setMessages([]); }
     try { const bd = await getBackendStatus(project.job_id); setBackendEnabled(!!bd.supabase_enabled); } catch { setBackendEnabled(false); }
+    try { const sd = await getStripeStatus(project.job_id); setStripeEnabled(!!sd.stripe_enabled); } catch { setStripeEnabled(false); }
   };
 
   const startPolling = (jobId) => {
@@ -1077,9 +1174,10 @@ export default function Studio() {
           if (la==="building") setThinkingText(""); else { const te=d.progress.filter(p=>p.action==="planning"&&p.detail); if(te.length>0) setThinkingText(te[te.length-1].detail); }
         }
         if (d.backend_requested && !backendEnabled && !showBackendInChat && !backendRespondedRef.current) setShowBackendInChat(true);
+        if (d.stripe_requested && !stripeEnabled && !showStripeInChat && !stripeRespondedRef.current) setShowStripeInChat(true);
         if (d.preview_url) { setPreviewUrl(d.preview_url); setPreviewError(false); if (d.code_changed) setPreviewKey(k=>k+1); }
         setProjects(prev=>prev.map(p=>p.job_id===jobId?{...p,state:d.state,preview_url:d.preview_url||p.preview_url}:p));
-        if (d.state==="completed"||d.state==="failed") { stopPolling(); setProgress([]); setThinkingText(""); setShowBackendInChat(false); fetchProjects().then(j=>setProjects(j)).catch(()=>{}); }
+        if (d.state==="completed"||d.state==="failed") { stopPolling(); setProgress([]); setThinkingText(""); setShowBackendInChat(false); setShowStripeInChat(false); fetchProjects().then(j=>setProjects(j)).catch(()=>{}); }
       } catch (e) { console.error("Poll error:",e); }
     }, 3000);
   };
@@ -1145,7 +1243,9 @@ export default function Studio() {
 
   const handleNewProject = () => {
     stopPolling(); setCurrentJobId(null); setMessages([]); setPreviewUrl(null); setPreviewError(false); setCodeChanged(false);
-    setState("idle"); setPrompt(""); setError(""); setAttachedFiles([]); setPublishedUrl(null); setChangesSincePublish(false); setBackendEnabled(false); setShowBackendInChat(false); backendRespondedRef.current = false;
+    setState("idle"); setPrompt(""); setError(""); setAttachedFiles([]); setPublishedUrl(null); setChangesSincePublish(false);
+    setBackendEnabled(false); setShowBackendInChat(false); backendRespondedRef.current = false;
+    setStripeEnabled(false); setShowStripeInChat(false); stripeRespondedRef.current = false;
     setTimeout(()=>inputRef.current?.focus(),100);
   };
 
@@ -1156,7 +1256,8 @@ export default function Studio() {
   const confirmStop = async () => {
     setShowStopModal(false); if (!currentJobId) return;
     cancelledRef.current = true;
-    stopPolling(); setState("failed"); setProgress([]); setThinkingText(""); setShowBackendInChat(false);
+    stopPolling(); setState("failed"); setProgress([]); setThinkingText("");
+    setShowBackendInChat(false); setShowStripeInChat(false);
     try { await API.post(`/auth/job/${currentJobId}/cancel`); } catch {}
     try { const c = await getCredits(); setCredits(c.balance); } catch {}
     fetchProjects().then(j=>setProjects(j)).catch(()=>{});
@@ -1177,13 +1278,35 @@ export default function Studio() {
 
   const handleBackendDeny = () => { backendRespondedRef.current = true; setShowBackendInChat(false); if (currentJobId) API.post(`/auth/job/${currentJobId}/backend-denied`).catch(()=>{}); };
 
+  const handleStripeSubmit = async (pubKey, secKey) => {
+    if (!currentJobId) return;
+    stripeRespondedRef.current = true;
+    setStripeLoading(true);
+    try {
+      await enableStripe(currentJobId, pubKey, secKey);
+      setStripeEnabled(true);
+      setShowStripeInChat(false);
+    } catch (err) {
+      setError(err?.response?.data?.error || "Failed to enable Stripe");
+      setShowStripeInChat(false);
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+  const handleStripeDeny = () => {
+    stripeRespondedRef.current = true;
+    setShowStripeInChat(false);
+    if (currentJobId) API.post(`/stripe/job/${currentJobId}/stripe-denied`).catch(()=>{});
+  };
+
   const handleLogout = () => setShowLogoutModal(true);
   const confirmLogout = () => { setShowLogoutModal(false); localStorage.removeItem("token"); localStorage.removeItem("user_email"); sessionStorage.removeItem("studio_current_job"); navigate("/home"); };
   const handleUpgrade = () => { if (currentJobId) sessionStorage.setItem("studio_return_job_id",currentJobId); navigate("/subscribe"); };
 
   const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
 
-  // ── Credits button — bright transparent red, white text ──────────────────
+  // ── Credits button ────────────────────────────────────────────────────────
   const renderCreditsButton = () => {
     const label = userPlan === "free" ? "Get Credits" : "Upgrade";
     return (
@@ -1236,10 +1359,7 @@ export default function Studio() {
         </span>
       </div>
       {previewUrl && <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:"0.7rem",padding:"2px",flexShrink:0 }} onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-muted)"}>↻</button>}
-
-      {/* FIX 4 & 5: replaced plain button with glowing credits button */}
       {renderCreditsButton()}
-
       {currentJobId&&!isRunning && (
         <button onClick={()=>{ const p=projects.find(p=>p.job_id===currentJobId); sessionStorage.setItem("github_push_job_id",currentJobId); sessionStorage.setItem("github_push_job_title",p?.title||"project"); window.location.href=`https://github.com/login/oauth/authorize?client_id=Ov23liUC5tA7pNQbfiWo&scope=repo&redirect_uri=https://thehustlerbot.com/github-callback`; }} style={{ padding:"3px 8px",height:"24px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"5px",color:"var(--text-secondary)",fontSize:"0.6rem",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"3px",fontFamily:"var(--font-mono)",flexShrink:0 }}
           onMouseEnter={e=>{e.currentTarget.style.borderColor="#58a6ff";e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border-subtle)";e.currentTarget.style.color="var(--text-secondary)";}}
@@ -1370,7 +1490,14 @@ export default function Studio() {
             </div>
           )}
 
-          {(isRunning||isRendering) && !showBackendInChat && (() => {
+          {showStripeInChat && isRunning && (
+            <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}>
+              <BotAvatar size={28} />
+              <StripeApprovalCard onSubmit={handleStripeSubmit} onDeny={handleStripeDeny} isLoading={stripeLoading} />
+            </div>
+          )}
+
+          {(isRunning||isRendering) && !showBackendInChat && !showStripeInChat && (() => {
             const last = messages.length>0?messages[messages.length-1]:null;
             const botReplied = last&&last.role==="assistant";
             if (botReplied) {
@@ -1478,10 +1605,7 @@ export default function Studio() {
       <div style={{ flex:1,display:"flex",flexDirection:"column",background:"var(--bg-0)",overflow:"hidden",minWidth:0 }}>
 
         {panelView==="preview" && <>
-          {/* FIX 1: white preview border with rounded card */}
           <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.22)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)" }}>
-
-            {/* Browser chrome bar */}
             <div style={{ flexShrink:0,padding:"6px 10px",background:"#000000",borderBottom:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",gap:"6px",borderRadius:"12px 12px 0 0" }}>
               <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
@@ -1490,21 +1614,16 @@ export default function Studio() {
               </div>
               {renderChromeButtons()}
             </div>
-
-            {/* Content area */}
             <div style={{ flex:1,overflow:"hidden",borderRadius:"0 0 11px 11px",display:"flex",flexDirection:"column" }}>
               {(isRunning||isRendering) && !previewUrl && (
                 <BuildView progress={progress} buildPhase={buildPhase} progressPercent={progressPercent} />
               )}
-
               {previewError && !isRunning && (
                 <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"14px",background:"var(--bg-0)" }}>
                   <span style={{ color:"var(--text-tertiary)",fontSize:"0.8rem",textAlign:"center",maxWidth:"200px",lineHeight:1.6 }}>Preview couldn't load.</span>
                   <button onClick={()=>{setPreviewError(false);setPreviewKey(k=>k+1);}} style={{ padding:"8px 20px",background:"linear-gradient(135deg,var(--red-accent),#701818)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.78rem",fontWeight:600,cursor:"pointer" }}>Reload</button>
                 </div>
               )}
-
-              {/* FIX 1: white background wrapper gives the preview white edges */}
               {previewUrl && !previewError && (
                 <div style={{ flex:1,overflow:"hidden",background:"#ffffff",borderRadius:"0 0 11px 11px" }}>
                   <iframe key={previewKey} src={previewUrl} title="Preview" style={{ width:"100%",height:"100%",border:"none",display:"block" }}
@@ -1512,7 +1631,6 @@ export default function Studio() {
                     onError={()=>setPreviewError(true)} onLoad={()=>{setPreviewError(false);const ic=document.querySelector("link[rel='icon']");if(ic)ic.href="/favicon.ico?"+Date.now();}} />
                 </div>
               )}
-
               {!previewUrl && !isRunning && !isRendering && !previewError && (
                 <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-0)" }}>
                   <span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Your app preview will appear here.</span>
@@ -1532,7 +1650,6 @@ export default function Studio() {
               </div>
               {renderChromeButtons()}
             </div>
-            {/* FIX 2: code panel content fills height so loader centers properly */}
             <div style={{ flex:1,overflow:"hidden",borderRadius:"0 0 11px 11px",display:"flex",flexDirection:"column" }}>
               {!currentJobId
                 ? <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-0)" }}><span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Build a project first.</span></div>
