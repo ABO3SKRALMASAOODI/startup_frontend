@@ -478,7 +478,7 @@ function BuildView({ progress, buildPhase, progressPercent }) {
               </div>
               <div style={{ marginLeft:"10px",borderLeft:`1px solid ${pi === phases.length - 1 ? "rgba(140,35,35,0.25)" : "var(--border-subtle)"}`,paddingLeft:"16px" }}>
                 {phase.entries.slice(-6).map((entry, ei) => (
-                  <div key={ei} style={{ fontSize:"0.68rem",color:"var(--text-tertiary)",padding:"2px 0",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%" }}>
+                  <div key={ei} style={{ fontSize:"0.68rem",color:"var(--text-tertiary)",padding:"2px 0",fontFamily:"var(--font-mono)",wordBreak:"break-word",whiteSpace:"normal",lineHeight:1.4 }}>
                     {entry.file && <span style={{ color:"var(--red-accent)",marginRight:"6px" }}>{entry.file.split("/").pop()}</span>}
                     <span>{entry.detail}</span>
                   </div>
@@ -682,7 +682,7 @@ function StripeApprovalCard({ onSubmit, onDeny, isLoading }) {
 
 // ── Credits badge ────────────────────────────────────────────────────────────
 function CreditsBadge({ balance, planLimit, onUpgrade }) {
-  const max = Math.max(planLimit || 20, balance, 20);
+  const max = Math.max(planLimit || 800, balance, 800);
   const pct = Math.max(0, Math.min(100, (balance / max) * 100));
   const isLow = pct <= 10;
   return (
