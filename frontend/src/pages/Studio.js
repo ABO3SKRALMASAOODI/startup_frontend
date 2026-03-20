@@ -1037,6 +1037,7 @@ export default function Studio() {
   const cancelledRef = useRef(false);
   const [previewError, setPreviewError] = useState(false);
   const [codeChanged, setCodeChanged] = useState(false);
+  const [buildOk, setBuildOk] = useState(true);
   const [selectedModel, setSelectedModel] = useState("hb-6");
   const [publishedUrl, setPublishedUrl] = useState(null);
   const [changesSincePublish, setChangesSincePublish] = useState(false);
@@ -1153,7 +1154,7 @@ export default function Studio() {
     try {
       const d = await getJobStatus(project.job_id);
       mergeServerMessages(d.messages);
-      if (d.state) setState(d.state); if (d.code_changed!==undefined) setCodeChanged(d.code_changed); if (d.model) setSelectedModel(d.model);
+      if (d.state) setState(d.state); if (d.code_changed!==undefined) setCodeChanged(d.code_changed);if (d.build_ok!==undefined) setBuildOk(d.build_ok); if (d.model) setSelectedModel(d.model);
       if (d.preview_url) { const u=_safePreview(d.preview_url); setPreviewUrl(u); setPreviewError(false); setPreviewKey(k=>k+1); }
       if (d.published_url) { setPublishedUrl(d.published_url); setChangesSincePublish(false); }
     } catch { setMessages([]); }
@@ -1688,8 +1689,17 @@ export default function Studio() {
                 </div>
               )}
               {!previewUrl && !isRunning && !isRendering && !previewError && (
-                <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-0)" }}>
-                  <span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Your app preview will appear here.</span>
+                <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"var(--bg-0)",gap:"8px" }}>
+                  {state === "completed" && !buildOk ? (
+                    <>
+                      <span style={{ color:"var(--yellow-accent)",fontSize:"0.82rem",fontWeight:600 }}>Build failed</span>
+                      <span style={{ color:"var(--text-tertiary)",fontSize:"0.72rem",maxWidth:"240px",textAlign:"center",lineHeight:1.5 }}>
+                        The code compiled with errors. Send a follow-up message describing what went wrong and the bot will try to fix it.
+                      </span>
+                    </>
+                  ) : (
+                    <span style={{ color:"var(--text-muted)",fontSize:"0.78rem" }}>Your app preview will appear here.</span>
+                  )}
                 </div>
               )}
             </div>
