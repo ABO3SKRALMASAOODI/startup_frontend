@@ -200,8 +200,13 @@ const getJobStatus = async (jobId) => { const res = await API.get(`/auth/job/${j
 const getCredits = async () => { const res = await API.get("/auth/credits"); return res.data; };
 const fetchProjects = async () => { const res = await API.get("/auth/jobs"); return res.data.jobs || []; };
 const fetchJobFiles = async (jobId) => { const res = await API.get(`/auth/job/${jobId}/files`); return res.data.files || []; };
-const enableBackend = async (jobId) => { const res = await API.post(`/supabase/job/${jobId}/enable-backend`); return res.data; };
+
+// ── Backend API helpers ───────────────────────────────────────────────────────
+// enableBackend now just fires the kick-off call and returns immediately (202).
+// The caller is responsible for polling getBackendStatus until done.
+const enableBackend  = async (jobId) => { const res = await API.post(`/supabase/job/${jobId}/enable-backend`); return res.data; };
 const getBackendStatus = async (jobId) => { const res = await API.get(`/supabase/job/${jobId}/backend-status`); return res.data; };
+
 const enableStripe = async (jobId, publishableKey, secretKey) => {
   const res = await API.post(`/stripe/job/${jobId}/enable-stripe`, {
     publishable_key: publishableKey,
@@ -559,7 +564,7 @@ function BackendApprovalCard({ onAllow, onDeny, isLoading }) {
           <div style={{ textAlign:"center",padding:"8px 0" }}>
             <Spinner size={24} color="var(--green-accent)" />
             <p style={{ fontSize:"0.78rem",fontWeight:600,color:"var(--green-accent)",marginTop:"12px",fontFamily:"var(--font-mono)" }}>Setting up backend...</p>
-            <p style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",marginTop:"4px",lineHeight:1.5 }}>Provisioning database, auth, and security. This usually takes 60-90 seconds.</p>
+            <p style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",marginTop:"4px",lineHeight:1.5 }}>Provisioning database, auth, and security. This usually takes 60–90 seconds.</p>
           </div>
         ) : (
           <>
@@ -1005,6 +1010,8 @@ export default function Studio() {
   const { isMobilePortrait, isMobileLandscape } = useIsMobile();
   const bottomRef = useRef(null);
   const pollRef = useRef(null);
+  // ── NEW: separate interval ref for backend-status polling ─────────────────
+  const backendPollRef = useRef(null);
   const inputRef = useRef(null);
 
   const userEmail = localStorage.getItem("user_email") || "anonymous";
@@ -1183,7 +1190,40 @@ export default function Studio() {
   };
 
   const stopPolling = () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
-  useEffect(() => () => stopPolling(), []);
+  useEffect(() => () => { stopPolling(); stopBackendPolling(); }, []); // eslint-disable-line
+
+  // ── Backend-status poller (runs independently of the job poller) ───────────
+  const stopBackendPolling = () => {
+    if (backendPollRef.current) { clearInterval(backendPollRef.current); backendPollRef.current = null; }
+  };
+
+  const startBackendPolling = (jobId) => {
+    stopBackendPolling();
+    backendPollRef.current = setInterval(async () => {
+      try {
+        const bd = await getBackendStatus(jobId);
+
+        if (bd.supabase_enabled) {
+          // Provisioning finished successfully
+          stopBackendPolling();
+          setBackendEnabled(true);
+          setBackendLoading(false);
+          setShowBackendInChat(false);
+          // Signal the AI agent that the backend is ready
+          try { await API.post(`/auth/job/${jobId}/backend-ready`); } catch {}
+        } else if (bd.provisioning_failed) {
+          // Hard failure reported by the backend thread
+          stopBackendPolling();
+          setBackendLoading(false);
+          setShowBackendInChat(false);
+          setError("Failed to enable backend. Please try again.");
+        }
+        // If still provisioning, just keep polling — card stays in loading state
+      } catch (e) {
+        console.error("Backend poll error:", e);
+      }
+    }, 4000);
+  };
 
   const ALLOWED_EXT = ['png','jpg','jpeg','gif','webp','svg','pdf','txt','md','csv'];
   const addFiles = fl => { const nf = Array.from(fl).filter(f => ALLOWED_EXT.includes(f.name.split('.').pop().toLowerCase()) && f.size <= 10*1024*1024); setAttachedFiles(prev=>[...prev,...nf].slice(0,5)); };
@@ -1242,41 +1282,56 @@ export default function Studio() {
   };
 
   const handleNewProject = () => {
-    stopPolling(); setCurrentJobId(null); setMessages([]); setPreviewUrl(null); setPreviewError(false); setCodeChanged(false);
+    stopPolling(); stopBackendPolling();
+    setCurrentJobId(null); setMessages([]); setPreviewUrl(null); setPreviewError(false); setCodeChanged(false);
     setState("idle"); setPrompt(""); setError(""); setAttachedFiles([]); setPublishedUrl(null); setChangesSincePublish(false);
     setBackendEnabled(false); setShowBackendInChat(false); backendRespondedRef.current = false;
     setStripeEnabled(false); setShowStripeInChat(false); stripeRespondedRef.current = false;
     setTimeout(()=>inputRef.current?.focus(),100);
   };
 
-  const handleLoadProject = async (p) => { stopPolling(); setChatLoading(true); await loadProjectState(p); setChatLoading(false); if (p.state==="running") startPolling(p.job_id); };
+  const handleLoadProject = async (p) => {
+    stopPolling(); stopBackendPolling();
+    setChatLoading(true); await loadProjectState(p); setChatLoading(false);
+    if (p.state==="running") startPolling(p.job_id);
+  };
 
   const handleStop = () => { if (currentJobId) setShowStopModal(true); };
 
   const confirmStop = async () => {
     setShowStopModal(false); if (!currentJobId) return;
     cancelledRef.current = true;
-    stopPolling(); setState("failed"); setProgress([]); setThinkingText("");
+    stopPolling(); stopBackendPolling();
+    setState("failed"); setProgress([]); setThinkingText("");
     setShowBackendInChat(false); setShowStripeInChat(false);
+    setBackendLoading(false);
     try { await API.post(`/auth/job/${currentJobId}/cancel`); } catch {}
     try { const c = await getCredits(); setCredits(c.balance); } catch {}
     fetchProjects().then(j=>setProjects(j)).catch(()=>{});
   };
 
+  // ── FIXED: kick off provisioning and poll instead of blocking await ────────
   const handleBackendAllow = async () => {
     if (!currentJobId) return;
     backendRespondedRef.current = true;
     setBackendLoading(true);
     try {
+      // This now returns 202 immediately — provisioning runs in a background thread
       await enableBackend(currentJobId);
-      setBackendEnabled(true);
-      try { await API.post(`/auth/job/${currentJobId}/backend-ready`); } catch {}
+      // Start polling backend-status every 4s until enabled or failed
+      startBackendPolling(currentJobId);
+    } catch (err) {
+      setBackendLoading(false);
       setShowBackendInChat(false);
-    } catch (err) { setError(err?.response?.data?.error||"Failed to enable backend"); setShowBackendInChat(false); }
-    finally { setBackendLoading(false); }
+      setError(err?.response?.data?.error || "Failed to enable backend");
+    }
   };
 
-  const handleBackendDeny = () => { backendRespondedRef.current = true; setShowBackendInChat(false); if (currentJobId) API.post(`/auth/job/${currentJobId}/backend-denied`).catch(()=>{}); };
+  const handleBackendDeny = () => {
+    backendRespondedRef.current = true;
+    setShowBackendInChat(false);
+    if (currentJobId) API.post(`/auth/job/${currentJobId}/backend-denied`).catch(()=>{});
+  };
 
   const handleStripeSubmit = async (pubKey, secKey) => {
     if (!currentJobId) return;
@@ -1483,7 +1538,8 @@ export default function Studio() {
             );
           })}
 
-          {showBackendInChat && isRunning && (
+          {/* Backend card — shown while backendLoading OR while the job is still running and requesting it */}
+          {showBackendInChat && (isRunning || backendLoading) && (
             <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}>
               <BotAvatar size={28} />
               <BackendApprovalCard onAllow={handleBackendAllow} onDeny={handleBackendDeny} isLoading={backendLoading} />
