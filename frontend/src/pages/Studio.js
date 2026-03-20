@@ -443,7 +443,8 @@ function BuildView({ progress, buildPhase, progressPercent }) {
             <span style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.55rem",fontWeight:700,color:"var(--text-primary)",fontFamily:"var(--font-mono)" }}>{progressPercent}%</span>
           </div>
           <div style={{ flex:1,minWidth:0 }}>
-            <div style={{ fontSize:"0.72rem",color:"var(--text-primary)",fontWeight:600,fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{latestDetail}</div>
+          <div style={{ fontSize:"0.72rem",color:"var(--text-primary)",fontWeight:600,fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%" }} title={latestDetail}>{latestDetail}</div>
+ 
             <div style={{ fontSize:"0.62rem",color:"var(--text-tertiary)",marginTop:"2px",fontFamily:"var(--font-mono)" }}>
               {filesCreated.length} file{filesCreated.length !== 1 ? "s" : ""} written
             </div>
@@ -479,7 +480,7 @@ function BuildView({ progress, buildPhase, progressPercent }) {
                 {phase.entries.slice(-6).map((entry, ei) => (
                   <div key={ei} style={{ fontSize:"0.68rem",color:"var(--text-tertiary)",padding:"2px 0",fontFamily:"var(--font-mono)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%" }}>
                     {entry.file && <span style={{ color:"var(--red-accent)",marginRight:"6px" }}>{entry.file.split("/").pop()}</span>}
-                    <span>{entry.detail?.slice(0,80)}</span>
+                    <span>{entry.detail}</span>
                   </div>
                 ))}
               </div>
@@ -536,7 +537,7 @@ function ThinkingLine({ text }) {
   const [expanded, setExpanded] = useState(false);
   const cleaned = text.replace(/^(plan|planning|task list|aesthetic direction)[:\s]*/i,"").replace(/^[-\u2500\u2550—]+\s*/gm,"").replace(/^\[.?\]\s*/gm,"").replace(/\n+/g," ").trim();
   if (!cleaned || cleaned.length < 5) return null;
-  const short = cleaned.length > 70 ? cleaned.slice(0,70)+"..." : cleaned;
+  const short = cleaned.length > 160 ? cleaned.slice(0,160)+"..." : cleaned;
   return (
     <div onClick={() => setExpanded(e=>!e)} style={{
       marginTop:"6px",cursor:"pointer",padding:"4px 8px",borderRadius:"6px",
