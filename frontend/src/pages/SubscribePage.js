@@ -49,20 +49,17 @@ const GLOBAL_CSS = `
 
   html { scroll-behavior: smooth; }
 
-  /* ── dot matrix bg ── */
   .dot-bg {
     background-color: var(--bg);
     background-image: radial-gradient(circle, rgba(200,16,46,0.16) 1px, transparent 1px);
     background-size: 26px 26px;
   }
-  /* fade mask — dots vanish toward the center so they don't crowd the cards */
   .dot-bg::before {
     content: '';
     position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background: radial-gradient(ellipse 75% 60% at 50% 35%, var(--bg) 18%, transparent 72%);
   }
 
-  /* ── corner tick brackets ── */
   .cb { position: relative; }
   .cb::before, .cb::after, .cb > .cbi::before, .cb > .cbi::after {
     content: ''; position: absolute;
@@ -74,7 +71,6 @@ const GLOBAL_CSS = `
   .cb > .cbi::before { bottom:-1px; left:-1px;  border-width:0 0 1px 1px; }
   .cb > .cbi::after  { bottom:-1px; right:-1px; border-width:0 1px 1px 0; }
 
-  /* ── circuit divider ── */
   .c-rule {
     position: relative; height: 1px;
     background: linear-gradient(90deg, transparent 0%, rgba(200,16,46,0.22) 20%, rgba(200,16,46,0.38) 50%, rgba(200,16,46,0.22) 80%, transparent 100%);
@@ -88,18 +84,15 @@ const GLOBAL_CSS = `
   .c-rule::before { left: 18%; }
   .c-rule::after  { right: 18%; }
 
-  /* ── node pulse ── */
   @keyframes nodePulse {
     0%,100% { box-shadow: 0 0 4px var(--red); opacity: 0.55; }
     50%      { box-shadow: 0 0 10px var(--red), 0 0 20px rgba(200,16,46,0.3); opacity: 1; }
   }
   .nd { animation: nodePulse 2.8s ease-in-out infinite; }
 
-  /* ── typing cursor ── */
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
   .cursor { animation: blink 1s step-end infinite; }
 
-  /* ── single slow scan line ── */
   @keyframes scanH {
     0%   { top: -2px; opacity: 0; }
     4%   { opacity: 0.5; }
@@ -113,7 +106,6 @@ const GLOBAL_CSS = `
     animation: scanH 14s linear infinite;
   }
 
-  /* ── vertical trace lines (hero) ── */
   .v-trace {
     position: absolute; width: 1px; top: 0; bottom: 0; pointer-events: none;
     background: linear-gradient(180deg, transparent 0%, rgba(200,16,46,0.1) 35%, rgba(200,16,46,0.1) 65%, transparent 100%);
@@ -194,7 +186,6 @@ function SystemReadout() {
 
   return (
     <div style={{ display:"inline-flex", alignItems:"center", gap:"16px", padding:"7px 18px", background:"rgba(200,16,46,0.04)", border:"1px solid rgba(200,16,46,0.16)", marginBottom:"1.8rem", position:"relative" }}>
-      {/* corner brackets */}
       {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h],i) => (
         <div key={i} style={{ position:"absolute",[v]:0,[h]:0,width:8,height:8,
           [`border${v[0].toUpperCase()+v.slice(1)}`]:"1px solid rgba(200,16,46,0.45)",
@@ -217,7 +208,7 @@ function SystemReadout() {
   );
 }
 
-/* ─── COUNTDOWN ──────────────────────────────────────────────────────────── */
+/* ─── INLINE COUNTDOWN (beside price) ────────────────────────────────────── */
 function InlineCountdown({ secs: init }) {
   const [s, setS] = useState(init);
   useEffect(() => {
@@ -229,37 +220,9 @@ function InlineCountdown({ secs: init }) {
   const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
   const pad = n => String(n).padStart(2,"0");
   return (
-    <div style={{ display:"flex",alignItems:"center",gap:"8px",marginTop:"8px",padding:"6px 10px",background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.18)",position:"relative" }}>
-      {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h],i)=>(
-        <div key={i} style={{ position:"absolute",[v]:0,[h]:0,width:5,height:5,[`border${v[0].toUpperCase()+v.slice(1)}`]:"1px solid rgba(34,197,94,0.35)",[`border${h[0].toUpperCase()+h.slice(1)}`]:"1px solid rgba(34,197,94,0.35)" }}/>
-      ))}
+    <div style={{ display:"inline-flex",alignItems:"center",gap:"6px",padding:"4px 8px",background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.22)",flexShrink:0 }}>
       <div style={{ width:4,height:4,background:"var(--green)",boxShadow:"0 0 6px var(--green)",animation:"nodePulse 1.5s ease infinite",flexShrink:0 }}/>
-      <span style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.58rem",fontWeight:500,letterSpacing:"0.08em",color:"var(--text-muted)" }}>50% off ends in</span>
-      <span style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.72rem",fontWeight:500,color:"var(--green)",letterSpacing:"0.06em",animation:"countdownTick 1s ease infinite" }}>
-        {pad(h)}:{pad(m)}:{pad(sec)}
-      </span>
-    </div>
-  );
-}
- 
-function Countdown({ secs: init }) {
-  const [s, setS] = useState(init);
-  useEffect(() => {
-    if (s <= 0) return;
-    const iv = setInterval(() => setS(p => Math.max(0, p - 1)), 1000);
-    return () => clearInterval(iv);
-  }, []);
-  if (!s) return null;
-  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-  const pad = n => String(n).padStart(2,"0");
-  return (
-    <div style={{ display:"inline-flex",alignItems:"center",gap:"14px",padding:"9px 22px",background:"rgba(34,197,94,0.05)",border:"1px solid rgba(34,197,94,0.2)",marginBottom:"2.5rem",position:"relative" }}>
-      {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h],i)=>(
-        <div key={i} style={{ position:"absolute",[v]:0,[h]:0,width:7,height:7,[`border${v[0].toUpperCase()+v.slice(1)}`]:"1px solid rgba(34,197,94,0.4)",[`border${h[0].toUpperCase()+h.slice(1)}`]:"1px solid rgba(34,197,94,0.4)" }}/>
-      ))}
-      <div style={{ width:4,height:4,background:"var(--green)",boxShadow:"0 0 6px var(--green)",animation:"nodePulse 1.5s ease infinite",flexShrink:0 }}/>
-      <span style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.6rem",fontWeight:500,letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--text-muted)" }}>50% off — ends in</span>
-      <span style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.9rem",fontWeight:500,color:"var(--green)",letterSpacing:"0.08em",animation:"countdownTick 1s ease infinite",display:"inline-block" }}>
+      <span style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.58rem",fontWeight:500,color:"var(--green)",letterSpacing:"0.06em",animation:"countdownTick 1s ease infinite",whiteSpace:"nowrap" }}>
         {pad(h)}:{pad(m)}:{pad(sec)}
       </span>
     </div>
@@ -289,15 +252,18 @@ function Modal({ message, onConfirm, onCancel }) {
 }
 
 /* ─── PLAN CARD ──────────────────────────────────────────────────────────── */
-function PlanCard({ plan, isCurrent, isHigher, isSubscribed, loading, billing, promoEligible, promoSeconds, onSubscribe, onChangePlan, onCancel, index }) {  const ts = TIER_STYLE[plan.tier];
+function PlanCard({ plan, isCurrent, isHigher, isSubscribed, loading, billing, promoEligible, promoSeconds, onSubscribe, onChangePlan, onCancel, index }) {
+  const ts = TIER_STYLE[plan.tier];
   const isFree = plan.id === "free";
   const isHighlighted = ["pro","titan","ace"].includes(plan.tier);
   const isCurrentPaid = isCurrent && !isFree;
 
+  const showPromo = !isFree && promoEligible && billing === "monthly" && promoSeconds > 0;
+
   const getDP = () => {
     if (!plan.price) return { main:0 };
     if (billing==="yearly") return { main:Math.round(plan.yearlyPrice/12), sub:`$${plan.yearlyPrice} billed annually`, savings:`Save $${plan.price*12-plan.yearlyPrice}/yr`, isYearly:true };
-    if (promoEligible) return { main:Math.round(plan.price/2), sub:`then $${plan.price}/mo`, strike:plan.price, isPromo:true };
+    if (showPromo) return { main:Math.round(plan.price/2), original:plan.price, isPromo:true };
     return { main:plan.price };
   };
   const dp = getDP();
@@ -322,7 +288,6 @@ function PlanCard({ plan, isCurrent, isHigher, isSubscribed, loading, billing, p
         </div>
       )}
 
-      {/* corner brackets on glowing cards */}
       {isHighlighted && [["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h],i)=>(
         <div key={i} style={{ position:"absolute",[v]:8,[h]:8,width:9,height:9,[`border${v[0].toUpperCase()+v.slice(1)}`]:"1px solid rgba(200,16,46,0.35)",[`border${h[0].toUpperCase()+h.slice(1)}`]:"1px solid rgba(200,16,46,0.35)",pointerEvents:"none",zIndex:2 }}/>
       ))}
@@ -351,30 +316,58 @@ function PlanCard({ plan, isCurrent, isHigher, isSubscribed, loading, billing, p
           <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"0.76rem",color:isFree?"var(--text-dim)":isHighlighted?"rgba(200,16,46,0.65)":"var(--text-muted)",fontStyle:"italic",fontWeight:300 }}>{plan.tagline}</p>
         </div>
 
+        {/* ── PRICE ROW ── */}
         <div style={{ marginBottom:"1.5rem" }}>
-          {dp.strike && <span style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"0.95rem",color:"var(--text-dim)",textDecoration:"line-through",marginRight:"6px" }}>${dp.strike}</span>}
-          <div style={{ display:"flex",alignItems:"baseline",gap:"4px" }}>
-            <span style={{ fontFamily:"'DM Serif Display',serif",fontSize:isFree?"2rem":"2.5rem",fontWeight:400,lineHeight:1,letterSpacing:"-0.02em",color:isFree?"var(--text-dim)":dp.isPromo?"var(--green)":"var(--text)" }}>${dp.main}</span>
-            {!isFree && <span style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"0.76rem",color:"var(--text-dim)",fontWeight:400 }}>/ mo</span>}
+          <div style={{ display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap" }}>
+            {/* Crossed out original price — prominent */}
+            {dp.isPromo && dp.original && (
+              <span style={{
+                fontFamily:"'DM Serif Display',serif",
+                fontSize:"1.6rem",
+                color:"var(--text-muted)",
+                textDecoration:"line-through",
+                textDecorationColor:"var(--red)",
+                textDecorationThickness:"2px",
+                opacity:0.7,
+                lineHeight:1,
+              }}>${dp.original}</span>
+            )}
+            {/* Current price */}
+            <div style={{ display:"flex",alignItems:"baseline",gap:"4px" }}>
+              <span style={{
+                fontFamily:"'DM Serif Display',serif",
+                fontSize:isFree?"2rem":"2.5rem",
+                fontWeight:400,lineHeight:1,letterSpacing:"-0.02em",
+                color:isFree?"var(--text-dim)":dp.isPromo?"var(--green)":"var(--text)",
+              }}>${dp.main}</span>
+              {!isFree && <span style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"0.76rem",color:"var(--text-dim)",fontWeight:400 }}>/ mo</span>}
+            </div>
+            {/* Countdown timer — right beside price */}
+            {showPromo && <InlineCountdown secs={promoSeconds} />}
           </div>
+
+          {/* Promo label under price */}
+          {dp.isPromo && (
+            <p style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.65rem",color:"var(--green)",marginTop:"6px",letterSpacing:"0.04em",fontWeight:500 }}>
+              50% off first month
+            </p>
+          )}
+
           {dp.isYearly && dp.savings && (
             <div style={{ display:"inline-flex",alignItems:"center",marginTop:"6px",padding:"3px 9px",background:"rgba(34,197,94,0.07)",border:"1px solid rgba(34,197,94,0.22)" }}>
               <span style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.62rem",fontWeight:500,color:"var(--green)",letterSpacing:"0.04em" }}>{dp.savings}</span>
             </div>
           )}
-          {dp.sub && !dp.isYearly && <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"0.7rem",color:dp.isPromo?"var(--green-dim)":"var(--text-muted)",marginTop:"4px" }}>{dp.sub}</p>}
           {dp.isYearly && dp.sub && <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"0.68rem",color:"var(--text-muted)",marginTop:"3px" }}>{dp.sub}</p>}
+
           <div style={{ marginTop:"10px",display:"inline-flex",alignItems:"center",gap:"6px",padding:"4px 10px",background:isFree?"transparent":isHighlighted?"rgba(200,16,46,0.08)":"rgba(200,16,46,0.05)",border:`1px solid ${isFree?"var(--border)":"var(--border-red)"}` }}>
             <span style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.63rem",color:isFree?"var(--text-dim)":"var(--red)",letterSpacing:"0.04em" }}>
               {plan.monthlyCredits>0 ? `${plan.monthlyCredits.toLocaleString()} credits / mo` : "20 credits / day"}
             </span>
           </div>
-          {!isFree && promoEligible && billing==="monthly" && promoSeconds>0 && (
-            <InlineCountdown secs={promoSeconds} />
-          )}
         </div>
 
-        {/* divider with glowing nodes on highlighted cards */}
+        {/* divider */}
         <div style={{ position:"relative",height:"1px",background:isHighlighted?"linear-gradient(90deg,transparent,rgba(200,16,46,0.4),transparent)":"var(--border)",marginBottom:"1.3rem" }}>
           {isHighlighted && <>
             <div style={{ position:"absolute",left:"22%",top:"50%",transform:"translateY(-50%)",width:4,height:4,background:"var(--red)",boxShadow:"0 0 6px var(--red)" }}/>
@@ -514,7 +507,6 @@ export default function SubscribePage() {
           Studio
         </button>
 
-        {/* centre — node + traces */}
         <div style={{ display:"flex",alignItems:"center",gap:"8px" }}>
           <div style={{ width:"36px",height:"1px",background:"linear-gradient(90deg,transparent,rgba(200,16,46,0.28))" }}/>
           <div className="nd" style={{ width:4,height:4,background:"var(--red)" }}/>
@@ -528,14 +520,11 @@ export default function SubscribePage() {
 
       {/* HERO */}
       <header style={{ textAlign:"center",padding:"4.5rem 2rem 3rem",position:"relative",overflow:"hidden" }}>
-
-        {/* vertical traces */}
         <div className="v-trace" style={{ left:"16%" }}/>
         <div className="v-trace" style={{ right:"16%" }}/>
         <div className="v-trace" style={{ left:"30%",opacity:0.5 }}/>
         <div className="v-trace" style={{ right:"30%",opacity:0.5 }}/>
 
-        {/* faint ambient glow */}
         <div style={{ position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:"560px",height:"260px",pointerEvents:"none",background:"radial-gradient(ellipse at 50% 0%,rgba(200,16,46,0.08) 0%,transparent 65%)",zIndex:0 }}/>
 
         <div style={{ animation:"fadeUp 0.5s ease 0.05s both",position:"relative",zIndex:1 }}>
@@ -550,12 +539,9 @@ export default function SubscribePage() {
           From free to enterprise — one platform, every tool you need to ship.
         </p>
 
-        {/* circuit rule */}
         <div style={{ maxWidth:"440px",margin:"0 auto 2rem",animation:"fadeUp 0.5s ease 0.16s both",position:"relative",zIndex:1 }}>
           <div className="c-rule"/>
         </div>
-
-        
 
         {/* billing toggle */}
         <div style={{ display:"inline-flex",alignItems:"center",background:"var(--surface)",border:"1px solid rgba(200,16,46,0.14)",padding:"4px",gap:"2px",animation:"fadeUp 0.5s ease 0.2s both",position:"relative",zIndex:1 }}>
