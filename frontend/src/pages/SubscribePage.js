@@ -218,6 +218,30 @@ function SystemReadout() {
 }
 
 /* ─── COUNTDOWN ──────────────────────────────────────────────────────────── */
+function InlineCountdown({ secs: init }) {
+  const [s, setS] = useState(init);
+  useEffect(() => {
+    if (s <= 0) return;
+    const iv = setInterval(() => setS(p => Math.max(0, p - 1)), 1000);
+    return () => clearInterval(iv);
+  }, []);
+  if (!s) return null;
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  const pad = n => String(n).padStart(2,"0");
+  return (
+    <div style={{ display:"flex",alignItems:"center",gap:"8px",marginTop:"8px",padding:"6px 10px",background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.18)",position:"relative" }}>
+      {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h],i)=>(
+        <div key={i} style={{ position:"absolute",[v]:0,[h]:0,width:5,height:5,[`border${v[0].toUpperCase()+v.slice(1)}`]:"1px solid rgba(34,197,94,0.35)",[`border${h[0].toUpperCase()+h.slice(1)}`]:"1px solid rgba(34,197,94,0.35)" }}/>
+      ))}
+      <div style={{ width:4,height:4,background:"var(--green)",boxShadow:"0 0 6px var(--green)",animation:"nodePulse 1.5s ease infinite",flexShrink:0 }}/>
+      <span style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.58rem",fontWeight:500,letterSpacing:"0.08em",color:"var(--text-muted)" }}>50% off ends in</span>
+      <span style={{ fontFamily:"'DM Mono',monospace",fontSize:"0.72rem",fontWeight:500,color:"var(--green)",letterSpacing:"0.06em",animation:"countdownTick 1s ease infinite" }}>
+        {pad(h)}:{pad(m)}:{pad(sec)}
+      </span>
+    </div>
+  );
+}
+ 
 function Countdown({ secs: init }) {
   const [s, setS] = useState(init);
   useEffect(() => {
@@ -265,8 +289,7 @@ function Modal({ message, onConfirm, onCancel }) {
 }
 
 /* ─── PLAN CARD ──────────────────────────────────────────────────────────── */
-function PlanCard({ plan, isCurrent, isHigher, isSubscribed, loading, billing, promoEligible, onSubscribe, onChangePlan, onCancel, index }) {
-  const ts = TIER_STYLE[plan.tier];
+function PlanCard({ plan, isCurrent, isHigher, isSubscribed, loading, billing, promoEligible, promoSeconds, onSubscribe, onChangePlan, onCancel, index }) {  const ts = TIER_STYLE[plan.tier];
   const isFree = plan.id === "free";
   const isHighlighted = ["pro","titan","ace"].includes(plan.tier);
   const isCurrentPaid = isCurrent && !isFree;
@@ -346,6 +369,9 @@ function PlanCard({ plan, isCurrent, isHigher, isSubscribed, loading, billing, p
               {plan.monthlyCredits>0 ? `${plan.monthlyCredits.toLocaleString()} credits / mo` : "20 credits / day"}
             </span>
           </div>
+          {!isFree && promoEligible && billing==="monthly" && promoSeconds>0 && (
+            <InlineCountdown secs={promoSeconds} />
+          )}
         </div>
 
         {/* divider with glowing nodes on highlighted cards */}
@@ -529,11 +555,7 @@ export default function SubscribePage() {
           <div className="c-rule"/>
         </div>
 
-        {promoEligible && promoSeconds>0 && billing==="monthly" && (
-          <div style={{ animation:"fadeUp 0.5s ease 0.18s both",position:"relative",zIndex:1 }}>
-            <Countdown secs={promoSeconds}/>
-          </div>
-        )}
+        
 
         {/* billing toggle */}
         <div style={{ display:"inline-flex",alignItems:"center",background:"var(--surface)",border:"1px solid rgba(200,16,46,0.14)",padding:"4px",gap:"2px",animation:"fadeUp 0.5s ease 0.2s both",position:"relative",zIndex:1 }}>
@@ -559,6 +581,7 @@ export default function SubscribePage() {
             <PlanCard key={plan.id} plan={plan} index={i}
               isCurrent={currentPlan===plan.id} isHigher={i>currentIdx}
               isSubscribed={isSubscribed} loading={loading} billing={billing} promoEligible={promoEligible}
+              promoSeconds={promoSeconds}
               onSubscribe={handleSubscribe}
               onChangePlan={id => {
                 const name = PLANS.find(p=>p.id===id)?.name;
