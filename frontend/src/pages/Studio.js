@@ -1675,9 +1675,19 @@ export default function Studio() {
       {(!isMobilePortrait || mobilePanel === "preview") && (
       <div style={{ flex:1,display:"flex",flexDirection:"column",background:"var(--bg-0)",overflow:"hidden",minWidth:0,height:isMobilePortrait?"100%":"auto" }}>
  
-        {panelView==="preview" && <>
-          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.22)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)" }}>
-            <div style={{ flexShrink:0,padding:"6px 10px",background:"#000000",borderBottom:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",gap:"6px",borderRadius:"12px 12px 0 0" }}>
+ {panelView==="preview" && <>
+          {isMobilePortrait && (
+            <div style={{ padding:"10px 12px",background:"var(--bg-0)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"8px",flexShrink:0 }}>
+              <div style={{ flex:1,textAlign:"center",minWidth:0 }}>
+                <span style={{ fontSize:"0.72rem",fontWeight:600,color:"var(--text-secondary)",fontFamily:"var(--font-mono)" }}>Preview</span>
+              </div>
+              <button onClick={() => setMobilePanel("chat")} style={{ background:"none",border:`1px solid var(--border-subtle)`,borderRadius:"6px",color:"var(--text-secondary)",cursor:"pointer",padding:"3px 8px",flexShrink:0,display:"flex",alignItems:"center",gap:"4px",fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}>
+                Chat
+              </button>
+            </div>
+          )}
+          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:isMobilePortrait?"0":"6px 8px 8px",borderRadius:isMobilePortrait?"0":"12px",border:isMobilePortrait?"none":"1px solid rgba(255,255,255,0.22)",background:"#000000",boxShadow:isMobilePortrait?"none":"0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)" }}>
+            <div style={{ flexShrink:0,padding:"6px 10px",background:"#000000",borderBottom:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",gap:"6px",borderRadius:isMobilePortrait?"0":"12px 12px 0 0" }}>
               <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
@@ -1721,8 +1731,18 @@ export default function Studio() {
         </>}
 
         {panelView==="code" && <>
-          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.22)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)" }}>
-            <div style={{ padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",flexShrink:0,borderRadius:"12px 12px 0 0" }}>
+          {isMobilePortrait && (
+            <div style={{ padding:"10px 12px",background:"var(--bg-0)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"8px",flexShrink:0 }}>
+              <div style={{ flex:1,textAlign:"center",minWidth:0 }}>
+                <span style={{ fontSize:"0.72rem",fontWeight:600,color:"var(--text-secondary)",fontFamily:"var(--font-mono)" }}>Code</span>
+              </div>
+              <button onClick={() => setMobilePanel("chat")} style={{ background:"none",border:`1px solid var(--border-subtle)`,borderRadius:"6px",color:"var(--text-secondary)",cursor:"pointer",padding:"3px 8px",flexShrink:0,display:"flex",alignItems:"center",gap:"4px",fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}>
+                Chat
+              </button>
+            </div>
+          )}
+          <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:isMobilePortrait?"0":"6px 8px 8px",borderRadius:isMobilePortrait?"0":"12px",border:isMobilePortrait?"none":"1px solid rgba(255,255,255,0.22)",background:"#000000",boxShadow:isMobilePortrait?"none":"0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)" }}>
+            <div style={{ padding:"6px 10px",background:"var(--bg-2)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"6px",flexShrink:0,borderRadius:isMobilePortrait?"0":"12px 12px 0 0" }}>
               <div style={{ display:"flex",gap:"4px",flexShrink:0,marginRight:"4px" }}>
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#ff5f57" }} />
                 <div style={{ width:"7px",height:"7px",borderRadius:"50%",background:"#febc2e" }} />
