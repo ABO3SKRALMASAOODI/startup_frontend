@@ -1238,7 +1238,7 @@ export default function Studio() {
     }, 4000);
   };
 
-  const ALLOWED_EXT = ['png','jpg','jpeg','gif','webp','svg','pdf','txt','md','csv'];
+  const ALLOWED_EXT = ['png','jpg','jpeg','gif','webp','svg','pdf','txt','md','csv','json','py','js','ts','jsx','tsx','css','html','env','yaml','yml','xml','sql','sh','toml'];
   const addFiles = fl => { const nf = Array.from(fl).filter(f => ALLOWED_EXT.includes(f.name.split('.').pop().toLowerCase()) && f.size <= 10*1024*1024); setAttachedFiles(prev=>[...prev,...nf].slice(0,5)); };
   const removeFile = i => setAttachedFiles(prev=>prev.filter((_,j)=>j!==i));
 
@@ -1640,7 +1640,7 @@ export default function Studio() {
               <button onClick={()=>fileInputRef.current?.click()} disabled={isRunning} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:isRunning?"default":"pointer",fontSize:"1rem",padding:"4px",flexShrink:0,opacity:isRunning?0.3:1,transition:"color 0.12s" }}
                 onMouseEnter={e=>{if(!isRunning)e.currentTarget.style.color="var(--red-accent)";}} onMouseLeave={e=>{if(!isRunning)e.currentTarget.style.color="var(--text-muted)";}}
               >+</button>
-              <input ref={fileInputRef} type="file" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.txt,.md,.csv" style={{ display:"none" }} onChange={e=>{if(e.target.files?.length){addFiles(e.target.files);e.target.value="";}}} />
+              <input ref={fileInputRef} type="file" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.txt,.md,.csv,.json,.py,.js,.ts,.jsx,.tsx,.css,.html,.env,.yaml,.yml,.xml,.sql,.sh,.toml" style={{ display:"none" }} onChange={e=>{if(e.target.files?.length){addFiles(e.target.files);e.target.value="";}}} />
               <textarea ref={inputRef} value={prompt} onChange={e=>{setPrompt(e.target.value);const el=e.target;el.style.height="auto";el.style.height=Math.min(el.scrollHeight,140)+"px";}}
                 onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend(e);}}} onPaste={handlePaste} placeholder={placeholder} rows={1} disabled={isRunning}
                 style={{ flex:1,background:"transparent",color:"var(--text-primary)",border:"none",outline:"none",fontSize:"0.82rem",resize:"none",fontFamily:"var(--font-sans)",lineHeight:1.5,maxHeight:"140px",minHeight:"36px",overflowY:"auto",opacity:isRunning?0.4:1,padding:0,margin:0 }} />
