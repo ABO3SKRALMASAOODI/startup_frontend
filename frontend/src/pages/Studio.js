@@ -1521,7 +1521,7 @@ export default function Studio() {
                       <div style={{ display:"flex",gap:"4px",flexWrap:"wrap",marginTop:"6px",paddingTop:"6px",borderTop:`1px solid var(--border-subtle)` }}>
                         {msg.attachments.map((att,ai) => {
                           const isImg = att.type?.startsWith("image/");
-                          const fileUrl = attachmentUrlsRef.current[att.name];
+                          const fileUrl = attachmentUrlsRef.current[att.name] || att.url || null;
                           const canOpen = !!fileUrl;
                           return (
                             <span key={ai}
