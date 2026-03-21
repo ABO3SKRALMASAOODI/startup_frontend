@@ -1702,7 +1702,7 @@ export default function Studio() {
               )}
               {!previewUrl && !isRunning && !isRendering && !previewError && (
                 <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"var(--bg-0)",gap:"8px" }}>
-                  {state === "completed" && !buildOk ? (
+                  {state === "completed" && codeChanged && !buildOk ? (
                     <>
                       <span style={{ color:"var(--yellow-accent)",fontSize:"0.82rem",fontWeight:600 }}>Build failed</span>
                       <span style={{ color:"var(--text-tertiary)",fontSize:"0.72rem",maxWidth:"240px",textAlign:"center",lineHeight:1.5 }}>
