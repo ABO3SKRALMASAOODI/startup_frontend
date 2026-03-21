@@ -43,7 +43,7 @@ const GLOBAL_STYLES = `
     --green-subtle: rgba(16,185,129,0.08);
     --yellow-accent: #f59e0b;
   }
-
+  html, body, #root { height: 100%; overflow: hidden; }
   .studio-scroll::-webkit-scrollbar { width: 4px; }
   .studio-scroll::-webkit-scrollbar-track { background: transparent; }
   .studio-scroll::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 4px; }
@@ -104,7 +104,8 @@ function GlobalStyles() {
 function useIsMobile() {
   const check = () => ({
     isMobilePortrait:  window.innerWidth <= 768 && window.innerHeight > window.innerWidth,
-    isMobileLandscape: window.innerWidth <= 926 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight,
+    isMobileLandscape: window.innerWidth <= 926 && window.innerHeight <= 500 && window.innerWidth > window.innerHeight,
+    isMobile: window.innerWidth <= 768 || (window.innerWidth <= 926 && window.innerHeight <= 500),
   });
   const [state, setState] = useState(check);
   useEffect(() => {
@@ -116,18 +117,7 @@ function useIsMobile() {
   return state;
 }
 
-// ── Rotate prompt ────────────────────────────────────────────────────────────
-function RotateScreen() {
-  return (
-    <div style={{ position:"fixed",inset:0,zIndex:99999,background:"var(--bg-0)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"24px",fontFamily:"var(--font-sans)" }}>
-      <div style={{ width:"48px",height:"48px",border:"2px solid var(--border-default)",borderTop:"2px solid var(--red-accent)",borderRadius:"50%",animation:"spin 1.5s linear infinite" }} />
-      <p style={{ color:"var(--text-primary)",fontSize:"1rem",fontWeight:600 }}>Rotate your phone</p>
-      <p style={{ color:"var(--text-tertiary)",fontSize:"0.8rem",maxWidth:"220px",textAlign:"center",lineHeight:1.6 }}>
-        The Hustler Bot Studio is designed for landscape mode on mobile.
-      </p>
-    </div>
-  );
-}
+
 
 // ── Bot avatar ───────────────────────────────────────────────────────────────
 function BotAvatar({ size = 30 }) {
@@ -1014,7 +1004,8 @@ function LongInputChip({ content }) {
 
 export default function Studio() {
   const navigate = useNavigate();
-  const { isMobilePortrait, isMobileLandscape } = useIsMobile();
+  const { isMobilePortrait, isMobileLandscape, isMobile } = useIsMobile();
+  const [mobilePanel, setMobilePanel] = useState("chat"); // "chat" or "preview"
   const bottomRef = useRef(null);
   const pollRef = useRef(null);
   // ── NEW: separate interval ref for backend-status polling ─────────────────
@@ -1437,11 +1428,11 @@ export default function Studio() {
     </>
   );
 
-  if (isMobilePortrait) return <><GlobalStyles /><RotateScreen /></>;
-  const chatFlex = isMobileLandscape ? "0 0 260px" : "0 0 380px";
+  const chatFlex = isMobilePortrait ? "1 1 100%" : isMobileLandscape ? "0 0 260px" : "0 0 380px";
+ 
 
   return (
-    <div style={{ height:"100vh",width:"100vw",display:"flex",background:"var(--bg-0)",color:"var(--text-primary)",fontFamily:"var(--font-sans)",overflow:"hidden" }}>
+    <div style={{ height:"100vh",width:"100vw",display:"flex",background:"var(--bg-0)",color:"var(--text-primary)",fontFamily:"var(--font-sans)",overflow:"hidden",flexDirection:isMobilePortrait?"column":"row" }}>
       <GlobalStyles />
       {showNameModal && <NameModal onDone={name => { localStorage.setItem("user_name",name); localStorage.removeItem("show_name_modal"); setShowNameModal(false); }} />}
       <ConfirmModal open={showLogoutModal} title="Log out?" description="You'll need to sign in again." confirmLabel="Log out" onConfirm={confirmLogout} onCancel={()=>setShowLogoutModal(false)} />
@@ -1459,13 +1450,13 @@ export default function Studio() {
       )}
       <Sidebar open={sidebarOpen} onClose={()=>setSidebarOpen(false)} userEmail={userEmail} credits={credits} planLimit={planLimit} projects={projects} currentJobId={currentJobId}
         onNewProject={handleNewProject} onLoadProject={handleLoadProject} onLogout={handleLogout} onUpgrade={handleUpgrade} onHome={()=>navigate("/home")} />
-
       {/* ── Chat panel ── */}
+      {(!isMobilePortrait || mobilePanel === "chat") && (
       <div
         onDragOver={e=>{e.preventDefault();e.stopPropagation();setIsDragging(true);}}
         onDragLeave={e=>{e.preventDefault();e.stopPropagation();if(!e.currentTarget.contains(e.relatedTarget))setIsDragging(false);}}
         onDrop={e=>{e.preventDefault();e.stopPropagation();setIsDragging(false);if(e.dataTransfer.files?.length)addFiles(e.dataTransfer.files);}}
-        style={{ flex:chatFlex,display:"flex",flexDirection:"column",borderRight:`1px solid var(--border-subtle)`,overflow:"hidden",background:"var(--bg-0)",position:"relative" }}>
+        style={{ flex:chatFlex,display:"flex",flexDirection:"column",borderRight:isMobilePortrait?"none":`1px solid var(--border-subtle)`,overflow:"hidden",background:"var(--bg-0)",position:"relative",height:isMobilePortrait?"100%":"auto" }}>
         {isDragging && (
           <div style={{ position:"absolute",inset:0,zIndex:20,background:"rgba(140,35,35,0.08)",border:"2px dashed var(--red-accent)",borderRadius:"0",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none" }}>
             <div style={{ background:"var(--bg-2)",border:"1px solid rgba(140,35,35,0.35)",borderRadius:"12px",padding:"16px 24px",boxShadow:"0 8px 30px rgba(0,0,0,0.5)" }}>
@@ -1667,12 +1658,14 @@ export default function Studio() {
             <span style={{ flex:1 }}>{error}</span>
             {error.toLowerCase().includes("credits") && <button onClick={handleUpgrade} style={{ background:"var(--red-accent)",border:"none",color:"#fff",borderRadius:"6px",padding:"3px 10px",cursor:"pointer",fontSize:"0.72rem",fontWeight:600,whiteSpace:"nowrap" }}>Get Credits</button>}
           </div>
+          )}
+        </div>
         )}
-      </div>
-
-      {/* ── Preview panel ── */}
-      <div style={{ flex:1,display:"flex",flexDirection:"column",background:"var(--bg-0)",overflow:"hidden",minWidth:0 }}>
-
+  
+        {/* ── Preview panel ── */}
+      {(!isMobilePortrait || mobilePanel === "preview") && (
+      <div style={{ flex:1,display:"flex",flexDirection:"column",background:"var(--bg-0)",overflow:"hidden",minWidth:0,height:isMobilePortrait?"100%":"auto" }}>
+ 
         {panelView==="preview" && <>
           <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",margin:"6px 8px 8px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.22)",background:"#000000",boxShadow:"0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)" }}>
             <div style={{ flexShrink:0,padding:"6px 10px",background:"#000000",borderBottom:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",gap:"6px",borderRadius:"12px 12px 0 0" }}>
@@ -1737,6 +1730,40 @@ export default function Studio() {
           </div>
         </>}
       </div>
+      )}
+      {isMobilePortrait && (
+        <button
+          onClick={() => setMobilePanel(p => p === "chat" ? "preview" : "chat")}
+          style={{
+            position:"fixed",
+            bottom:"16px",
+            right:"16px",
+            zIndex:600,
+            width:"48px",
+            height:"48px",
+            borderRadius:"50%",
+            background:"linear-gradient(135deg,var(--red-accent),#701818)",
+            border:"none",
+            color:"#fff",
+            fontSize:"1.1rem",
+            cursor:"pointer",
+            display:"flex",
+            alignItems:"center",
+            justifyContent:"center",
+            boxShadow:"0 4px 20px rgba(140,30,30,0.6), 0 0 0 1px rgba(255,255,255,0.08)",
+          }}
+        >
+          {mobilePanel === "chat" ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+          )}
+        </button>
+      )}
     </div>
   );
 }
