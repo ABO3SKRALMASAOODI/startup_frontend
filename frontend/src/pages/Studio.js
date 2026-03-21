@@ -1140,7 +1140,7 @@ export default function Studio() {
   }, []); // eslint-disable-line
 
   const mergeServerMessages = useCallback((serverMsgs) => {
-    const mapped = (serverMsgs||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used }));
+    const mapped = (serverMsgs||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used,attachments:m.attachments||undefined }));
     setMessages(prev => {
       return mapped.map((msg, i) => {
         const existing = prev[i];
