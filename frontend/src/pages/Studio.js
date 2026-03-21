@@ -257,7 +257,13 @@ function HighlightedCode({ code, lang }) {
 // ── Copy button ──────────────────────────────────────────────────────────────
 function CopyButton({ text, label = "Copy", size = "sm" }) {
   const [copied, setCopied] = useState(false);
-  const handleCopy = () => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const copyTimerRef = useRef(null);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => { setCopied(false); copyTimerRef.current = null; }, 2000);
+  };
   return (
     <button onClick={handleCopy} style={{
       background: copied ? "rgba(16,185,129,0.1)" : "transparent",
@@ -1137,8 +1143,13 @@ export default function Studio() {
     const mapped = (serverMsgs||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used }));
     setMessages(prev => {
       return mapped.map((msg, i) => {
-        if (prev[i] && prev[i].role === msg.role && prev[i].attachments) {
-          return { ...msg, attachments: prev[i].attachments };
+        const existing = prev[i];
+        if (existing && existing.role === msg.role) {
+          // Preserve attachments and collapsed state from previous render
+          const merged = { ...msg };
+          if (existing.attachments) merged.attachments = existing.attachments;
+          if (existing.collapsed) merged.collapsed = existing.collapsed;
+          return merged;
         }
         return msg;
       });
@@ -1523,7 +1534,7 @@ export default function Studio() {
                               onMouseEnter={e=>{ if (canOpen) e.currentTarget.style.borderColor="var(--red-accent)"; }}
                               onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--border-subtle)"; }}
                             >
-                              {isImg && fileUrl ? <img src={fileUrl} alt="" style={{ width:"18px",height:"18px",borderRadius:"2px",objectFit:"cover" }} /> : isImg ? "IMG" : "DOC"}
+                              {isImg && fileUrl ? <img src={fileUrl} alt="" style={{ width:"18px",height:"18px",borderRadius:"2px",objectFit:"cover" }} /> : <span style={{ fontSize:"0.55rem",color:"var(--text-muted)",fontWeight:600 }}>{isImg ? "IMG" : "DOC"}</span>}
                               <span style={{ maxWidth:"80px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{att.name}</span>
                             </span>
                           );
@@ -1673,7 +1684,7 @@ export default function Studio() {
               {renderChromeButtons()}
             </div>
             <div style={{ flex:1,overflow:"hidden",borderRadius:"0 0 11px 11px",display:"flex",flexDirection:"column" }}>
-              {(isRunning||isRendering) && !previewUrl && (
+            {(isRunning||isRendering) && !previewUrl && progress.some(p => ["writing","editing","building","installing","generating image","editing image","requesting backend","requesting stripe","requesting ai","compiling"].includes(p.action)) && (
                 <BuildView progress={progress} buildPhase={buildPhase} progressPercent={progressPercent} />
               )}
               {previewError && !isRunning && (
