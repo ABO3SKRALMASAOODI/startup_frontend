@@ -43,7 +43,10 @@ const GLOBAL_STYLES = `
     --green-subtle: rgba(16,185,129,0.08);
     --yellow-accent: #f59e0b;
   }
-  html, body, #root { height: 100%; overflow: hidden; }
+  html, body, #root { height: 100dvh; overflow: hidden; }
+  @media screen and (max-width: 768px) {
+    input, textarea, select { font-size: 16px !important; }
+  }
   .studio-scroll::-webkit-scrollbar { width: 4px; }
   .studio-scroll::-webkit-scrollbar-track { background: transparent; }
   .studio-scroll::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 4px; }
@@ -1432,7 +1435,7 @@ export default function Studio() {
  
 
   return (
-    <div style={{ height:"100vh",width:"100vw",display:"flex",background:"var(--bg-0)",color:"var(--text-primary)",fontFamily:"var(--font-sans)",overflow:"hidden",flexDirection:isMobilePortrait?"column":"row" }}>
+    <div style={{ height:"100dvh",width:"100vw",display:"flex",background:"var(--bg-0)",color:"var(--text-primary)",fontFamily:"var(--font-sans)",overflow:"hidden",flexDirection:isMobilePortrait?"column":"row" }}>
       <GlobalStyles />
       {showNameModal && <NameModal onDone={name => { localStorage.setItem("user_name",name); localStorage.removeItem("show_name_modal"); setShowNameModal(false); }} />}
       <ConfirmModal open={showLogoutModal} title="Log out?" description="You'll need to sign in again." confirmLabel="Log out" onConfirm={confirmLogout} onCancel={()=>setShowLogoutModal(false)} />
@@ -1472,7 +1475,13 @@ export default function Studio() {
               {currentJobId ? (projects.find(p=>p.job_id===currentJobId)?.title||"Project") : "The Hustler Bot"}
             </h2>
           </div>
-          <div style={{ width:"30px",flexShrink:0 }} />
+          {isMobilePortrait ? (
+            <button onClick={() => setMobilePanel(p => p === "chat" ? "preview" : "chat")} style={{ background:"none",border:`1px solid var(--border-subtle)`,borderRadius:"6px",color:"var(--text-secondary)",cursor:"pointer",padding:"3px 8px",flexShrink:0,display:"flex",alignItems:"center",gap:"4px",fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}>
+              {mobilePanel === "chat" ? "Preview" : "Chat"}
+            </button>
+          ) : (
+            <div style={{ width:"30px",flexShrink:0 }} />
+          )}
         </div>
 
         {/* Chat messages */}
@@ -1731,39 +1740,7 @@ export default function Studio() {
         </>}
       </div>
       )}
-      {isMobilePortrait && (
-        <button
-          onClick={() => setMobilePanel(p => p === "chat" ? "preview" : "chat")}
-          style={{
-            position:"fixed",
-            bottom:"16px",
-            right:"16px",
-            zIndex:600,
-            width:"48px",
-            height:"48px",
-            borderRadius:"50%",
-            background:"linear-gradient(135deg,var(--red-accent),#701818)",
-            border:"none",
-            color:"#fff",
-            fontSize:"1.1rem",
-            cursor:"pointer",
-            display:"flex",
-            alignItems:"center",
-            justifyContent:"center",
-            boxShadow:"0 4px 20px rgba(140,30,30,0.6), 0 0 0 1px rgba(255,255,255,0.08)",
-          }}
-        >
-          {mobilePanel === "chat" ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-            </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-            </svg>
-          )}
-        </button>
-      )}
+      
     </div>
   );
 }
