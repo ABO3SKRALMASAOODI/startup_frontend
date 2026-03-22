@@ -218,7 +218,7 @@ export default function ModelSelector({ selectedModel, onSelect, plan }) {
 
         <span style={{
           fontSize: "0.67rem", fontWeight: 700,
-          color: current.color,
+          color: "#ffffff",
           letterSpacing: "0.05em",
           fontFamily: "'JetBrains Mono', monospace",
           lineHeight: 1,
