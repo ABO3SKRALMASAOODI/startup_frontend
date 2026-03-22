@@ -5,9 +5,9 @@ import API from "../api/api";
 
 /* ─── Shared model definitions ───────────────────────────────────────────── */
 const MODEL_DEFS = {
-  "hb-6":     { name: "HB-6",     riveSrc: "/hustler-robot.riv",      glow: null },
-  "hb-6-pro": { name: "HB-6 Pro", riveSrc: "/hustler-robot.riv",      glow: "rgba(200,16,46,0.9)" },
-  "hb-7":     { name: "HB-7",     riveSrc: "/hustler-bubble-bot.riv", glow: "rgba(200,16,46,0.9)" },
+  "hb-6":     { name: "HB-6",     riveSrc: "/hustler-robot90.riv",      glow: null },
+  "hb-6-pro": { name: "HB-6 Pro", riveSrc: "/hustler-robot91.riv",      glow: "rgba(200,16,46,0.9)" },
+  "hb-7":     { name: "HB-7",     riveSrc: "/hustler-bubble-bot92.riv", glow: "rgba(200,16,46,0.9)" },
 };
 
 function PlanBot({ modelId, size = 18 }) {
