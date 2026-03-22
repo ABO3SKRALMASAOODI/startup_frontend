@@ -105,61 +105,7 @@ function TemplateCard({ template, index, onUse, disabled = false }) {
     </motion.div>
   );
 }
-// ── Robot card with its own Rive instance ─────────────────────────────────────
-function RobotCard({ num, index }) {
-  const { RiveComponent } = useRive({
-    src: `/hustler-robot${num}.riv`,
-    autoplay: true,
-    stateMachines: ["State Machine 1"],
-  });
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.03 }}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "6px",
-        padding: "14px 10px 10px",
-        background: "rgba(12,2,2,0.85)",
-        border: "1px solid rgba(80,0,0,0.35)",
-        borderRadius: "14px",
-        transition: "all 0.2s ease",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "rgba(200,0,0,0.6)";
-        e.currentTarget.style.background = "rgba(40,0,0,0.4)";
-        e.currentTarget.style.boxShadow = "0 0 24px rgba(180,0,0,0.3)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(80,0,0,0.35)";
-        e.currentTarget.style.background = "rgba(12,2,2,0.85)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
-    >
-      <div style={{ width: "100px", height: "100px" }}>
-        <RiveComponent style={{ width: "100%", height: "100%" }} />
-      </div>
-      <span
-        style={{
-          fontSize: "0.75rem",
-          color: "rgba(200,60,60,0.8)",
-          background: "rgba(100,0,0,0.2)",
-          border: "1px solid rgba(120,0,0,0.3)",
-          borderRadius: "100px",
-          padding: "2px 10px",
-          fontWeight: 600,
-          letterSpacing: "0.04em",
-        }}
-      >
-        #{num}
-      </span>
-    </motion.div>
-  );
-}
 // ── Bottom glowing prompt box ─────────────────────────────────────────────────
 function BottomPromptBox({ onSend }) {
   const [prompt, setPrompt] = useState("Build a SaaS landing page for a fitness app");
@@ -501,39 +447,7 @@ function LandingPage() {
           </motion.div>
         </section>
       </div>
-      {/* ── ROBOT ROSTER ── */}
-      <section className="py-24 bg-black relative z-10 px-4 md:px-12">
-      <motion.div
-      className="text-center mb-12"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1 }}
-      >
-      <h2
-      className="text-4xl md:text-5xl font-bold mb-3 text-white"
-      style={{ textShadow: "0 0 30px rgba(255,26,26,0.3)" }}
-      >
-      Robot Roster
-      </h2>
-      <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.95rem" }}>
-      25 variants · hustler-robot88 → hustler-robot112
-      </p>
-      </motion.div>
 
-      <div
-      style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-      gap: "12px",
-      maxWidth: "960px",
-      margin: "0 auto",
-      }}
-      >
-      {Array.from({ length: 37 }, (_, i) => i + 88).map((num, index) => (
-      <RobotCard key={num} num={num} index={index} />
-      ))}
-      </div>
-      </section>
       {/* ── FLOATING BUBBLE ── */}
       <div
         className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#111] border border-red-700 rounded-full px-4 py-2 shadow-[0_0_25px_#ff1a1a] hover:scale-105 transition cursor-pointer"
