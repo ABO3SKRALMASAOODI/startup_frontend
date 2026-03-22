@@ -1429,23 +1429,35 @@ export default function Studio() {
   };
  
   const handleStartWithPlanner = async (text) => {
-    setShowPlannerPopup(false); setPlannerMode(true); setPlannerState("thinking");
+    setShowPlannerPopup(false);
+    setPlannerMode(true);
+    setPlannerState("thinking");
     try {
-      if (!currentJobId) {
-        setState("running");
-        const [jobId, smartTitle] = await Promise.all([generateProject(text, "", selectedModel, []), generateTitle(text)]);
-        setCurrentJobId(jobId); setPublishedUrl(null); setChangesSincePublish(false);
-        setProjects(prev => [{ job_id: jobId, title: smartTitle, state: "running", preview_url: null }, ...prev]);
+      let jobId = currentJobId;
+
+      if (!jobId) {
+        const smartTitle = await generateTitle(text);
+        const res = await API.post("/auth/job/create", {
+          model: selectedModel,
+          title: smartTitle,
+        });
+        jobId = res.data.job_id;
+        setCurrentJobId(jobId);
+        setPublishedUrl(null);
+        setChangesSincePublish(false);
+        setProjects(prev => [
+          { job_id: jobId, title: smartTitle, state: "idle", preview_url: null },
+          ...prev,
+        ]);
         API.patch(`/auth/job/${jobId}/title`, { title: smartTitle }).catch(() => {});
-        try { await API.post(`/auth/job/${jobId}/cancel`); } catch {}
-        setState("idle");
-        await startPlannerAPI(jobId, text); startPlannerPolling(jobId);
-      } else {
-        await startPlannerAPI(currentJobId, text); startPlannerPolling(currentJobId);
       }
+
+      await startPlannerAPI(jobId, text);
+      startPlannerPolling(jobId);
     } catch (e) {
       console.error("Failed to start planner:", e);
-      setPlannerMode(false); setPlannerState(null);
+      setPlannerMode(false);
+      setPlannerState(null);
       setError(e?.response?.data?.error || "Failed to start planner");
     }
   };
