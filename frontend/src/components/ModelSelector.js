@@ -19,7 +19,7 @@ const MODEL_DEFS = [
     badgeColor: "#4caf50",
     min_plan_label: "Free+",
     badge: "FAST",
-    riveSrc: "/hustler-robot.riv",
+    riveSrc: "/hustler-robot112.riv",
   },
   {
     id: "hb-6-pro",
