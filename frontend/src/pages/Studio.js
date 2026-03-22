@@ -878,7 +878,7 @@ function PlannerPopup({ onYes, onSkip }) {
               fontFamily:"'JetBrains Mono', monospace",
             }}>BETA</span>
           </div>
-          <div style={{ fontSize:"0.64rem",color:"#4a4a4a",lineHeight:1.4 }}>
+          <div style={{ fontSize:"0.64rem",color:"var(--green-accent)",lineHeight:1.4,opacity:0.8 }}>
             Asks targeted questions to build a detailed spec before the AI starts coding. Produces higher quality results.
           </div>
         </div>
@@ -899,8 +899,8 @@ function PlannerPopup({ onYes, onSkip }) {
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="var(--yellow-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div>
-            <div style={{ fontSize:"0.75rem",fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono', monospace" }}>Yes, plan first</div>
-            <div style={{ fontSize:"0.6rem",color:"#4a4a4a",marginTop:"1px" }}>Recommended for complex apps</div>
+          <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--green-accent)",fontFamily:"'JetBrains Mono', monospace" }}>Yes, plan first</div>
+          <div style={{ fontSize:"0.6rem",color:"rgba(16,185,129,0.5)",marginTop:"1px" }}>Recommended for complex apps</div>
           </div>
         </button>
 
@@ -919,8 +919,8 @@ function PlannerPopup({ onYes, onSkip }) {
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 8h8" stroke="#4a4a56" strokeWidth="2" strokeLinecap="round"/></svg>
           </div>
           <div>
-            <div style={{ fontSize:"0.75rem",fontWeight:700,color:"#888",fontFamily:"'JetBrains Mono', monospace" }}>Skip, build now</div>
-            <div style={{ fontSize:"0.6rem",color:"#3a3a3a",marginTop:"1px" }}>Go straight to the builder</div>
+          <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--red-accent)",fontFamily:"'JetBrains Mono', monospace" }}>Skip, build now</div>
+          <div style={{ fontSize:"0.6rem",color:"rgba(160,32,32,0.5)",marginTop:"1px" }}>Go straight to the builder</div>
           </div>
         </button>
       </div>
@@ -1249,7 +1249,48 @@ function LongInputChip({ content }) {
     </div>
   );
 }
+// ── Spec attachment chip — collapsed view of the approved spec ─────────────
+function SpecAttachmentChip({ specText }) {
+  const [expanded, setExpanded] = useState(false);
+  const lines = specText.split("\n").length;
+  const summaryMatch = specText.match(/\[APPROVED SPEC\]\n(.+?)(\n|$)/);
+  const summary = summaryMatch ? summaryMatch[1].trim() : "Approved specification";
 
+  return (
+    <div onClick={() => setExpanded(e => !e)} style={{
+      padding:"10px 14px",borderRadius:"14px 14px 4px 14px",
+      background:"rgba(30,10,10,0.95)",
+      border:"1px solid rgba(120,30,30,0.4)",
+      boxShadow:"0 1px 8px rgba(0,0,0,0.4)",
+      cursor:"pointer",transition:"all 0.15s",maxWidth:"320px",
+    }}
+      onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(160,40,40,0.6)"}
+      onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(120,30,30,0.4)"}
+    >
+      <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:expanded?"8px":"0" }}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink:0 }}>
+          <path d="M2 2h12v12H2z" stroke="var(--green-accent)" strokeWidth="1.5" strokeLinejoin="round"/>
+          <path d="M5 5h6M5 8h6M5 11h4" stroke="var(--green-accent)" strokeWidth="1" strokeLinecap="round"/>
+        </svg>
+        <span style={{ fontSize:"0.72rem",fontWeight:600,color:"var(--green-accent)",fontFamily:"var(--font-mono)" }}>Approved Spec</span>
+        <span style={{ fontSize:"0.55rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginLeft:"auto" }}>{lines} lines</span>
+        <span style={{ fontSize:"0.6rem",color:"var(--text-muted)" }}>{expanded ? "▲" : "▼"}</span>
+      </div>
+      {!expanded && <div style={{ fontSize:"0.68rem",color:"var(--text-tertiary)",marginTop:"4px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{summary}</div>}
+      {expanded && (
+        <pre style={{
+          margin:0,padding:"8px",background:"var(--bg-0)",borderRadius:"6px",
+          fontSize:"0.65rem",fontFamily:"var(--font-mono)",color:"var(--text-secondary)",
+          overflowY:"auto",overflowX:"auto",maxHeight:"400px",
+          whiteSpace:"pre-wrap",wordBreak:"break-word",lineHeight:1.5,
+        }}>{specText}</pre>
+      )}
+      <div style={{ marginTop:"6px",paddingTop:"4px",borderTop:"none" }}>
+        <CopyButton text={specText} label="Copy spec" size="sm" />
+      </div>
+    </div>
+  );
+}
 // ═══════════════════════════════════════════════════════════════════════════════
 //  MAIN STUDIO
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1507,6 +1548,14 @@ export default function Studio() {
         setPlannerState(st);
 
         if (st === "waiting_questions") {
+          // Add the questions as a planner message so they persist in the chat
+          const questionsText = (d.context ? `*${d.context}*\n\n` : "") + (d.questions||[]).map((q,i) => `**${i+1}.** ${q}`).join("\n");
+          setPlannerMessages(prev => {
+            // Avoid duplicating if questions haven't changed
+            const lastPlanner = [...prev].reverse().find(m => m.role === "planner");
+            if (lastPlanner && lastPlanner.content === questionsText) return prev;
+            return [...prev, { role: "planner", content: questionsText }];
+          });
           setPlannerQuestions({ context: d.context, questions: d.questions });
           setPlannerSpec(null); setPlannerTextReply(null);
         } else if (st === "waiting_spec" || st === "waiting_edit") {
@@ -1871,7 +1920,74 @@ export default function Studio() {
       <GlobalStyles />
       {showNameModal && <NameModal onDone={name => { localStorage.setItem("user_name",name); localStorage.removeItem("show_name_modal"); setShowNameModal(false); }} />}
       <ConfirmModal open={showLogoutModal} title="Log out?" description="You'll need to sign in again." confirmLabel="Log out" onConfirm={confirmLogout} onCancel={()=>setShowLogoutModal(false)} />
-      <ConfirmModal open={showQuitPlannerModal} title="Quit Planner?" description="The planning session will be discarded and the spec will not be saved." warning="You can continue answering questions and the final plan will be handed to the builder agent automatically." confirmLabel="Quit" onConfirm={() => { setShowQuitPlannerModal(false); handleQuitPlanner(); }} onCancel={() => setShowQuitPlannerModal(false)} />
+      {showQuitPlannerModal && (
+        <div style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+          <div style={{
+            background:"#0b0b0b",border:"1px solid #1e1e1e",borderRadius:"14px",
+            padding:"6px",width:"300px",
+            boxShadow:"0 16px 48px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.025)",
+            animation:"slideIn 0.15s cubic-bezier(0.2,0,0,1) forwards",
+            position:"relative",
+          }}>
+            <button onClick={() => setShowQuitPlannerModal(false)} style={{
+              position:"absolute",top:"8px",right:"8px",background:"none",border:"none",
+              color:"#3a3a3a",fontSize:"0.9rem",cursor:"pointer",padding:"2px 6px",lineHeight:1,zIndex:1,borderRadius:"4px",transition:"color 0.12s",
+            }}
+              onMouseEnter={e=>e.currentTarget.style.color="#888"}
+              onMouseLeave={e=>e.currentTarget.style.color="#3a3a3a"}
+            >×</button>
+
+            <div style={{ padding:"14px 14px 10px",borderBottom:"1px solid #161616",marginBottom:"6px" }}>
+              <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px" }}>
+                <div style={{ width:"24px",height:"24px",borderRadius:"6px",background:"rgba(160,32,32,0.1)",border:"1px solid rgba(160,32,32,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 3v6M8 11.5v1" stroke="var(--red-accent)" strokeWidth="2" strokeLinecap="round"/></svg>
+                </div>
+                <span style={{ fontSize:"0.78rem",fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono', monospace" }}>Quit Planning?</span>
+              </div>
+              <div style={{ fontSize:"0.64rem",color:"var(--red-accent)",lineHeight:1.5,marginBottom:"4px",fontWeight:600 }}>
+                The planning session and all progress will be permanently lost.
+              </div>
+              <div style={{ fontSize:"0.62rem",color:"var(--text-tertiary)",lineHeight:1.5 }}>
+                If you continue answering questions, the planner will produce a detailed spec and automatically hand it to the builder agent.
+              </div>
+            </div>
+
+            <button onClick={() => { setShowQuitPlannerModal(false); }}
+              onMouseEnter={e=>{e.currentTarget.style.background="rgba(16,185,129,0.06)";}}
+              onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}
+              style={{
+                display:"flex",alignItems:"center",gap:"10px",width:"100%",padding:"10px 12px",
+                background:"transparent",border:"1px solid rgba(16,185,129,0.12)",borderRadius:"10px",
+                cursor:"pointer",textAlign:"left",marginBottom:"4px",outline:"none",transition:"all 0.13s ease",
+              }}>
+              <div style={{ width:"20px",height:"20px",borderRadius:"6px",background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="var(--green-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+              <div>
+                <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--green-accent)",fontFamily:"'JetBrains Mono', monospace" }}>Keep planning</div>
+                <div style={{ fontSize:"0.6rem",color:"rgba(16,185,129,0.5)",marginTop:"1px" }}>Continue where you left off</div>
+              </div>
+            </button>
+
+            <button onClick={() => { setShowQuitPlannerModal(false); handleQuitPlanner(); }}
+              onMouseEnter={e=>{e.currentTarget.style.background="rgba(160,32,32,0.08)";}}
+              onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}
+              style={{
+                display:"flex",alignItems:"center",gap:"10px",width:"100%",padding:"10px 12px",
+                background:"transparent",border:"1px solid transparent",borderRadius:"10px",
+                cursor:"pointer",textAlign:"left",outline:"none",transition:"all 0.13s ease",
+              }}>
+              <div style={{ width:"20px",height:"20px",borderRadius:"6px",background:"rgba(160,32,32,0.1)",border:"1px solid rgba(160,32,32,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="var(--red-accent)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </div>
+              <div>
+                <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--red-accent)",fontFamily:"'JetBrains Mono', monospace" }}>Quit planning session</div>
+                <div style={{ fontSize:"0.6rem",color:"rgba(160,32,32,0.5)",marginTop:"1px" }}>Discard all planning progress</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
       {showPlannerPopup && <PlannerPopup onYes={handlePlannerPopupYes} onSkip={handlePlannerPopupSkip} />}
       {imagePreview && (
         <div onClick={()=>setImagePreview(null)} style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out" }}>
@@ -1962,7 +2078,7 @@ export default function Studio() {
             </div>
           )}
           {/* Planner intro card — shown at top of planner conversation */}
-          {plannerMode && plannerMessages.length <= 1 && !plannerQuestions && plannerState === "thinking" && (
+          {plannerMode && plannerMessages.length <= 1 && (
             <div style={{ animation:"fadeIn 0.3s ease forwards",marginBottom:"4px" }}>
               <div style={{
                 background:"rgba(245,158,11,0.03)",
@@ -1998,61 +2114,170 @@ export default function Studio() {
               </div>
             </div>
           )}
-            {!plannerMode && messages.map((msg,i) => {
-            const isLastBot = msg.role==="assistant"&&!messages.slice(i+1).some(m=>m.role==="assistant")&&!isRunning;
-            return (
-              <div key={i} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
-                {msg.role==="assistant" && (isLastBot ? <BotAvatar size={28} /> : <div style={{ width:"28px",flexShrink:0 }} />)}
-                <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",overflow:"hidden" }}>
-                  <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(140,35,35,0.55)":"rgba(140,35,35,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>
-                    {msg.role==="user"?"You":"Hustler Bot"}
-                  </span>
-                  <div style={{
-                    padding:"10px 14px",borderRadius: msg.role==="user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                    background: msg.role==="user" ? "rgba(30,10,10,0.95)" : "var(--bg-0)",
-                    border: msg.role==="assistant" ? "1px solid rgba(255,255,255,0.28)" : "1px solid rgba(120,30,30,0.4)",
-                    boxShadow: msg.role==="user" ? "0 1px 8px rgba(0,0,0,0.4)" : "0 1px 8px rgba(0,0,0,0.3)",
-                    minWidth:0, overflow:"hidden",
-                  }}>
-                    {msg.collapsed ? (
-                      <LongInputChip content={msg.content} />
-                    ) : (
-                      <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
-                    )}
-                    {msg.attachments?.length>0 && (
-                      <div style={{ display:"flex",gap:"4px",flexWrap:"wrap",marginTop:"6px",paddingTop:"6px",borderTop:`1px solid var(--border-subtle)` }}>
-                        {msg.attachments.map((att,ai) => {
-                          const isImg = att.type?.startsWith("image/");
-                          const fileUrl = attachmentUrlsRef.current[att.name] || att.url || null;
-                          const canOpen = !!fileUrl;
-                          return (
-                            <span key={ai}
-                              onClick={() => {
-                                if (!canOpen) return;
-                                if (isImg) setImagePreview(fileUrl);
-                                else setImagePreview({ type:"doc", url:fileUrl });
-                              }}
-                              style={{ display:"flex",alignItems:"center",gap:"4px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"4px",padding:"2px 6px",fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor: canOpen ? "pointer" : "default",transition:"border-color 0.12s" }}
-                              onMouseEnter={e=>{ if (canOpen) e.currentTarget.style.borderColor="var(--red-accent)"; }}
-                              onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--border-subtle)"; }}
-                            >
-                              {isImg && fileUrl ? <img src={fileUrl} alt="" style={{ width:"18px",height:"18px",borderRadius:"2px",objectFit:"cover" }} /> : <span style={{ fontSize:"0.55rem",color:"var(--text-muted)",fontWeight:600 }}>{isImg ? "IMG" : "DOC"}</span>}
-                              <span style={{ maxWidth:"80px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{att.name}</span>
-                            </span>
-                          );
-                        })}
+            {/* === Unified message renderer === */}
+          {(() => {
+            // Combine persisted messages (from server) with live planner messages
+            // Persisted messages have source:"planner" for planner phase
+            // Live plannerMessages are used during active planner session
+            const allMessages = plannerMode ? [] : messages;
+
+            return allMessages.map((msg, i) => {
+              const isPlannerMsg = msg.source === "planner";
+              const isSystemMsg = msg.role === "system";
+              const variant = isPlannerMsg ? "planner" : "builder";
+
+              // Transition marker — planner→builder handoff
+              if (isSystemMsg) {
+                let parsed = null;
+                try { parsed = JSON.parse(msg.content || msg.text || "{}"); } catch {}
+                if (parsed?.type === "planner_complete") {
+                  return (
+                    <div key={i} style={{ animation:"fadeIn 0.2s ease forwards",margin:"8px 0" }}>
+                      <div style={{
+                        background:"linear-gradient(90deg,rgba(245,158,11,0.06),transparent,rgba(160,32,32,0.06))",
+                        border:"1px solid rgba(255,255,255,0.04)",
+                        borderRadius:"10px",padding:"10px 14px",
+                        display:"flex",alignItems:"center",gap:"10px",
+                      }}>
+                        <div style={{ width:"24px",height:"24px",borderRadius:"6px",background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                          <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="var(--green-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontSize:"0.68rem",fontWeight:700,color:"var(--text-secondary)",fontFamily:"var(--font-mono)" }}>Planning complete — handing off to Builder</div>
+                          <div style={{ fontSize:"0.6rem",color:"var(--text-muted)",marginTop:"2px" }}>{parsed?.summary || ""}</div>
+                        </div>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="var(--red-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
-                    )}
-                    <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop: msg.role==="assistant" ? `1px solid var(--border-subtle)` : "none" }}>
-                      <CopyButton text={msg.content||""} label="Copy" size="sm" />
-                      {msg.role==="assistant"&&msg.credits_used!==undefined ? <CostDots credits={msg.credits_used} /> : <div />}
+                    </div>
+                  );
+                }
+                return null; // Skip other system messages
+              }
+
+              // Spec attachment — collapsed card instead of raw text
+              if (msg.role === "user" && typeof (msg.content || msg.text || "") === "string" && (msg.content || msg.text || "").startsWith("[APPROVED SPEC]")) {
+                const specText = (msg.content || msg.text || "");
+                return (
+                  <div key={i} className="msg-row" style={{ display:"flex",flexDirection:"row-reverse",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
+                    <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:"flex-end",overflow:"hidden" }}>
+                      <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:"rgba(140,35,35,0.55)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>You</span>
+                      <SpecAttachmentChip specText={specText} />
+                    </div>
+                  </div>
+                );
+              }
+
+              const isLastBot = msg.role==="assistant"&&!allMessages.slice(i+1).some(m=>m.role==="assistant"&&m.source===msg.source)&&!isRunning;
+
+              const accentAlpha = isPlannerMsg ? "245,158,11" : "140,35,35";
+              const userBg = isPlannerMsg ? "rgba(40,30,5,0.95)" : "rgba(30,10,10,0.95)";
+              const botBg = isPlannerMsg ? "rgba(245,158,11,0.03)" : "var(--bg-0)";
+              const userBorder = isPlannerMsg ? `1px solid rgba(${accentAlpha},0.3)` : "1px solid rgba(120,30,30,0.4)";
+              const botBorder = isPlannerMsg ? `1px solid rgba(${accentAlpha},0.12)` : "1px solid rgba(255,255,255,0.28)";
+              const labelColor = msg.role==="user" ? `rgba(${accentAlpha},0.55)` : `rgba(${accentAlpha},0.75)`;
+              const labelText = msg.role==="user" ? "You" : (isPlannerMsg ? "Planner" : "Hustler Bot");
+
+              return (
+                <div key={i} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
+                  {msg.role==="assistant" && (isLastBot ? <BotAvatar size={28} variant={variant} /> : <div style={{ width:"28px",flexShrink:0 }} />)}
+                  <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",overflow:"hidden" }}>
+                    <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:labelColor,fontFamily:"var(--font-mono)",marginBottom:"3px" }}>{labelText}</span>
+                    <div style={{
+                      padding:"10px 14px",
+                      borderRadius: msg.role==="user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                      background: msg.role==="user" ? userBg : botBg,
+                      border: msg.role==="user" ? userBorder : botBorder,
+                      boxShadow: "0 1px 8px rgba(0,0,0,0.3)",
+                      minWidth:0, overflow:"hidden",
+                    }}>
+                      {msg.collapsed ? (
+                        <LongInputChip content={msg.content||msg.text||""} />
+                      ) : (
+                        <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||msg.text||"") }} className="msg-content" />
+                      )}
+                      {msg.attachments?.length>0 && (
+                        <div style={{ display:"flex",gap:"4px",flexWrap:"wrap",marginTop:"6px",paddingTop:"6px",borderTop:`1px solid var(--border-subtle)` }}>
+                          {msg.attachments.map((att,ai) => {
+                            const isImg = att.type?.startsWith("image/");
+                            const fileUrl = attachmentUrlsRef.current[att.name] || att.url || null;
+                            const canOpen = !!fileUrl;
+                            return (
+                              <span key={ai} onClick={()=>{if(!canOpen)return;if(isImg)setImagePreview(fileUrl);else setImagePreview({type:"doc",url:fileUrl});}}
+                                style={{ display:"flex",alignItems:"center",gap:"4px",background:"var(--bg-3)",border:`1px solid var(--border-subtle)`,borderRadius:"4px",padding:"2px 6px",fontSize:"0.62rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",cursor:canOpen?"pointer":"default",transition:"border-color 0.12s" }}
+                                onMouseEnter={e=>{if(canOpen)e.currentTarget.style.borderColor=isPlannerMsg?"var(--yellow-accent)":"var(--red-accent)";}}
+                                onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border-subtle)";}}
+                              >
+                                {isImg&&fileUrl?<img src={fileUrl} alt="" style={{ width:"18px",height:"18px",borderRadius:"2px",objectFit:"cover" }} />:<span style={{ fontSize:"0.55rem",color:"var(--text-muted)",fontWeight:600 }}>{isImg?"IMG":"DOC"}</span>}
+                                <span style={{ maxWidth:"80px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{att.name}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop:msg.role==="assistant"?`1px solid ${isPlannerMsg?"rgba(245,158,11,0.08)":"var(--border-subtle)"}` :"none" }}>
+                        <CopyButton text={msg.content||msg.text||""} label="Copy" size="sm" />
+                        {msg.role==="assistant"&&msg.credits_used!==undefined ? <CostDots credits={msg.credits_used} /> : <div />}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
 
+          {/* Live planner messages (during active session, before they're persisted) */}
+          {plannerMode && plannerMessages.map((msg, i) => (
+            <div key={`planner-live-${i}`} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
+              {msg.role==="planner" && <BotAvatar size={28} variant="planner" />}
+              <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",overflow:"hidden" }}>
+                <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(245,158,11,0.5)":"rgba(245,158,11,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>{msg.role==="user"?"You":"Planner"}</span>
+                <div style={{ padding:"10px 14px",borderRadius:msg.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:msg.role==="user"?"rgba(40,30,5,0.95)":"rgba(245,158,11,0.03)",border:msg.role==="user"?"1px solid rgba(245,158,11,0.3)":"1px solid rgba(245,158,11,0.12)",boxShadow:"0 1px 8px rgba(0,0,0,0.3)",minWidth:0,overflow:"hidden" }}>
+                  <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
+                  <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop:msg.role==="planner"?"1px solid rgba(245,158,11,0.08)":"none" }}>
+                    <CopyButton text={msg.content||""} label="Copy" size="sm" />
+                    <div />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {/* Builder intro card — shown when builder starts */}
+          {!plannerMode && isRunning && messages.length <= 1 && progress.length === 0 && (
+            <div style={{ animation:"fadeIn 0.3s ease forwards",marginBottom:"4px" }}>
+              <div style={{
+                background:"rgba(160,32,32,0.03)",
+                border:"1px solid rgba(160,32,32,0.08)",
+                borderRadius:"12px",
+                padding:"14px 16px",
+                maxWidth:"360px",
+              }}>
+                <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px" }}>
+                  <div style={{ width:"32px",height:"32px",flexShrink:0 }}>
+                    <BotAvatarStatic size={32} variant="builder" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--text-primary)",fontFamily:"var(--font-mono)" }}>Builder Agent</div>
+                    <div style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>CODE GENERATION</div>
+                  </div>
+                </div>
+                <div style={{ fontSize:"0.7rem",color:"var(--text-tertiary)",lineHeight:1.6 }}>
+                  Building your application. I'll write the code, install dependencies, generate images, and compile everything into a live preview.
+                </div>
+                <div style={{ display:"flex",gap:"12px",marginTop:"8px" }}>
+                  {[
+                    { icon:"◎", label:"Code" },
+                    { icon:"◧", label:"Assets" },
+                    { icon:"▶", label:"Preview" },
+                  ].map((step, i) => (
+                    <div key={i} style={{ display:"flex",alignItems:"center",gap:"4px" }}>
+                      <span style={{ fontSize:"0.6rem",color:"var(--red-accent)",fontFamily:"var(--font-mono)" }}>{step.icon}</span>
+                      <span style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           {/* Backend card — shown while backendLoading OR while the job is still running and requesting it */}
           {showBackendInChat && (isRunning || backendLoading) && (
             <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}>
@@ -2060,7 +2285,7 @@ export default function Studio() {
               <BackendApprovalCard onAllow={handleBackendAllow} onDeny={handleBackendDeny} isLoading={backendLoading} />
             </div>
           )}
-          {/* Planner conversation messages */}
+          {/* Planner conversations messages */}
           {plannerMode && plannerMessages.map((msg, i) => (
             <div key={`planner-${i}`} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
               {msg.role==="planner" && <BotAvatar size={28} variant="planner" />}
@@ -2068,6 +2293,10 @@ export default function Studio() {
                 <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(245,158,11,0.5)":"rgba(245,158,11,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>{msg.role==="user"?"You":"Planner"}</span>
                 <div style={{ padding:"10px 14px",borderRadius:msg.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:msg.role==="user"?"rgba(40,30,5,0.95)":"rgba(245,158,11,0.03)",border:msg.role==="user"?"1px solid rgba(245,158,11,0.3)":"1px solid rgba(245,158,11,0.12)",boxShadow:"0 1px 8px rgba(0,0,0,0.3)",minWidth:0,overflow:"hidden" }}>
                   <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
+                  <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop:msg.role==="planner"?"1px solid rgba(245,158,11,0.08)":"none" }}>
+                    <CopyButton text={msg.content||""} label="Copy" size="sm" />
+                    {msg.role==="planner"&&msg.credits_used!==undefined ? <CostDots credits={msg.credits_used} /> : <div />}
+                  </div>
                 </div>
               </div>
             </div>
