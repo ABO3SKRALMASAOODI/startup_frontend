@@ -193,8 +193,8 @@ function LandingPage() {
   };
   const [userName] = useState(getRawName());
 
-  const { rive: heroRive,   RiveComponent: HeroBot   } = useRive({ src: "/hustler-robot96.riv",      autoplay: true, stateMachines: ["State Machine 1"] });
-  const { rive: bubbleRive, RiveComponent: BubbleBot } = useRive({ src: "/hustler-bubble-bot97.riv", autoplay: true, stateMachines: ["State Machine 1"] });
+  const { rive: heroRive,   RiveComponent: HeroBot   } = useRive({ src: "/hustler-robot103.riv",      autoplay: true, stateMachines: ["State Machine 1"] });
+  const { rive: bubbleRive, RiveComponent: BubbleBot } = useRive({ src: "/hustler-bubble-bot104.riv", autoplay: true, stateMachines: ["State Machine 1"] });
 
   useEffect(() => {
     let lastCall = 0;
