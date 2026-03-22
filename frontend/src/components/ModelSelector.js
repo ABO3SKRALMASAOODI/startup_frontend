@@ -19,7 +19,7 @@ const MODEL_DEFS = [
     badgeColor: "#4caf50",
     min_plan_label: "Free+",
     badge: "FAST",
-    riveSrc: "/hustler-robot99.riv",
+    riveSrc: "/hustler-robot112.riv",
   },
   {
     id: "hb-6-pro",
@@ -43,7 +43,7 @@ const MODEL_DEFS = [
     badgeColor: "#ff6600",
     min_plan_label: "Ultra+",
     badge: "MAX",
-    riveSrc: "/hustler-robot112.riv",     // white bubble-bot
+    riveSrc: "/hustler-robot99.riv",     // white bubble-bot
   },
 ];
 
