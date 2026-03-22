@@ -211,6 +211,11 @@ const getStripeStatus = async (jobId) => {
   const res = await API.get(`/stripe/job/${jobId}/stripe-status`);
   return res.data;
 };
+const startPlannerAPI = async (jobId, message) => { const res = await API.post("/auth/planner/start", { job_id: jobId, message }); return res.data; };
+const getPlannerStatus = async (jobId) => { const res = await API.get(`/auth/planner/${jobId}/status`); return res.data; };
+const sendPlannerAnswer = async (jobId, data) => { const res = await API.post(`/auth/planner/${jobId}/answer`, data); return res.data; };
+const quitPlannerAPI = async (jobId) => { const res = await API.post(`/auth/planner/${jobId}/quit`); return res.data; };
+const getPlannerSpecAPI = async (jobId) => { const res = await API.get(`/auth/planner/${jobId}/spec`); return res.data; };
 const downloadProjectZip = async (jobId, title) => {
   const res = await API.get(`/auth/job/${jobId}/download`, { responseType:"blob" });
   const url = URL.createObjectURL(new Blob([res.data], { type:"application/zip" }));
@@ -678,7 +683,152 @@ function StripeApprovalCard({ onSubmit, onDeny, isLoading }) {
     </div>
   );
 }
-
+function PlannerQuestionCard({ context, questions, onSubmit, isThinking }) {
+  const [answers, setAnswers] = useState({});
+  const [combined, setCombined] = useState("");
+  const [mode, setMode] = useState("individual");
+ 
+  if (isThinking) {
+    return (
+      <div style={{ animation:"fadeIn 0.2s ease forwards", maxWidth:"420px" }}>
+        <div style={{ padding:"16px",borderRadius:"12px",background:"rgba(245,158,11,0.06)",border:"1px solid rgba(245,158,11,0.2)" }}>
+          <div style={{ display:"flex",alignItems:"center",gap:"8px" }}>
+            <Spinner size={18} color="var(--yellow-accent)" />
+            <span style={{ fontSize:"0.75rem",color:"var(--yellow-accent)",fontFamily:"var(--font-mono)" }}>Planner is thinking...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+ 
+  const handleSubmitIndividual = () => {
+    const parts = questions.map((q, i) => `${i+1}. ${answers[i]||"(skipped)"}`);
+    onSubmit(parts.join("\n"));
+  };
+ 
+  return (
+    <div style={{ animation:"fadeIn 0.2s ease forwards", maxWidth:"420px", width:"100%" }}>
+      <div style={{ padding:"16px",borderRadius:"12px",background:"rgba(245,158,11,0.04)",border:"1px solid rgba(245,158,11,0.18)" }}>
+        <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px" }}>
+          <div style={{ width:"24px",height:"24px",borderRadius:"6px",background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.7rem",color:"var(--yellow-accent)",fontWeight:700 }}>?</div>
+          <span style={{ fontSize:"0.72rem",fontWeight:600,color:"var(--yellow-accent)",fontFamily:"var(--font-mono)" }}>Planner</span>
+        </div>
+        {context && <p style={{ fontSize:"0.72rem",color:"var(--text-secondary)",lineHeight:1.5,margin:"0 0 10px",fontStyle:"italic" }}>{context}</p>}
+        <div style={{ display:"flex",gap:"4px",marginBottom:"10px" }}>
+          <button onClick={()=>setMode("individual")} style={{ padding:"3px 8px",borderRadius:"4px",border:"none",background:mode==="individual"?"rgba(245,158,11,0.15)":"transparent",color:mode==="individual"?"var(--yellow-accent)":"var(--text-muted)",fontSize:"0.6rem",cursor:"pointer",fontFamily:"var(--font-mono)" }}>One by one</button>
+          <button onClick={()=>setMode("freeform")} style={{ padding:"3px 8px",borderRadius:"4px",border:"none",background:mode==="freeform"?"rgba(245,158,11,0.15)":"transparent",color:mode==="freeform"?"var(--yellow-accent)":"var(--text-muted)",fontSize:"0.6rem",cursor:"pointer",fontFamily:"var(--font-mono)" }}>Freeform</button>
+        </div>
+        {mode === "individual" ? (
+          <>
+            {questions.map((q, i) => (
+              <div key={i} style={{ marginBottom:"8px" }}>
+                <label style={{ fontSize:"0.68rem",color:"var(--text-secondary)",display:"block",marginBottom:"3px",lineHeight:1.4 }}>
+                  <span style={{ color:"var(--yellow-accent)",fontWeight:700,marginRight:"4px" }}>{i+1}.</span>{q}
+                </label>
+                <input type="text" value={answers[i]||""} onChange={e=>setAnswers(prev=>({...prev,[i]:e.target.value}))}
+                  onKeyDown={e=>{if(e.key==="Enter"&&i===questions.length-1)handleSubmitIndividual();}}
+                  placeholder="Your answer..." style={{ width:"100%",background:"var(--bg-0)",border:"1px solid var(--border-subtle)",borderRadius:"6px",padding:"6px 10px",color:"var(--text-primary)",fontSize:"0.72rem",fontFamily:"var(--font-sans)",outline:"none",boxSizing:"border-box" }} />
+              </div>
+            ))}
+            <button onClick={handleSubmitIndividual} style={{ width:"100%",padding:"8px",marginTop:"4px",background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:"8px",color:"var(--yellow-accent)",fontSize:"0.72rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)" }}>Submit Answers</button>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize:"0.65rem",color:"var(--text-muted)",marginBottom:"6px" }}>
+              {questions.map((q,i)=><div key={i} style={{marginBottom:"2px"}}><span style={{color:"var(--yellow-accent)"}}>{i+1}.</span> {q}</div>)}
+            </div>
+            <textarea value={combined} onChange={e=>setCombined(e.target.value)} placeholder="Answer all questions here..." rows={4}
+              style={{ width:"100%",background:"var(--bg-0)",border:"1px solid var(--border-subtle)",borderRadius:"6px",padding:"8px 10px",color:"var(--text-primary)",fontSize:"0.72rem",fontFamily:"var(--font-sans)",outline:"none",resize:"vertical",boxSizing:"border-box" }} />
+            <button onClick={()=>{if(combined.trim())onSubmit(combined.trim());}} disabled={!combined.trim()} style={{ width:"100%",padding:"8px",marginTop:"6px",background:combined.trim()?"rgba(245,158,11,0.12)":"var(--bg-3)",border:`1px solid ${combined.trim()?"rgba(245,158,11,0.25)":"var(--border-subtle)"}`,borderRadius:"8px",color:combined.trim()?"var(--yellow-accent)":"var(--text-muted)",fontSize:"0.72rem",fontWeight:700,cursor:combined.trim()?"pointer":"default",fontFamily:"var(--font-mono)" }}>Submit</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+ 
+// ── Planner Spec Card ────────────────────────────────────────────────────────
+function PlannerSpecCard({ spec, summary, editsApplied, onApprove, onEdit, onReject }) {
+  const [editText, setEditText] = useState("");
+  const [rejectText, setRejectText] = useState("");
+  const [showEdit, setShowEdit] = useState(false);
+  const [showReject, setShowReject] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const project = spec?.project||{}; const pages = spec?.pages||[]; const design = spec?.design||{}; const data = spec?.data||{};
+  return (
+    <div style={{ animation:"fadeIn 0.2s ease forwards", maxWidth:"440px", width:"100%" }}>
+      <div style={{ padding:"16px",borderRadius:"12px",background:"rgba(245,158,11,0.04)",border:"1px solid rgba(245,158,11,0.2)" }}>
+        <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px" }}>
+          <div style={{ width:"24px",height:"24px",borderRadius:"6px",background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.25)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 2h12v12H2z" stroke="var(--yellow-accent)" strokeWidth="1.5"/><path d="M5 5h6M5 8h6M5 11h4" stroke="var(--yellow-accent)" strokeWidth="1" strokeLinecap="round"/></svg>
+          </div>
+          <span style={{ fontSize:"0.72rem",fontWeight:700,color:"var(--yellow-accent)",fontFamily:"var(--font-mono)" }}>{editsApplied?"Updated Spec":"Proposed Spec"}</span>
+        </div>
+        <p style={{ fontSize:"0.75rem",color:"var(--text-primary)",lineHeight:1.6,margin:"0 0 12px" }}>{summary}</p>
+        {editsApplied&&editsApplied.length>0&&(
+          <div style={{ marginBottom:"10px",padding:"6px 8px",background:"rgba(16,185,129,0.06)",border:"1px solid rgba(16,185,129,0.15)",borderRadius:"6px" }}>
+            <span style={{ fontSize:"0.6rem",color:"var(--green-accent)",fontFamily:"var(--font-mono)",fontWeight:600 }}>Changes applied:</span>
+            {editsApplied.map((e,i)=>(<div key={i} style={{ fontSize:"0.62rem",color:"var(--text-tertiary)",marginTop:"2px",fontFamily:"var(--font-mono)" }}>{e.path} {e.reason?`— ${e.reason}`:""}</div>))}
+          </div>
+        )}
+        <div style={{ marginBottom:"10px",padding:"8px",background:"var(--bg-0)",borderRadius:"6px",border:"1px solid var(--border-subtle)" }}>
+          <div style={{ fontSize:"0.68rem",color:"var(--text-secondary)",marginBottom:"4px" }}><span style={{ color:"var(--yellow-accent)",fontWeight:600 }}>Project:</span> {project.name||"—"}</div>
+          <div style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",marginBottom:"4px" }}>{project.purpose}</div>
+          <div style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",marginBottom:"6px" }}><span style={{ color:"var(--text-secondary)" }}>Pages:</span> {pages.map(p=>p.name).join(", ")||"—"}</div>
+          <div style={{ fontSize:"0.65rem",color:"var(--text-tertiary)",marginBottom:"4px" }}><span style={{ color:"var(--text-secondary)" }}>Design:</span> {design.aesthetic||"—"}</div>
+          {design.colors&&(<div style={{ display:"flex",gap:"3px",marginBottom:"4px",flexWrap:"wrap" }}>{Object.entries(design.colors).map(([k,v])=>(<span key={k} style={{ display:"inline-flex",alignItems:"center",gap:"3px",fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}><span style={{ width:"8px",height:"8px",borderRadius:"2px",background:v,border:"1px solid rgba(255,255,255,0.1)",flexShrink:0 }} />{k}</span>))}</div>)}
+          <div style={{ fontSize:"0.65rem",color:"var(--text-tertiary)" }}><span style={{ color:"var(--text-secondary)" }}>Backend:</span> {data.backend||"none"} | Auth: {data.auth_required?"yes":"no"}</div>
+        </div>
+        <button onClick={()=>setExpanded(e=>!e)} style={{ background:"none",border:"none",color:"var(--text-muted)",fontSize:"0.6rem",cursor:"pointer",fontFamily:"var(--font-mono)",padding:"2px 0",marginBottom:"10px" }}>{expanded?"▾ Hide full spec":"▸ Show full spec JSON"}</button>
+        {expanded&&(<pre style={{ background:"var(--bg-0)",border:"1px solid var(--border-subtle)",borderRadius:"6px",padding:"8px",fontSize:"0.6rem",color:"var(--text-tertiary)",fontFamily:"var(--font-mono)",maxHeight:"300px",overflowY:"auto",overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-word",marginBottom:"10px" }}>{JSON.stringify(spec,null,2)}</pre>)}
+        {!showEdit&&!showReject&&(
+          <div style={{ display:"flex",gap:"6px" }}>
+            <button onClick={()=>setShowReject(true)} style={{ flex:1,padding:"8px",background:"var(--bg-3)",border:"1px solid var(--border-default)",borderRadius:"8px",color:"var(--text-secondary)",fontSize:"0.72rem",cursor:"pointer",fontFamily:"var(--font-sans)" }}>Reject</button>
+            <button onClick={()=>setShowEdit(true)} style={{ flex:1,padding:"8px",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:"8px",color:"var(--yellow-accent)",fontSize:"0.72rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>Edit</button>
+            <button onClick={onApprove} style={{ flex:1,padding:"8px",background:"linear-gradient(135deg,rgba(16,185,129,0.2),rgba(5,150,105,0.15))",border:"1px solid rgba(16,185,129,0.3)",borderRadius:"8px",color:"var(--green-accent)",fontSize:"0.72rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)" }}>Approve</button>
+          </div>
+        )}
+        {showEdit&&(
+          <div>
+            <textarea value={editText} onChange={e=>setEditText(e.target.value)} placeholder="Describe what to change..." rows={3} style={{ width:"100%",background:"var(--bg-0)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:"6px",padding:"8px 10px",color:"var(--text-primary)",fontSize:"0.72rem",fontFamily:"var(--font-sans)",outline:"none",resize:"vertical",marginBottom:"6px",boxSizing:"border-box" }} />
+            <div style={{ display:"flex",gap:"6px" }}>
+              <button onClick={()=>{setShowEdit(false);setEditText("");}} style={{ flex:1,padding:"7px",background:"var(--bg-3)",border:"1px solid var(--border-default)",borderRadius:"6px",color:"var(--text-secondary)",fontSize:"0.7rem",cursor:"pointer" }}>Cancel</button>
+              <button onClick={()=>{if(editText.trim()){onEdit(editText.trim());setShowEdit(false);setEditText("");}}} disabled={!editText.trim()} style={{ flex:1,padding:"7px",background:editText.trim()?"rgba(245,158,11,0.12)":"var(--bg-3)",border:`1px solid ${editText.trim()?"rgba(245,158,11,0.25)":"var(--border-subtle)"}`,borderRadius:"6px",color:editText.trim()?"var(--yellow-accent)":"var(--text-muted)",fontSize:"0.7rem",fontWeight:600,cursor:editText.trim()?"pointer":"default",fontFamily:"var(--font-mono)" }}>Send Edit</button>
+            </div>
+          </div>
+        )}
+        {showReject&&(
+          <div>
+            <textarea value={rejectText} onChange={e=>setRejectText(e.target.value)} placeholder="What's wrong with this spec?" rows={2} style={{ width:"100%",background:"var(--bg-0)",border:"1px solid rgba(140,35,35,0.2)",borderRadius:"6px",padding:"8px 10px",color:"var(--text-primary)",fontSize:"0.72rem",fontFamily:"var(--font-sans)",outline:"none",resize:"vertical",marginBottom:"6px",boxSizing:"border-box" }} />
+            <div style={{ display:"flex",gap:"6px" }}>
+              <button onClick={()=>{setShowReject(false);setRejectText("");}} style={{ flex:1,padding:"7px",background:"var(--bg-3)",border:"1px solid var(--border-default)",borderRadius:"6px",color:"var(--text-secondary)",fontSize:"0.7rem",cursor:"pointer" }}>Cancel</button>
+              <button onClick={()=>{onReject(rejectText.trim());setShowReject(false);setRejectText("");}} style={{ flex:1,padding:"7px",background:"rgba(140,35,35,0.12)",border:"1px solid rgba(140,35,35,0.25)",borderRadius:"6px",color:"var(--red-accent)",fontSize:"0.7rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-mono)" }}>Reject</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+ 
+// ── Planner Popup (shown on new conversation) ────────────────────────────────
+function PlannerPopup({ onYes, onSkip }) {
+  return (
+    <div style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+      <div style={{ background:"var(--bg-2)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:"14px",padding:"24px 28px",maxWidth:"380px",width:"90%",boxShadow:"0 0 40px rgba(0,0,0,0.7), 0 0 20px rgba(245,158,11,0.08)",textAlign:"center",animation:"slideIn 0.15s ease" }}>
+        <div style={{ width:"36px",height:"36px",borderRadius:"10px",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:"1.1rem",color:"var(--yellow-accent)",fontWeight:700 }}>?</div>
+        <h3 style={{ margin:"0 0 8px",fontSize:"1rem",color:"var(--text-primary)",fontWeight:700,fontFamily:"var(--font-sans)" }}>Start with the Planner?</h3>
+        <p style={{ margin:"0 0 6px",fontSize:"0.8rem",color:"var(--text-secondary)",lineHeight:1.5 }}>The Planner asks targeted questions to build a detailed spec before the AI starts coding. This produces better results.</p>
+        <p style={{ margin:"0 0 16px",fontSize:"0.68rem",color:"var(--text-muted)",lineHeight:1.4 }}>You can quit the planner at any time.</p>
+        <div style={{ display:"flex",gap:"8px" }}>
+          <button onClick={onSkip} style={{ flex:1,padding:"10px",background:"var(--bg-3)",border:"1px solid var(--border-default)",borderRadius:"8px",color:"var(--text-secondary)",fontSize:"0.82rem",cursor:"pointer",fontFamily:"var(--font-sans)" }}>Skip</button>
+          <button onClick={onYes} style={{ flex:1.3,padding:"10px",background:"linear-gradient(135deg,rgba(245,158,11,0.2),rgba(217,119,6,0.15))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:"8px",color:"var(--yellow-accent)",fontSize:"0.82rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)" }}>Yes, plan first</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+ 
 // ── Credits badge ────────────────────────────────────────────────────────────
 function CreditsBadge({ balance, planLimit, onUpgrade }) {
   const max = Math.max(planLimit || 800, balance, 800);
@@ -1057,6 +1207,13 @@ export default function Studio() {
   const stripeRespondedRef = useRef(false);
   const [showNameModal, setShowNameModal] = useState(localStorage.getItem("show_name_modal") === "1");
   const [imagePreview, setImagePreview] = useState(null);
+  const [plannerMode, setPlannerMode] = useState(false);
+  const [plannerState, setPlannerState] = useState(null);
+  const [plannerQuestions, setPlannerQuestions] = useState(null);
+  const [plannerSpec, setPlannerSpec] = useState(null);
+  const [showPlannerPopup, setShowPlannerPopup] = useState(false);
+  const plannerPollRef = useRef(null);
+  const pendingPlannerPrompt = useRef(null);
   const attachmentUrlsRef = useRef({});
 
   const isRunning = state === "running";
@@ -1197,7 +1354,7 @@ export default function Studio() {
   };
 
   const stopPolling = () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
-  useEffect(() => () => { stopPolling(); stopBackendPolling(); }, []); // eslint-disable-line
+  useEffect(() => () => { stopPolling(); stopBackendPolling(); stopPlannerPolling(); }, []); 
 
   // ── Backend-status poller (runs independently of the job poller) ───────────
   const stopBackendPolling = () => {
@@ -1231,7 +1388,67 @@ export default function Studio() {
       }
     }, 4000);
   };
-
+  const stopPlannerPolling = () => { if (plannerPollRef.current) { clearInterval(plannerPollRef.current); plannerPollRef.current = null; } };
+ 
+  const startPlannerPolling = (jobId) => {
+    stopPlannerPolling();
+    plannerPollRef.current = setInterval(async () => {
+      try {
+        const d = await getPlannerStatus(jobId);
+        const st = d.state;
+        setPlannerState(st);
+        if (st === "waiting_questions") { setPlannerQuestions({ context: d.context, questions: d.questions }); setPlannerSpec(null); }
+        else if (st === "waiting_spec" || st === "waiting_edit") { setPlannerSpec({ spec: d.spec, summary: d.summary, edits_applied: d.edits_applied || null }); setPlannerQuestions(null); }
+        else if (st === "thinking") { setPlannerQuestions(null); setPlannerSpec(null); }
+        else if (st === "completed") {
+          stopPlannerPolling(); setPlannerQuestions(null); setPlannerSpec(null);
+          try {
+            const specData = await getPlannerSpecAPI(jobId);
+            const specText = `[APPROVED SPEC]\n${specData.summary}\n\n${JSON.stringify(specData.spec, null, 2)}`;
+            setPlannerMode(false); setPlannerState(null);
+            await sendFollowUp(jobId, specText, selectedModel, []);
+            setState("running"); startPolling(jobId);
+          } catch (e) { console.error("Failed to fetch planner spec:", e); setPlannerMode(false); setPlannerState(null); }
+        } else if (st === "quit" || st === "error" || st === "idle") {
+          stopPlannerPolling(); setPlannerMode(false); setPlannerQuestions(null); setPlannerSpec(null); setPlannerState(null);
+        }
+      } catch (e) { console.error("Planner poll error:", e); }
+    }, 2500);
+  };
+ 
+  const handlePlannerAnswer = async (answerText) => { if (!currentJobId) return; setPlannerQuestions(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { answer: answerText }); };
+  const handlePlannerApprove = async () => { if (!currentJobId) return; setPlannerSpec(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { decision: "approve" }); };
+  const handlePlannerEdit = async (editText) => { if (!currentJobId) return; setPlannerSpec(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { decision: "edit", detail: editText }); };
+  const handlePlannerReject = async (feedback) => { if (!currentJobId) return; setPlannerSpec(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { decision: "reject", detail: feedback || "No specific feedback" }); };
+ 
+  const handleQuitPlanner = async () => {
+    if (!currentJobId) return;
+    stopPlannerPolling();
+    try { await quitPlannerAPI(currentJobId); } catch {}
+    setPlannerMode(false); setPlannerState(null); setPlannerQuestions(null); setPlannerSpec(null);
+  };
+ 
+  const handleStartWithPlanner = async (text) => {
+    setShowPlannerPopup(false); setPlannerMode(true); setPlannerState("thinking");
+    try {
+      if (!currentJobId) {
+        setState("running");
+        const [jobId, smartTitle] = await Promise.all([generateProject(text, "", selectedModel, []), generateTitle(text)]);
+        setCurrentJobId(jobId); setPublishedUrl(null); setChangesSincePublish(false);
+        setProjects(prev => [{ job_id: jobId, title: smartTitle, state: "running", preview_url: null }, ...prev]);
+        API.patch(`/auth/job/${jobId}/title`, { title: smartTitle }).catch(() => {});
+        try { await API.post(`/auth/job/${jobId}/cancel`); } catch {}
+        setState("idle");
+        await startPlannerAPI(jobId, text); startPlannerPolling(jobId);
+      } else {
+        await startPlannerAPI(currentJobId, text); startPlannerPolling(currentJobId);
+      }
+    } catch (e) {
+      console.error("Failed to start planner:", e);
+      setPlannerMode(false); setPlannerState(null);
+      setError(e?.response?.data?.error || "Failed to start planner");
+    }
+  };
   const ALLOWED_EXT = ['png','jpg','jpeg','gif','webp','svg','pdf','txt','md','csv','json','py','js','ts','jsx','tsx','css','html','env','yaml','yml','xml','sql','sh','toml'];
   const addFiles = fl => { const nf = Array.from(fl).filter(f => ALLOWED_EXT.includes(f.name.split('.').pop().toLowerCase()) && f.size <= 10*1024*1024); setAttachedFiles(prev=>[...prev,...nf].slice(0,5)); };
   const removeFile = i => setAttachedFiles(prev=>prev.filter((_,j)=>j!==i));
@@ -1247,15 +1464,18 @@ export default function Studio() {
   };
 
   const handleSendWithText = async (text) => {
-    if (!text||isRunning) return; setPrompt(""); setError("");
+    if (!text||isRunning) return;
+    // New conversation — offer the planner
+    if (!currentJobId && !plannerMode) {
+      pendingPlannerPrompt.current = text;
+      setShowPlannerPopup(true);
+      return;
+    }
+    setPrompt(""); setError("");
     try {
       setState("running"); setProgress([]); setThinkingText(""); setCodeChanged(false);
       const fs=[...attachedFiles];
-      const fn=fs.map(f=>{
-        const url = URL.createObjectURL(f);
-        attachmentUrlsRef.current[f.name] = url;
-        return {name:f.name,type:f.type};
-      });
+      const fn=fs.map(f=>{ const url=URL.createObjectURL(f); attachmentUrlsRef.current[f.name]=url; return {name:f.name,type:f.type}; });
       setAttachedFiles([]);
       setMessages([{ role:"user", content:text, attachments:fn.length>0?fn:undefined }]);
       const [jobId,smartTitle] = await Promise.all([generateProject(text,"",selectedModel,fs),generateTitle(text)]);
@@ -1264,6 +1484,27 @@ export default function Studio() {
       API.patch(`/auth/job/${jobId}/title`,{title:smartTitle}).catch(()=>{});
       startPolling(jobId);
     } catch (err) { setError(err?.response?.data?.error||"Something went wrong"); setState("failed"); }
+  };
+ 
+  // ── Planner popup callbacks ────────────────────────────────────────────────
+  const handlePlannerPopupYes = () => { const text = pendingPlannerPrompt.current; pendingPlannerPrompt.current = null; setShowPlannerPopup(false); if (text) handleStartWithPlanner(text); };
+  const handlePlannerPopupSkip = () => {
+    const text = pendingPlannerPrompt.current; pendingPlannerPrompt.current = null; setShowPlannerPopup(false);
+    if (text) {
+      setPrompt(""); setError("");
+      (async()=>{
+        try {
+          setState("running"); setProgress([]); setThinkingText(""); setCodeChanged(false);
+          const fs=[...attachedFiles]; const fn=fs.map(f=>{ const url=URL.createObjectURL(f); attachmentUrlsRef.current[f.name]=url; return {name:f.name,type:f.type}; }); setAttachedFiles([]);
+          setMessages([{ role:"user", content:text, attachments:fn.length>0?fn:undefined }]);
+          const [jobId,smartTitle] = await Promise.all([generateProject(text,"",selectedModel,fs),generateTitle(text)]);
+          setCurrentJobId(jobId); setPublishedUrl(null); setChangesSincePublish(false);
+          setProjects(prev=>[{ job_id:jobId,title:smartTitle,state:"running",preview_url:null },...prev]);
+          API.patch(`/auth/job/${jobId}/title`,{title:smartTitle}).catch(()=>{});
+          startPolling(jobId);
+        } catch(err){ setError(err?.response?.data?.error||"Something went wrong"); setState("failed"); }
+      })();
+    }
   };
 
   const handleSend = async (e) => {
@@ -1294,6 +1535,7 @@ export default function Studio() {
     setState("idle"); setPrompt(""); setError(""); setAttachedFiles([]); setPublishedUrl(null); setChangesSincePublish(false);
     setBackendEnabled(false); setShowBackendInChat(false); backendRespondedRef.current = false;
     setStripeEnabled(false); setShowStripeInChat(false); stripeRespondedRef.current = false;
+    stopPlannerPolling(); setPlannerMode(false); setPlannerState(null); setPlannerQuestions(null); setPlannerSpec(null);
     setTimeout(()=>inputRef.current?.focus(),100);
   };
 
@@ -1440,7 +1682,7 @@ export default function Studio() {
       {showNameModal && <NameModal onDone={name => { localStorage.setItem("user_name",name); localStorage.removeItem("show_name_modal"); setShowNameModal(false); }} />}
       <ConfirmModal open={showLogoutModal} title="Log out?" description="You'll need to sign in again." confirmLabel="Log out" onConfirm={confirmLogout} onCancel={()=>setShowLogoutModal(false)} />
       <ConfirmModal open={showStopModal} title="Stop building?" description="The AI agent is still working." warning="Credits used so far will still be charged." confirmLabel="Stop" onConfirm={confirmStop} onCancel={()=>setShowStopModal(false)} />
-
+      {showPlannerPopup && <PlannerPopup onYes={handlePlannerPopupYes} onSkip={handlePlannerPopupSkip} />}
       {imagePreview && (
         <div onClick={()=>setImagePreview(null)} style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out" }}>
           {imagePreview.type === "doc" ? (
@@ -1475,6 +1717,11 @@ export default function Studio() {
               {currentJobId ? (projects.find(p=>p.job_id===currentJobId)?.title||"Project") : "The Hustler Bot"}
             </h2>
           </div>
+          {plannerMode && (
+            <button onClick={handleQuitPlanner} style={{ background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:"6px",color:"var(--yellow-accent)",cursor:"pointer",padding:"3px 10px",flexShrink:0,fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}
+              onMouseEnter={e=>{e.currentTarget.style.background="rgba(245,158,11,0.2)";}} onMouseLeave={e=>{e.currentTarget.style.background="rgba(245,158,11,0.1)";}}
+            >Quit Planner</button>
+          )}
           {isMobilePortrait ? (
             <button onClick={() => setMobilePanel(p => p === "chat" ? "preview" : "chat")} style={{ background:"none",border:`1px solid var(--border-subtle)`,borderRadius:"6px",color:"var(--text-secondary)",cursor:"pointer",padding:"3px 8px",flexShrink:0,display:"flex",alignItems:"center",gap:"4px",fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}>
               {mobilePanel === "chat" ? "Preview" : "Chat"}
@@ -1558,7 +1805,25 @@ export default function Studio() {
               <BackendApprovalCard onAllow={handleBackendAllow} onDeny={handleBackendDeny} isLoading={backendLoading} />
             </div>
           )}
-
+          {plannerMode && (
+            <>
+              {(plannerState === "waiting_questions" && plannerQuestions) && (
+                <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}><BotAvatar size={28} />
+                  <PlannerQuestionCard context={plannerQuestions.context} questions={plannerQuestions.questions} onSubmit={handlePlannerAnswer} isThinking={false} />
+                </div>
+              )}
+              {((plannerState === "waiting_spec" || plannerState === "waiting_edit") && plannerSpec) && (
+                <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}><BotAvatar size={28} />
+                  <PlannerSpecCard spec={plannerSpec.spec} summary={plannerSpec.summary} editsApplied={plannerSpec.edits_applied} onApprove={handlePlannerApprove} onEdit={handlePlannerEdit} onReject={handlePlannerReject} />
+                </div>
+              )}
+              {plannerState === "thinking" && (
+                <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}><BotAvatar size={28} />
+                  <PlannerQuestionCard isThinking={true} context="" questions={[]} onSubmit={()=>{}} />
+                </div>
+              )}
+            </>
+          )}
           {showStripeInChat && isRunning && (
             <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}>
               <BotAvatar size={28} />
