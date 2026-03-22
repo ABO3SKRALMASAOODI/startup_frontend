@@ -1324,6 +1324,7 @@ export default function Studio() {
   const [progress, setProgress] = useState([]);
   const [thinkingText, setThinkingText] = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showStopModal, setShowStopModal] = useState(false);
   const [showQuitPlannerModal, setShowQuitPlannerModal] = useState(false);
   const cancelledRef = useRef(false);
   const [previewError, setPreviewError] = useState(false);
@@ -1463,17 +1464,41 @@ export default function Studio() {
     const safeUrl = _safePreview(project.preview_url);
     setPreviewUrl(safeUrl); setState(project.state||"completed"); setCodeChanged(!!safeUrl);
     if (safeUrl) setPreviewKey(k=>k+1);
+    let jobData = null;
     try {
-      const d = await getJobStatus(project.job_id);
-      mergeServerMessages(d.messages);
-      if (d.state) setState(d.state); if (d.code_changed!==undefined) setCodeChanged(d.code_changed);if (d.build_ok!==undefined) setBuildOk(d.build_ok); if (d.model) setSelectedModel(d.model);
-      if (d.preview_url) { const u=_safePreview(d.preview_url); setPreviewUrl(u); setPreviewError(false); setPreviewKey(k=>k+1); }
-      if (d.published_url) { setPublishedUrl(d.published_url); setChangesSincePublish(false); }
+      jobData = await getJobStatus(project.job_id);
+      mergeServerMessages(jobData.messages);
+      if (jobData.state) setState(jobData.state);
+      if (jobData.code_changed!==undefined) setCodeChanged(jobData.code_changed);
+      if (jobData.build_ok!==undefined) setBuildOk(jobData.build_ok);
+      if (jobData.model) setSelectedModel(jobData.model);
+      if (jobData.preview_url) { const u=_safePreview(jobData.preview_url); setPreviewUrl(u); setPreviewError(false); setPreviewKey(k=>k+1); }
+      if (jobData.published_url) { setPublishedUrl(jobData.published_url); setChangesSincePublish(false); }
     } catch { setMessages([]); }
     try { const bd = await getBackendStatus(project.job_id); setBackendEnabled(!!bd.supabase_enabled); } catch { setBackendEnabled(false); }
     try { const sd = await getStripeStatus(project.job_id); setStripeEnabled(!!sd.stripe_enabled); } catch { setStripeEnabled(false); }
+    // Check if planner session is active
+    try {
+      const ps = await getPlannerStatus(project.job_id);
+      if (ps.state && ps.state !== "idle" && ps.state !== "quit" && ps.state !== "error" && ps.state !== "completed") {
+        setPlannerMode(true);
+        setPlannerState(ps.state);
+        if (ps.state === "waiting_questions") {
+          setPlannerQuestions({ context: ps.context, questions: ps.questions });
+        } else if (ps.state === "waiting_spec" || ps.state === "waiting_edit") {
+          setPlannerSpec({ spec: ps.spec, summary: ps.summary, edits_applied: ps.edits_applied || null });
+        } else if (ps.state === "waiting_reply") {
+          setPlannerTextReply(ps.message || "");
+        }
+        const plannerMsgs = (jobData?.messages || []).filter(m => m.source === "planner").map(m => ({
+          role: m.role === "assistant" ? "planner" : m.role,
+          content: m.text || m.content || "",
+        }));
+        setPlannerMessages(plannerMsgs);
+        startPlannerPolling(project.job_id);
+      }
+    } catch { /* planner not active */ }
   };
-
   const startPolling = (jobId) => {
     stopPolling();
     cancelledRef.current = false;
@@ -1912,6 +1937,7 @@ export default function Studio() {
       <GlobalStyles />
       {showNameModal && <NameModal onDone={name => { localStorage.setItem("user_name",name); localStorage.removeItem("show_name_modal"); setShowNameModal(false); }} />}
       <ConfirmModal open={showLogoutModal} title="Log out?" description="You'll need to sign in again." confirmLabel="Log out" onConfirm={confirmLogout} onCancel={()=>setShowLogoutModal(false)} />
+      <ConfirmModal open={showStopModal} title="Stop building?" description="The AI agent is still working." warning="Credits used so far will still be charged." confirmLabel="Stop" onConfirm={confirmStop} onCancel={()=>setShowStopModal(false)} />  
       {showQuitPlannerModal && (
         <div style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center" }}>
           <div style={{
