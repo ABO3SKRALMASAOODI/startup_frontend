@@ -2217,22 +2217,7 @@ export default function Studio() {
             });
           })()}
 
-          {/* Live planner messages (during active session, before they're persisted) */}
-          {plannerMode && plannerMessages.map((msg, i) => (
-            <div key={`planner-live-${i}`} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
-              {msg.role==="planner" && <BotAvatar size={28} variant="planner" />}
-              <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",overflow:"hidden" }}>
-                <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(245,158,11,0.5)":"rgba(245,158,11,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>{msg.role==="user"?"You":"Planner"}</span>
-                <div style={{ padding:"10px 14px",borderRadius:msg.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:msg.role==="user"?"rgba(40,30,5,0.95)":"rgba(245,158,11,0.03)",border:msg.role==="user"?"1px solid rgba(245,158,11,0.3)":"1px solid rgba(245,158,11,0.12)",boxShadow:"0 1px 8px rgba(0,0,0,0.3)",minWidth:0,overflow:"hidden" }}>
-                  <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
-                  <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop:msg.role==="planner"?"1px solid rgba(245,158,11,0.08)":"none" }}>
-                    <CopyButton text={msg.content||""} label="Copy" size="sm" />
-                    <div />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+          
           {/* Builder intro card — shown when builder starts */}
           {!plannerMode && isRunning && messages.length <= 1 && progress.length === 0 && (
             <div style={{ animation:"fadeIn 0.3s ease forwards",marginBottom:"4px" }}>
