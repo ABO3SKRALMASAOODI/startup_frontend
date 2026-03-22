@@ -124,7 +124,7 @@ function useIsMobile() {
 
 // ── Bot avatar ───────────────────────────────────────────────────────────────
 function BotAvatar({ size = 30 }) {
-  const { RiveComponent, rive } = useRive({ src:"/hustler-robot.riv", autoplay:true, stateMachines:["State Machine 1"] });
+  const { RiveComponent, rive } = useRive({ src:"/hustler-robot123.riv", autoplay:true, stateMachines:["State Machine 1"] });
   const ref = useRef(null);
 
   const setMouseX = useCallback((val) => {
