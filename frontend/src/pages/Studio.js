@@ -152,7 +152,7 @@ function BotAvatar({ size = 30, variant = "builder" }) {
           : { filter:"drop-shadow(0 0 3px rgba(140,35,35,0.92)) drop-shadow(0 0 8px rgba(140,35,35,0.55))", animation:"redPulse 2.4s ease-in-out infinite" }
         )
       }}>
-      <div style={{ position:"absolute",inset:0,zIndex:1,background:"transparent" }} />
+      <div style={{ position:"absolute",inset:0,zIndex:1,background:"transparent",pointerEvents:"none" }} />
       <RiveComponent style={{ width:"100%",height:"100%",display:"block" }} />
     </div>
   );
@@ -721,9 +721,12 @@ function PlannerQuestionCard({ context, questions, onSubmit, isThinking }) {
   return (
     <div style={{ animation:"fadeIn 0.2s ease forwards", maxWidth:"420px", width:"100%" }}>
       <div style={{ padding:"16px",borderRadius:"12px",background:"rgba(245,158,11,0.04)",border:"1px solid rgba(245,158,11,0.18)" }}>
-        <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px" }}>
-          <div style={{ width:"24px",height:"24px",borderRadius:"6px",background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.7rem",color:"var(--yellow-accent)",fontWeight:700 }}>?</div>
-          <span style={{ fontSize:"0.72rem",fontWeight:600,color:"var(--yellow-accent)",fontFamily:"var(--font-mono)" }}>Planner</span>
+      <div style={{ display:"flex",alignItems:"center",gap:"6px",marginBottom:"10px" }}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink:0 }}>
+            <path d="M2 2h12v12H2z" stroke="var(--yellow-accent)" strokeWidth="1.5" strokeLinejoin="round" />
+            <path d="M5 6h6M5 8.5h4" stroke="var(--yellow-accent)" strokeWidth="1" strokeLinecap="round" />
+          </svg>
+          <span style={{ fontSize:"0.68rem",fontWeight:700,color:"var(--yellow-accent)",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Questions</span>
         </div>
         {context && <p style={{ fontSize:"0.72rem",color:"var(--text-secondary)",lineHeight:1.5,margin:"0 0 10px",fontStyle:"italic" }}>{context}</p>}
         <div style={{ display:"flex",gap:"4px",marginBottom:"10px" }}>
@@ -1901,9 +1904,17 @@ export default function Studio() {
           <button onClick={()=>setSidebarOpen(true)} style={{ background:"none",border:"none",color:"var(--text-tertiary)",fontSize:"0.95rem",cursor:"pointer",padding:"2px 4px",flexShrink:0 }}>&#9776;</button>
           <div style={{ flex:1,textAlign:"center",minWidth:0 }}>
             {plannerMode ? (
-              <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:"6px" }}>
-                <div style={{ width:"6px",height:"6px",borderRadius:"50%",background:"var(--yellow-accent)",boxShadow:"0 0 6px rgba(245,158,11,0.6)",animation:"pulse 1.5s infinite" }} />
-                <h2 style={{ margin:0,fontSize:"0.82rem",fontWeight:700,color:"var(--yellow-accent)",fontFamily:"var(--font-mono)" }}>Planner Mode</h2>
+              <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:"0" }}>
+                <div style={{
+                  display:"inline-flex",alignItems:"center",gap:"6px",
+                  background:"rgba(245,158,11,0.06)",
+                  border:"1px solid rgba(245,158,11,0.12)",
+                  borderRadius:"999px",
+                  padding:"3px 12px 3px 8px",
+                }}>
+                  <div style={{ width:"5px",height:"5px",borderRadius:"50%",background:"var(--yellow-accent)",boxShadow:"0 0 4px rgba(245,158,11,0.5)",animation:"pulse 1.5s infinite",flexShrink:0 }} />
+                  <span style={{ fontSize:"0.68rem",fontWeight:700,color:"var(--yellow-accent)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>PLANNER</span>
+                </div>
               </div>
             ) : (
               <h2 style={{ margin:0,fontSize:"0.82rem",fontWeight:700,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"var(--font-sans)" }}>
@@ -1912,9 +1923,23 @@ export default function Studio() {
             )}
           </div>
           {plannerMode && (
-            <button onClick={() => setShowQuitPlannerModal(true)} style={{ background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:"6px",color:"var(--yellow-accent)",cursor:"pointer",padding:"3px 10px",flexShrink:0,fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(245,158,11,0.2)";}} onMouseLeave={e=>{e.currentTarget.style.background="rgba(245,158,11,0.1)";}}
-            >Quit Planner</button>
+            <button onClick={() => setShowQuitPlannerModal(true)} style={{
+              background:"transparent",
+              border:"1px solid #1e1e1e",
+              borderRadius:"6px",
+              color:"#555",
+              cursor:"pointer",
+              padding:"3px 8px",
+              flexShrink:0,
+              fontSize:"0.58rem",
+              fontFamily:"var(--font-mono)",
+              fontWeight:600,
+              letterSpacing:"0.03em",
+              transition:"all 0.12s",
+            }}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(245,158,11,0.3)";e.currentTarget.style.color="var(--yellow-accent)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor="#1e1e1e";e.currentTarget.style.color="#555";}}
+            >Quit</button>
           )}
           {isMobilePortrait ? (
             <button onClick={() => setMobilePanel(p => p === "chat" ? "preview" : "chat")} style={{ background:"none",border:`1px solid var(--border-subtle)`,borderRadius:"6px",color:"var(--text-secondary)",cursor:"pointer",padding:"3px 8px",flexShrink:0,display:"flex",alignItems:"center",gap:"4px",fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}>
@@ -1936,7 +1961,43 @@ export default function Studio() {
               <p style={{ color:"var(--text-tertiary)",fontSize:"0.78rem",maxWidth:"200px",lineHeight:1.6 }}>Describe an app and I'll build it for you.</p>
             </div>
           )}
-
+          {/* Planner intro card — shown at top of planner conversation */}
+          {plannerMode && plannerMessages.length <= 1 && !plannerQuestions && plannerState === "thinking" && (
+            <div style={{ animation:"fadeIn 0.3s ease forwards",marginBottom:"4px" }}>
+              <div style={{
+                background:"rgba(245,158,11,0.03)",
+                border:"1px solid rgba(245,158,11,0.08)",
+                borderRadius:"12px",
+                padding:"14px 16px",
+                maxWidth:"360px",
+              }}>
+                <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px" }}>
+                  <div style={{ width:"32px",height:"32px",flexShrink:0 }}>
+                    <BotAvatarStatic size={32} variant="planner" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--text-primary)",fontFamily:"var(--font-mono)" }}>Planner Agent</div>
+                    <div style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>REQUIREMENTS GATHERER</div>
+                  </div>
+                </div>
+                <div style={{ fontSize:"0.7rem",color:"var(--text-tertiary)",lineHeight:1.6,marginBottom:"10px" }}>
+                  I'll ask you a few questions to understand exactly what you want to build. Once we agree on a spec, I'll hand it off to the builder agent.
+                </div>
+                <div style={{ display:"flex",gap:"12px" }}>
+                  {[
+                    { icon:"◎", label:"Questions" },
+                    { icon:"◧", label:"Spec review" },
+                    { icon:"→", label:"Auto-build" },
+                  ].map((step, i) => (
+                    <div key={i} style={{ display:"flex",alignItems:"center",gap:"4px" }}>
+                      <span style={{ fontSize:"0.6rem",color:"var(--yellow-accent)",fontFamily:"var(--font-mono)" }}>{step.icon}</span>
+                      <span style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
             {!plannerMode && messages.map((msg,i) => {
             const isLastBot = msg.role==="assistant"&&!messages.slice(i+1).some(m=>m.role==="assistant")&&!isRunning;
             return (
@@ -2206,7 +2267,7 @@ export default function Studio() {
 
         {panelView==="code" && <>
           {isMobilePortrait && (
-            <div style={{ padding:"10px 12px",background:"var(--bg-0)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"8px",flexShrink:0 }}>
+            <div style={{ padding:"10px 12px",background:"var(--bg-0)",borderBottom:`1px solid ${plannerMode?"rgba(245,158,11,0.06)":"var(--border-subtle)"}`,display:"flex",alignItems:"center",gap:"8px",flexShrink:0 }}>
               <div style={{ flex:1,textAlign:"center",minWidth:0 }}>
                 <span style={{ fontSize:"0.72rem",fontWeight:600,color:"var(--text-secondary)",fontFamily:"var(--font-mono)" }}>Code</span>
               </div>
