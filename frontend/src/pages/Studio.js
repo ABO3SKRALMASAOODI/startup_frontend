@@ -2232,6 +2232,11 @@ export default function Studio() {
                         </div>
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="var(--red-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
+                      {/* Builder start notice */}
+                      <div style={{ display:"flex",alignItems:"center",gap:"6px",marginTop:"8px",padding:"6px 10px",borderRadius:"6px",background:"rgba(160,32,32,0.04)",border:"1px solid rgba(160,32,32,0.08)" }}>
+                        <div style={{ width:"4px",height:"4px",borderRadius:"50%",background:"var(--red-accent)",flexShrink:0 }} />
+                        <span style={{ fontSize:"0.6rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.03em" }}>Builder agent started</span>
+                      </div>
                     </div>
                   );
                 }
