@@ -150,7 +150,7 @@ function BotAvatar({ size = 30 }) {
 }
 
 function BotAvatarStatic({ size = 56 }) {
-  const { RiveComponent } = useRive({ src:"/hustler-robot.riv", autoplay:true, stateMachines:["State Machine 1"] });
+  const { RiveComponent } = useRive({ src:"/hustler-robot123.riv", autoplay:true, stateMachines:["State Machine 1"] });
   return <div style={{ width:size,height:size }}><RiveComponent style={{ width:"100%",height:"100%" }} /></div>;
 }
 
