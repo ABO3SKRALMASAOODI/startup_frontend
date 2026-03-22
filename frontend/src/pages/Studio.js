@@ -1262,7 +1262,7 @@ function SpecAttachmentChip({ specText }) {
       background:"rgba(30,10,10,0.95)",
       border:"1px solid rgba(120,30,30,0.4)",
       boxShadow:"0 1px 8px rgba(0,0,0,0.4)",
-      cursor:"pointer",transition:"all 0.15s",maxWidth:"320px",
+      cursor:"pointer",transition:"all 0.15s",
     }}
       onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(160,40,40,0.6)"}
       onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(120,30,30,0.4)"}
@@ -1609,26 +1609,45 @@ export default function Studio() {
  
   const handlePlannerAnswer = async (answerText) => {
     if (!currentJobId) return;
+    // Save the questions as a planner message before removing the card
+    if (plannerQuestions) {
+      const qText = (plannerQuestions.context ? `*${plannerQuestions.context}*\n\n` : "") +
+        (plannerQuestions.questions || []).map((q, i) => `**${i+1}.** ${q}`).join("\n");
+      setPlannerMessages(prev => [...prev, { role: "planner", content: qText }]);
+    }
     setPlannerQuestions(null);
     setPlannerState("thinking");
-    // Show user's answer as a chat message
-    setPlannerMessages(prev => [...prev, { role: "user", content: answerText }]);
+    // Format user's answer with bold numbers
+    const formatted = answerText.split("\n").map(line => {
+      const m = line.match(/^(\d+)\.\s*(.*)/);
+      return m ? `**${m[1]}.** ${m[2]}` : line;
+    }).join("\n");
+    setPlannerMessages(prev => [...prev, { role: "user", content: formatted }]);
     await sendPlannerAnswer(currentJobId, { answer: answerText });
   };
   const handlePlannerApprove = async () => {
     if (!currentJobId) return;
+    if (plannerSpec) {
+      setPlannerMessages(prev => [...prev, { role: "planner", content: `📋 **Proposed Spec:** ${plannerSpec.summary || "Specification ready for review"}` }]);
+    }
     setPlannerSpec(null); setPlannerState("thinking");
     setPlannerMessages(prev => [...prev, { role: "user", content: "✓ Approved the spec" }]);
     await sendPlannerAnswer(currentJobId, { decision: "approve" });
   };
   const handlePlannerEdit = async (editText) => {
     if (!currentJobId) return;
+    if (plannerSpec) {
+      setPlannerMessages(prev => [...prev, { role: "planner", content: `📋 **Spec proposed** — requesting edits` }]);
+    }
     setPlannerSpec(null); setPlannerState("thinking");
     setPlannerMessages(prev => [...prev, { role: "user", content: `Edit request: ${editText}` }]);
     await sendPlannerAnswer(currentJobId, { decision: "edit", detail: editText });
   };
   const handlePlannerReject = async (feedback) => {
     if (!currentJobId) return;
+    if (plannerSpec) {
+      setPlannerMessages(prev => [...prev, { role: "planner", content: `📋 **Spec proposed** — rejected` }]);
+    }
     setPlannerSpec(null); setPlannerState("thinking");
     setPlannerMessages(prev => [...prev, { role: "user", content: `Rejected: ${feedback || "No specific feedback"}` }]);
     await sendPlannerAnswer(currentJobId, { decision: "reject", detail: feedback || "No specific feedback" });
@@ -1958,7 +1977,7 @@ export default function Studio() {
             <div style={{ padding:"14px 14px 10px",borderBottom:"1px solid #161616",marginBottom:"6px" }}>
               <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px" }}>
                 <div style={{ width:"24px",height:"24px",borderRadius:"6px",background:"rgba(160,32,32,0.1)",border:"1px solid rgba(160,32,32,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 3v6M8 11.5v1" stroke="var(--red-accent)" strokeWidth="2" strokeLinecap="round"/></svg>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="var(--red-accent)" strokeWidth="1.5" strokeLinecap="round"/></svg>
                 </div>
                 <span style={{ fontSize:"0.78rem",fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono', monospace" }}>Quit Planning?</span>
               </div>
@@ -2073,7 +2092,7 @@ export default function Studio() {
             }}
               onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(245,158,11,0.3)";e.currentTarget.style.color="var(--yellow-accent)";}}
               onMouseLeave={e=>{e.currentTarget.style.borderColor="#1e1e1e";e.currentTarget.style.color="#555";}}
-            >Quit</button>
+              >Quit Planning</button>
           )}
           {isMobilePortrait ? (
             <button onClick={() => setMobilePanel(p => p === "chat" ? "preview" : "chat")} style={{ background:"none",border:`1px solid var(--border-subtle)`,borderRadius:"6px",color:"var(--text-secondary)",cursor:"pointer",padding:"3px 8px",flexShrink:0,display:"flex",alignItems:"center",gap:"4px",fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}>
@@ -2177,7 +2196,7 @@ export default function Studio() {
                 const specText = (msg.content || msg.text || "");
                 return (
                   <div key={i} className="msg-row" style={{ display:"flex",flexDirection:"row-reverse",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
-                    <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:"flex-end",overflow:"hidden" }}>
+                    <div style={{ maxWidth:"85%",minWidth:0,display:"flex",flexDirection:"column",alignItems:"flex-end" }}>
                       <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:"rgba(140,35,35,0.55)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>You</span>
                       <SpecAttachmentChip specText={specText} />
                     </div>
@@ -2245,7 +2264,7 @@ export default function Studio() {
 
           
           {/* Builder intro card — shown when builder starts */}
-          {!plannerMode && isRunning && messages.length <= 1 && progress.length === 0 && (
+          {!plannerMode && isRunning && !messages.some(m => m.role === "assistant" && m.source !== "planner") && (
             <div style={{ animation:"fadeIn 0.3s ease forwards",marginBottom:"4px" }}>
               <div style={{
                 background:"rgba(160,32,32,0.03)",
