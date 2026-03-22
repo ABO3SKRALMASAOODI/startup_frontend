@@ -2264,6 +2264,20 @@ export default function Studio() {
                         <div style={{ width:"4px",height:"4px",borderRadius:"50%",background:"var(--red-accent)",flexShrink:0 }} />
                         <span style={{ fontSize:"0.6rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.03em" }}>Builder agent started</span>
                       </div>
+                      {/* Builder intro card — inline after transition */}
+                      <div style={{ marginTop:"8px",background:"rgba(160,32,32,0.03)",border:"1px solid rgba(160,32,32,0.08)",borderRadius:"12px",padding:"14px 16px" }}>
+                        <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px" }}>
+                          <div style={{ width:"32px",height:"32px",flexShrink:0 }}><BotAvatarStatic size={32} variant="builder" /></div>
+                          <div>
+                            <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--text-primary)",fontFamily:"var(--font-mono)" }}>Builder Agent</div>
+                            <div style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>CODE GENERATION</div>
+                          </div>
+                        </div>
+                        <div style={{ fontSize:"0.7rem",color:"var(--text-tertiary)",lineHeight:1.6 }}>Building your application. Writing code, installing dependencies, generating images, and compiling into a live preview.</div>
+                        <div style={{ display:"flex",gap:"12px",marginTop:"8px" }}>
+                          {[{icon:"◎",label:"Code"},{icon:"◧",label:"Assets"},{icon:"▶",label:"Preview"}].map((step,si)=>(<div key={si} style={{display:"flex",alignItems:"center",gap:"4px"}}><span style={{fontSize:"0.6rem",color:"var(--red-accent)",fontFamily:"var(--font-mono)"}}>{step.icon}</span><span style={{fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)"}}>{step.label}</span></div>))}
+                        </div>
+                      </div>
                     </div>
                   );
                 }
@@ -2342,43 +2356,7 @@ export default function Studio() {
           })()}
 
           
-          {/* Builder intro card — shown when builder starts */}
-          {!plannerMode && messages.some(m => m.source === "planner") && (
-            <div style={{ animation:"fadeIn 0.3s ease forwards",marginBottom:"4px" }}>
-              <div style={{
-                background:"rgba(160,32,32,0.03)",
-                border:"1px solid rgba(160,32,32,0.08)",
-                borderRadius:"12px",
-                padding:"14px 16px",
-                maxWidth:"360px",
-              }}>
-                <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px" }}>
-                  <div style={{ width:"32px",height:"32px",flexShrink:0 }}>
-                    <BotAvatarStatic size={32} variant="builder" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--text-primary)",fontFamily:"var(--font-mono)" }}>Builder Agent</div>
-                    <div style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>CODE GENERATION</div>
-                  </div>
-                </div>
-                <div style={{ fontSize:"0.7rem",color:"var(--text-tertiary)",lineHeight:1.6 }}>
-                  Building your application. I'll write the code, install dependencies, generate images, and compile everything into a live preview.
-                </div>
-                <div style={{ display:"flex",gap:"12px",marginTop:"8px" }}>
-                  {[
-                    { icon:"◎", label:"Code" },
-                    { icon:"◧", label:"Assets" },
-                    { icon:"▶", label:"Preview" },
-                  ].map((step, i) => (
-                    <div key={i} style={{ display:"flex",alignItems:"center",gap:"4px" }}>
-                      <span style={{ fontSize:"0.6rem",color:"var(--red-accent)",fontFamily:"var(--font-mono)" }}>{step.icon}</span>
-                      <span style={{ fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{step.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          
           {/* Backend card — shown while backendLoading OR while the job is still running and requesting it */}
           {showBackendInChat && (isRunning || backendLoading) && (
             <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}>
