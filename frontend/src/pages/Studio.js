@@ -2226,9 +2226,36 @@ export default function Studio() {
                         <div style={{ width:"24px",height:"24px",borderRadius:"6px",background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                           <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="var(--green-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </div>
-                        <div style={{ flex:1 }}>
+                        <div style={{ flex:1,minWidth:0 }}>
                           <div style={{ fontSize:"0.68rem",fontWeight:700,color:"var(--text-secondary)",fontFamily:"var(--font-mono)" }}>Planning complete — handing off to Builder</div>
-                          <div style={{ fontSize:"0.6rem",color:"var(--text-muted)",marginTop:"2px" }}>{parsed?.summary || ""}</div>
+                          <div style={{ fontSize:"0.6rem",color:"var(--text-muted)",marginTop:"2px",lineHeight:1.4 }}>{parsed?.summary || ""}</div>
+                          {parsed?.spec && (() => {
+                            const s = parsed.spec;
+                            const project = s.project || {};
+                            const pages = s.pages || [];
+                            const design = s.design || {};
+                            const data = s.data || {};
+                            return (
+                              <div style={{ marginTop:"6px",padding:"6px 8px",background:"rgba(255,255,255,0.02)",borderRadius:"6px",border:"1px solid rgba(255,255,255,0.03)" }}>
+                                <div style={{ display:"flex",flexWrap:"wrap",gap:"8px",fontSize:"0.58rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)",lineHeight:1.6 }}>
+                                  {project.name && <span><span style={{color:"var(--text-tertiary)"}}>Project:</span> {project.name}</span>}
+                                  {pages.length > 0 && <span><span style={{color:"var(--text-tertiary)"}}>Pages:</span> {pages.map(p=>p.name).join(", ")}</span>}
+                                  {design.aesthetic && <span><span style={{color:"var(--text-tertiary)"}}>Style:</span> {design.aesthetic}</span>}
+                                  {data.backend && <span><span style={{color:"var(--text-tertiary)"}}>Backend:</span> {data.backend}</span>}
+                                  {data.auth_required && <span><span style={{color:"var(--text-tertiary)"}}>Auth:</span> yes</span>}
+                                </div>
+                                {design.colors && Object.keys(design.colors).length > 0 && (
+                                  <div style={{ display:"flex",gap:"3px",marginTop:"4px",flexWrap:"wrap" }}>
+                                    {Object.entries(design.colors).map(([k,v]) => (
+                                      <span key={k} style={{ display:"inline-flex",alignItems:"center",gap:"2px",fontSize:"0.52rem",color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>
+                                        <span style={{ width:"6px",height:"6px",borderRadius:"2px",background:v,border:"1px solid rgba(255,255,255,0.08)",flexShrink:0 }} />{k}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="var(--red-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
@@ -2316,7 +2343,7 @@ export default function Studio() {
 
           
           {/* Builder intro card — shown when builder starts */}
-          {!plannerMode && isRunning && !messages.some(m => m.role === "assistant" && m.source !== "planner") && (
+          {!plannerMode && messages.some(m => m.source === "planner") && (
             <div style={{ animation:"fadeIn 0.3s ease forwards",marginBottom:"4px" }}>
               <div style={{
                 background:"rgba(160,32,32,0.03)",
