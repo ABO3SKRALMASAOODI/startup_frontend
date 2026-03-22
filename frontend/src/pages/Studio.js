@@ -2162,7 +2162,7 @@ export default function Studio() {
             </div>
           )}
           {/* Planner intro card — shown at top of planner conversation */}
-          {plannerMode && (
+          {(plannerMode || messages.some(m => m.source === "planner")) && (
             <div style={{ animation:"fadeIn 0.3s ease forwards",marginBottom:"4px" }}>
               <div style={{
                 background:"rgba(245,158,11,0.03)",
