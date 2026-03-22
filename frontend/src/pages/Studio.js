@@ -19,8 +19,8 @@ const GLOBAL_STYLES = `
   @keyframes slideIn      { from{opacity:0;transform:translateY(-4px) scale(0.98)} to{opacity:1;transform:translateY(0) scale(1)} }
   @keyframes progressPulse { 0%{box-shadow:0 0 4px rgba(130,25,25,0.65)} 50%{box-shadow:0 0 12px rgba(130,25,25,0.92)} 100%{box-shadow:0 0 4px rgba(130,25,25,0.65)} }
   @keyframes nodeAppear   { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
-
-
+  @keyframes nodeAppear   { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
+  @keyframes yellowPulse  { 0%,100%{filter:drop-shadow(0 0 3px rgba(245,158,11,0.85)) drop-shadow(0 0 7px rgba(217,119,6,0.6)) drop-shadow(0 0 14px rgba(180,83,9,0.3))} 50%{filter:drop-shadow(0 0 5px rgba(245,158,11,1)) drop-shadow(0 0 12px rgba(217,119,6,0.8)) drop-shadow(0 0 22px rgba(180,83,9,0.5))} }
 
   :root {
     --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -42,6 +42,8 @@ const GLOBAL_STYLES = `
     --green-accent: #10b981;
     --green-subtle: rgba(16,185,129,0.08);
     --yellow-accent: #f59e0b;
+    --yellow-glow: rgba(245,158,11,0.18);
+    --yellow-subtle: rgba(245,158,11,0.08);
   }
   html, body, #root { height: 100dvh; overflow: hidden; }
   @media screen and (max-width: 768px) {
@@ -81,7 +83,7 @@ const GLOBAL_STYLES = `
 
   .msg-row { animation: fadeIn 0.2s ease forwards; }
   .input-area:focus-within { border-color: rgba(140,35,35,0.45) !important; box-shadow: 0 0 0 1px rgba(140,35,35,0.18) !important; }
-
+  .input-area.planner-active:focus-within { border-color: rgba(245,158,11,0.45) !important; box-shadow: 0 0 0 1px rgba(245,158,11,0.18) !important; }
 
 `;
 
@@ -123,8 +125,10 @@ function useIsMobile() {
 
 
 // ── Bot avatar ───────────────────────────────────────────────────────────────
-function BotAvatar({ size = 30 }) {
-  const { RiveComponent, rive } = useRive({ src:"/hustler-robot112.riv", autoplay:true, stateMachines:["State Machine 1"] });
+function BotAvatar({ size = 30, variant = "builder" }) {
+  const isPlanner = variant === "planner";
+  const rivSrc = isPlanner ? "/hustler-robot97.riv" : "/hustler-robot112.riv";
+  const { RiveComponent, rive } = useRive({ src: rivSrc, autoplay:true, stateMachines:["State Machine 1"] });
   const ref = useRef(null);
 
   const setMouseX = useCallback((val) => {
@@ -142,23 +146,30 @@ function BotAvatar({ size = 30 }) {
     <div ref={ref}
       onMouseMove={e => { if (!ref.current) return; const r = ref.current.getBoundingClientRect(); setMouseX(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))); }}
       onMouseLeave={() => setMouseX(0.5)}
-      style={{ width:size,height:size,flexShrink:0,filter:"drop-shadow(0 0 3px rgba(140,35,35,0.92)) drop-shadow(0 0 8px rgba(140,35,35,0.55))",animation:"redPulse 2.4s ease-in-out infinite" }}>
+      style={{ width:size,height:size,flexShrink:0,
+        ...(isPlanner
+          ? { filter:"drop-shadow(0 0 3px rgba(245,158,11,0.85)) drop-shadow(0 0 8px rgba(217,119,6,0.55))", animation:"yellowPulse 2.4s ease-in-out infinite" }
+          : { filter:"drop-shadow(0 0 3px rgba(140,35,35,0.92)) drop-shadow(0 0 8px rgba(140,35,35,0.55))", animation:"redPulse 2.4s ease-in-out infinite" }
+        )
+      }}>
       <div style={{ position:"absolute",inset:0,zIndex:1,background:"transparent" }} />
       <RiveComponent style={{ width:"100%",height:"100%",display:"block" }} />
     </div>
   );
 }
 
-function BotAvatarStatic({ size = 56 }) {
-  const { RiveComponent } = useRive({ src:"/hustler-robot112.riv", autoplay:true, stateMachines:["State Machine 1"] });
+function BotAvatarStatic({ size = 56, variant = "builder" }) {
+  const isPlanner = variant === "planner";
+  const rivSrc = isPlanner ? "/hustler-robot97.riv" : "/hustler-robot112.riv";
+  const { RiveComponent } = useRive({ src: rivSrc, autoplay:true, stateMachines:["State Machine 1"] });
   return <div style={{ width:size,height:size }}><RiveComponent style={{ width:"100%",height:"100%" }} /></div>;
 }
 
 // ── Typing dots ──────────────────────────────────────────────────────────────
-function TypingDots() {
+function TypingDots({ color = "var(--red-accent)" }) {
   return (
     <div style={{ display:"flex",alignItems:"center",gap:"3px",padding:"2px 0" }}>
-      {[0,1,2].map(i => <span key={i} style={{ width:"5px",height:"5px",borderRadius:"50%",background:"var(--red-accent)",display:"inline-block",animation:`buildingDot 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+      {[0,1,2].map(i => <span key={i} style={{ width:"5px",height:"5px",borderRadius:"50%",background:color,display:"inline-block",animation:`buildingDot 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
     </div>
   );
 }
@@ -215,6 +226,7 @@ const startPlannerAPI = async (jobId, message) => { const res = await API.post("
 const getPlannerStatus = async (jobId) => { const res = await API.get(`/auth/planner/${jobId}/status`); return res.data; };
 const sendPlannerAnswer = async (jobId, data) => { const res = await API.post(`/auth/planner/${jobId}/answer`, data); return res.data; };
 const quitPlannerAPI = async (jobId) => { const res = await API.post(`/auth/planner/${jobId}/quit`); return res.data; };
+const continuePlannerAPI = async (jobId, message) => { const res = await API.post(`/auth/planner/${jobId}/continue`, { message }); return res.data; };
 const getPlannerSpecAPI = async (jobId) => { const res = await API.get(`/auth/planner/${jobId}/spec`); return res.data; };
 const downloadProjectZip = async (jobId, title) => {
   const res = await API.get(`/auth/job/${jobId}/download`, { responseType:"blob" });
@@ -815,14 +827,16 @@ function PlannerSpecCard({ spec, summary, editsApplied, onApprove, onEdit, onRej
 function PlannerPopup({ onYes, onSkip }) {
   return (
     <div style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-      <div style={{ background:"var(--bg-2)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:"14px",padding:"24px 28px",maxWidth:"380px",width:"90%",boxShadow:"0 0 40px rgba(0,0,0,0.7), 0 0 20px rgba(245,158,11,0.08)",textAlign:"center",animation:"slideIn 0.15s ease" }}>
-        <div style={{ width:"36px",height:"36px",borderRadius:"10px",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:"1.1rem",color:"var(--yellow-accent)",fontWeight:700 }}>?</div>
+      <div style={{ background:"var(--bg-2)",border:"1px solid rgba(245,158,11,0.3)",borderRadius:"14px",padding:"24px 28px",maxWidth:"380px",width:"90%",boxShadow:"0 0 40px rgba(0,0,0,0.7), 0 0 30px rgba(245,158,11,0.1)",textAlign:"center",animation:"slideIn 0.15s ease" }}>
+      <div style={{ width:"48px",height:"48px",borderRadius:"12px",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px" }}>
+          <BotAvatarStatic size={32} variant="planner" />
+        </div>
         <h3 style={{ margin:"0 0 8px",fontSize:"1rem",color:"var(--text-primary)",fontWeight:700,fontFamily:"var(--font-sans)" }}>Start with the Planner?</h3>
-        <p style={{ margin:"0 0 6px",fontSize:"0.8rem",color:"var(--text-secondary)",lineHeight:1.5 }}>The Planner asks targeted questions to build a detailed spec before the AI starts coding. This produces better results.</p>
+        <p style={{ margin:"0 0 6px",fontSize:"0.8rem",color:"var(--text-secondary)",lineHeight:1.5 }}>The Planner asks targeted questions to build a detailed spec before the AI starts coding. This produces <span style={{ color:"var(--yellow-accent)",fontWeight:600 }}>significantly better results</span>.</p>
         <p style={{ margin:"0 0 16px",fontSize:"0.68rem",color:"var(--text-muted)",lineHeight:1.4 }}>You can quit the planner at any time.</p>
         <div style={{ display:"flex",gap:"8px" }}>
           <button onClick={onSkip} style={{ flex:1,padding:"10px",background:"var(--bg-3)",border:"1px solid var(--border-default)",borderRadius:"8px",color:"var(--text-secondary)",fontSize:"0.82rem",cursor:"pointer",fontFamily:"var(--font-sans)" }}>Skip</button>
-          <button onClick={onYes} style={{ flex:1.3,padding:"10px",background:"linear-gradient(135deg,rgba(245,158,11,0.2),rgba(217,119,6,0.15))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:"8px",color:"var(--yellow-accent)",fontSize:"0.82rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)" }}>Yes, plan first</button>
+          <button onClick={onYes} style={{ flex:1.3,padding:"10px",background:"linear-gradient(135deg,rgba(245,158,11,0.2),rgba(217,119,6,0.15))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:"8px",color:"var(--yellow-accent)",fontSize:"0.82rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",boxShadow:"0 0 20px rgba(245,158,11,0.1)" }}>Yes, plan first</button>
         </div>
       </div>
     </div>
@@ -1211,6 +1225,8 @@ export default function Studio() {
   const [plannerState, setPlannerState] = useState(null);
   const [plannerQuestions, setPlannerQuestions] = useState(null);
   const [plannerSpec, setPlannerSpec] = useState(null);
+  const [plannerTextReply, setPlannerTextReply] = useState(null);
+  const [plannerMessages, setPlannerMessages] = useState([]);
   const [showPlannerPopup, setShowPlannerPopup] = useState(false);
   const plannerPollRef = useRef(null);
   const pendingPlannerPrompt = useRef(null);
@@ -1239,7 +1255,7 @@ export default function Studio() {
   useEffect(() => { fetchProjects().then(jobs => setProjects(jobs)).catch(()=>{}); }, []);
 
   const prevMsgCount = useRef(0);
-  useEffect(() => { if (messages.length > prevMsgCount.current) bottomRef.current?.scrollIntoView({ behavior:"smooth" }); prevMsgCount.current = messages.length; }, [messages]);
+  useEffect(() => { if (messages.length > prevMsgCount.current || plannerMessages.length > 0) bottomRef.current?.scrollIntoView({ behavior:"smooth" }); prevMsgCount.current = messages.length; }, [messages, plannerMessages, plannerQuestions, plannerSpec, plannerTextReply, plannerState]);
 
   useEffect(() => { getCredits().then(d => { setCredits(d.balance); if (d.plan_limit) setPlanLimit(d.plan_limit); }).catch(()=>{}); setUserPlan(localStorage.getItem("user_plan")||"free"); }, []);
 
@@ -1311,6 +1327,7 @@ export default function Studio() {
     setCurrentJobId(project.job_id); setError(""); setPreviewError(false); setMessages([]); setAttachedFiles([]);
     setPublishedUrl(null); setChangesSincePublish(false);
     setStripeEnabled(false); setShowStripeInChat(false); stripeRespondedRef.current = false;
+    setPlannerMode(false); setPlannerState(null); setPlannerQuestions(null); setPlannerSpec(null); setPlannerTextReply(null); setPlannerMessages([]);
     const safeUrl = _safePreview(project.preview_url);
     setPreviewUrl(safeUrl); setState(project.state||"completed"); setCodeChanged(!!safeUrl);
     if (safeUrl) setPreviewKey(k=>k+1);
@@ -1397,20 +1414,37 @@ export default function Studio() {
         const d = await getPlannerStatus(jobId);
         const st = d.state;
         setPlannerState(st);
-        if (st === "waiting_questions") { setPlannerQuestions({ context: d.context, questions: d.questions }); setPlannerSpec(null); }
-        else if (st === "waiting_spec" || st === "waiting_edit") { setPlannerSpec({ spec: d.spec, summary: d.summary, edits_applied: d.edits_applied || null }); setPlannerQuestions(null); }
-        else if (st === "thinking") { setPlannerQuestions(null); setPlannerSpec(null); }
-        else if (st === "completed") {
-          stopPlannerPolling(); setPlannerQuestions(null); setPlannerSpec(null);
+
+        if (st === "waiting_questions") {
+          setPlannerQuestions({ context: d.context, questions: d.questions });
+          setPlannerSpec(null); setPlannerTextReply(null);
+        } else if (st === "waiting_spec" || st === "waiting_edit") {
+          setPlannerSpec({ spec: d.spec, summary: d.summary, edits_applied: d.edits_applied || null });
+          setPlannerQuestions(null); setPlannerTextReply(null);
+        } else if (st === "waiting_reply") {
+          // Text-only response from planner (e.g. reply to "hi")
+          stopPlannerPolling();
+          const msg = d.message || "";
+          setPlannerTextReply(msg);
+          setPlannerQuestions(null); setPlannerSpec(null);
+          setPlannerMessages(prev => [...prev, { role: "planner", content: msg }]);
+          getCredits().then(c=>{setCredits(c.balance);}).catch(()=>{});
+        } else if (st === "thinking") {
+          setPlannerQuestions(null); setPlannerSpec(null); setPlannerTextReply(null);
+        } else if (st === "completed") {
+          stopPlannerPolling();
+          setPlannerQuestions(null); setPlannerSpec(null); setPlannerTextReply(null);
           try {
             const specData = await getPlannerSpecAPI(jobId);
             const specText = `[APPROVED SPEC]\n${specData.summary}\n\n${JSON.stringify(specData.spec, null, 2)}`;
-            setPlannerMode(false); setPlannerState(null);
+            setPlannerMode(false); setPlannerState(null); setPlannerMessages([]);
             await sendFollowUp(jobId, specText, selectedModel, []);
             setState("running"); startPolling(jobId);
           } catch (e) { console.error("Failed to fetch planner spec:", e); setPlannerMode(false); setPlannerState(null); }
+          getCredits().then(c=>{setCredits(c.balance);}).catch(()=>{});
         } else if (st === "quit" || st === "error" || st === "idle") {
-          stopPlannerPolling(); setPlannerMode(false); setPlannerQuestions(null); setPlannerSpec(null); setPlannerState(null);
+          stopPlannerPolling(); setPlannerMode(false); setPlannerQuestions(null); setPlannerSpec(null); setPlannerTextReply(null); setPlannerState(null); setPlannerMessages([]);
+          getCredits().then(c=>{setCredits(c.balance);}).catch(()=>{});
         }
       } catch (e) { console.error("Planner poll error:", e); }
     }, 2500);
@@ -1420,18 +1454,33 @@ export default function Studio() {
   const handlePlannerApprove = async () => { if (!currentJobId) return; setPlannerSpec(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { decision: "approve" }); };
   const handlePlannerEdit = async (editText) => { if (!currentJobId) return; setPlannerSpec(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { decision: "edit", detail: editText }); };
   const handlePlannerReject = async (feedback) => { if (!currentJobId) return; setPlannerSpec(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { decision: "reject", detail: feedback || "No specific feedback" }); };
- 
+  const handlePlannerContinue = async (text) => {
+    if (!currentJobId || !text.trim()) return;
+    setPlannerTextReply(null);
+    setPlannerState("thinking");
+    setPlannerMessages(prev => [...prev, { role: "user", content: text }]);
+    try {
+      await continuePlannerAPI(currentJobId, text);
+      startPlannerPolling(currentJobId);
+    } catch (e) {
+      console.error("Failed to continue planner:", e);
+      setError(e?.response?.data?.error || "Failed to continue planner conversation");
+      setPlannerState(null);
+    }
+  };
   const handleQuitPlanner = async () => {
     if (!currentJobId) return;
     stopPlannerPolling();
     try { await quitPlannerAPI(currentJobId); } catch {}
-    setPlannerMode(false); setPlannerState(null); setPlannerQuestions(null); setPlannerSpec(null);
+    setPlannerMode(false); setPlannerState(null); setPlannerQuestions(null); setPlannerSpec(null); setPlannerTextReply(null); setPlannerMessages([]);
+    getCredits().then(c=>{setCredits(c.balance);}).catch(()=>{});
   };
  
   const handleStartWithPlanner = async (text) => {
     setShowPlannerPopup(false);
     setPlannerMode(true);
     setPlannerState("thinking");
+    setPlannerMessages([{ role: "user", content: text }]);
     try {
       let jobId = currentJobId;
 
@@ -1521,7 +1570,17 @@ export default function Studio() {
 
   const handleSend = async (e) => {
     e.preventDefault(); const text=prompt.trim();
-    if (!text&&attachedFiles.length===0) return; if (isRunning) return;
+    if (!text&&attachedFiles.length===0) return;
+
+    // If planner is waiting for a text reply, continue the planner conversation
+    if (plannerMode && (plannerState === "waiting_reply" || plannerTextReply !== null)) {
+      if (!text) return;
+      setPrompt("");
+      handlePlannerContinue(text);
+      return;
+    }
+
+    if (isRunning) return;
     setPrompt(""); setError("");
     try {
       if (!currentJobId) { await handleSendWithText(text||"Build based on attached files"); }
@@ -1547,7 +1606,7 @@ export default function Studio() {
     setState("idle"); setPrompt(""); setError(""); setAttachedFiles([]); setPublishedUrl(null); setChangesSincePublish(false);
     setBackendEnabled(false); setShowBackendInChat(false); backendRespondedRef.current = false;
     setStripeEnabled(false); setShowStripeInChat(false); stripeRespondedRef.current = false;
-    stopPlannerPolling(); setPlannerMode(false); setPlannerState(null); setPlannerQuestions(null); setPlannerSpec(null);
+    stopPlannerPolling(); setPlannerMode(false); setPlannerState(null); setPlannerQuestions(null); setPlannerSpec(null); setPlannerTextReply(null); setPlannerMessages([]);
     setTimeout(()=>inputRef.current?.focus(),100);
   };
 
@@ -1620,7 +1679,13 @@ export default function Studio() {
   const confirmLogout = () => { setShowLogoutModal(false); localStorage.removeItem("token"); localStorage.removeItem("user_email"); sessionStorage.removeItem("studio_current_job"); navigate("/home"); };
   const handleUpgrade = () => { if (currentJobId) sessionStorage.setItem("studio_return_job_id",currentJobId); navigate("/subscribe"); };
 
-  const placeholder = currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
+  const placeholder = plannerMode
+    ? (plannerTextReply !== null ? "Reply to the planner..." : "Planner is working...")
+    : currentJobId ? "Ask for changes..." : "Describe the app you want to build...";
+
+  const inputDisabled = plannerMode
+    ? (plannerState === "thinking" || plannerState === "waiting_questions" || plannerState === "waiting_spec" || plannerState === "waiting_edit")
+    : isRunning;
 
   // ── Credits button ────────────────────────────────────────────────────────
   const renderCreditsButton = () => {
@@ -1725,9 +1790,16 @@ export default function Studio() {
         <div style={{ padding:"10px 12px",background:"var(--bg-0)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"8px",flexShrink:0 }}>
           <button onClick={()=>setSidebarOpen(true)} style={{ background:"none",border:"none",color:"var(--text-tertiary)",fontSize:"0.95rem",cursor:"pointer",padding:"2px 4px",flexShrink:0 }}>&#9776;</button>
           <div style={{ flex:1,textAlign:"center",minWidth:0 }}>
-            <h2 style={{ margin:0,fontSize:"0.82rem",fontWeight:700,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"var(--font-sans)" }}>
-              {currentJobId ? (projects.find(p=>p.job_id===currentJobId)?.title||"Project") : "The Hustler Bot"}
-            </h2>
+            {plannerMode ? (
+              <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:"6px" }}>
+                <div style={{ width:"6px",height:"6px",borderRadius:"50%",background:"var(--yellow-accent)",boxShadow:"0 0 6px rgba(245,158,11,0.6)",animation:"pulse 1.5s infinite" }} />
+                <h2 style={{ margin:0,fontSize:"0.82rem",fontWeight:700,color:"var(--yellow-accent)",fontFamily:"var(--font-mono)" }}>Planner Mode</h2>
+              </div>
+            ) : (
+              <h2 style={{ margin:0,fontSize:"0.82rem",fontWeight:700,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"var(--font-sans)" }}>
+                {currentJobId ? (projects.find(p=>p.job_id===currentJobId)?.title||"Project") : "The Hustler Bot"}
+              </h2>
+            )}
           </div>
           {plannerMode && (
             <button onClick={handleQuitPlanner} style={{ background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:"6px",color:"var(--yellow-accent)",cursor:"pointer",padding:"3px 10px",flexShrink:0,fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}
@@ -1747,7 +1819,7 @@ export default function Studio() {
         <div className="studio-scroll" style={{ flexGrow:1,overflowY:"auto",overflowX:"hidden",padding:"16px 12px",display:"flex",flexDirection:"column",gap:"12px",minHeight:0 }}>
           {chatLoading && messages.length===0 && <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"10px" }}><Spinner /><span style={{ color:"var(--text-tertiary)",fontSize:"0.78rem" }}>Loading...</span></div>}
 
-          {!chatLoading && messages.length===0 && !isRunning && (
+          {!chatLoading && messages.length===0 && !isRunning && !plannerMode && (
             <div style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"2rem",gap:"12px" }}>
               <div style={{ animation:"redPulse 2.4s ease-in-out infinite" }}><BotAvatarStatic size={56} /></div>
               <p style={{ color:"var(--text-primary)",fontSize:"0.9rem",fontWeight:600 }}>The Hustler Bot</p>
@@ -1755,7 +1827,7 @@ export default function Studio() {
             </div>
           )}
 
-          {messages.map((msg,i) => {
+            {!plannerMode && messages.map((msg,i) => {
             const isLastBot = msg.role==="assistant"&&!messages.slice(i+1).some(m=>m.role==="assistant")&&!isRunning;
             return (
               <div key={i} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
@@ -1817,21 +1889,36 @@ export default function Studio() {
               <BackendApprovalCard onAllow={handleBackendAllow} onDeny={handleBackendDeny} isLoading={backendLoading} />
             </div>
           )}
+          {/* Planner conversation messages */}
+          {plannerMode && plannerMessages.map((msg, i) => (
+            <div key={`planner-${i}`} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
+              {msg.role==="planner" && <BotAvatar size={28} variant="planner" />}
+              <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",overflow:"hidden" }}>
+                <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(245,158,11,0.5)":"rgba(245,158,11,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>{msg.role==="user"?"You":"Planner"}</span>
+                <div style={{ padding:"10px 14px",borderRadius:msg.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:msg.role==="user"?"rgba(40,30,5,0.95)":"rgba(245,158,11,0.03)",border:msg.role==="user"?"1px solid rgba(245,158,11,0.3)":"1px solid rgba(245,158,11,0.12)",boxShadow:"0 1px 8px rgba(0,0,0,0.3)",minWidth:0,overflow:"hidden" }}>
+                  <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
+                </div>
+              </div>
+            </div>
+          ))}
           {plannerMode && (
             <>
               {(plannerState === "waiting_questions" && plannerQuestions) && (
-                <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}><BotAvatar size={28} />
+                <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}><BotAvatar size={28} variant="planner" />
                   <PlannerQuestionCard context={plannerQuestions.context} questions={plannerQuestions.questions} onSubmit={handlePlannerAnswer} isThinking={false} />
                 </div>
               )}
               {((plannerState === "waiting_spec" || plannerState === "waiting_edit") && plannerSpec) && (
-                <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}><BotAvatar size={28} />
+                <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}><BotAvatar size={28} variant="planner" />
                   <PlannerSpecCard spec={plannerSpec.spec} summary={plannerSpec.summary} editsApplied={plannerSpec.edits_applied} onApprove={handlePlannerApprove} onEdit={handlePlannerEdit} onReject={handlePlannerReject} />
                 </div>
               )}
               {plannerState === "thinking" && (
-                <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}><BotAvatar size={28} />
-                  <PlannerQuestionCard isThinking={true} context="" questions={[]} onSubmit={()=>{}} />
+                <div className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}><BotAvatar size={28} variant="planner" />
+                  <div style={{ padding:"10px 14px",borderRadius:"14px 14px 14px 4px",background:"rgba(245,158,11,0.04)",border:"1px solid rgba(245,158,11,0.12)" }}>
+                    <TypingDots color="var(--yellow-accent)" />
+                    <span style={{ fontSize:"0.68rem",color:"var(--yellow-accent)",display:"block",marginTop:"3px",fontFamily:"var(--font-mono)" }}>Planner is thinking...</span>
+                  </div>
                 </div>
               )}
             </>
@@ -1843,7 +1930,7 @@ export default function Studio() {
             </div>
           )}
 
-          {(isRunning||isRendering) && !showBackendInChat && !showStripeInChat && (() => {
+            {!plannerMode && (isRunning||isRendering) && !showBackendInChat && !showStripeInChat && (() => {
             const last = messages.length>0?messages[messages.length-1]:null;
             const botReplied = last&&last.role==="assistant";
             if (botReplied) {
@@ -1882,12 +1969,12 @@ export default function Studio() {
         </div>
 
         {/* Input area */}
-        <div style={{ padding:"10px",borderTop:`1px solid var(--border-subtle)`,background:"var(--bg-0)",flexShrink:0 }}>
-          <div className="input-area"
+        <div style={{ padding:"10px",borderTop:`1px solid ${plannerMode ? "rgba(245,158,11,0.12)" : "var(--border-subtle)"}`,background:"var(--bg-0)",flexShrink:0 }}>
+          <div className={`input-area${plannerMode ? " planner-active" : ""}`}
             style={{
               display:"flex",flexDirection:"column",gap:"8px",
               background:"var(--bg-1)",
-              border:`1px solid var(--border-subtle)`,
+              border:`1px solid ${plannerMode ? "rgba(245,158,11,0.15)" : "var(--border-subtle)"}`,
               borderRadius:"12px",padding:"10px",transition:"all 0.15s",position:"relative"
             }}>
 
@@ -1914,21 +2001,21 @@ export default function Studio() {
             )}
 
             <div style={{ display:"flex",alignItems:"flex-end",gap:"8px" }}>
-              <button onClick={()=>fileInputRef.current?.click()} disabled={isRunning} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:isRunning?"default":"pointer",fontSize:"1rem",padding:"4px",flexShrink:0,opacity:isRunning?0.3:1,transition:"color 0.12s" }}
+            {!plannerMode && <button onClick={()=>fileInputRef.current?.click()} disabled={isRunning} style={{ background:"none",border:"none",color:"var(--text-muted)",cursor:isRunning?"default":"pointer",fontSize:"1rem",padding:"4px",flexShrink:0,opacity:isRunning?0.3:1,transition:"color 0.12s" }}
                 onMouseEnter={e=>{if(!isRunning)e.currentTarget.style.color="var(--red-accent)";}} onMouseLeave={e=>{if(!isRunning)e.currentTarget.style.color="var(--text-muted)";}}
-              >+</button>
+              >+</button>}
               <input ref={fileInputRef} type="file" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.svg,.pdf,.txt,.md,.csv,.json,.py,.js,.ts,.jsx,.tsx,.css,.html,.env,.yaml,.yml,.xml,.sql,.sh,.toml" style={{ display:"none" }} onChange={e=>{if(e.target.files?.length){addFiles(e.target.files);e.target.value="";}}} />
               <textarea ref={inputRef} value={prompt} onChange={e=>{setPrompt(e.target.value);const el=e.target;el.style.height="auto";el.style.height=Math.min(el.scrollHeight,140)+"px";}}
-                onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend(e);}}} onPaste={handlePaste} placeholder={placeholder} rows={1} disabled={isRunning}
-                style={{ flex:1,background:"transparent",color:"var(--text-primary)",border:"none",outline:"none",fontSize:"0.82rem",resize:"none",fontFamily:"var(--font-sans)",lineHeight:1.5,maxHeight:"140px",minHeight:"36px",overflowY:"auto",opacity:isRunning?0.4:1,padding:0,margin:0 }} />
-              {isRunning ? (
+                onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend(e);}}} onPaste={handlePaste} placeholder={placeholder} rows={1} disabled={inputDisabled}
+                style={{ flex:1,background:"transparent",color:"var(--text-primary)",border:"none",outline:"none",fontSize:"0.82rem",resize:"none",fontFamily:"var(--font-sans)",lineHeight:1.5,maxHeight:"140px",minHeight:"36px",overflowY:"auto",opacity:inputDisabled?0.4:1,padding:0,margin:0 }} />
+              {isRunning && !plannerMode ? (
                 <button onClick={handleStop} title="Stop" style={{ width:"32px",height:"32px",borderRadius:"8px",border:"none",background:"linear-gradient(135deg,var(--red-accent),#701818)",color:"#fff",fontSize:"0.65rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>&#9632;</button>
               ) : (
-                <button onClick={handleSend} disabled={!prompt.trim()&&attachedFiles.length===0} style={{
+                <button onClick={handleSend} disabled={(!prompt.trim()&&attachedFiles.length===0)||inputDisabled} style={{
                   width:"32px",height:"32px",borderRadius:"8px",border:"none",
-                  background:(!prompt.trim()&&attachedFiles.length===0)?"var(--bg-3)":"linear-gradient(135deg,var(--red-accent),#701818)",
-                  color:(!prompt.trim()&&attachedFiles.length===0)?"var(--text-muted)":"#fff",fontSize:"0.85rem",
-                  cursor:(!prompt.trim()&&attachedFiles.length===0)?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"
+                  background:((!prompt.trim()&&attachedFiles.length===0)||inputDisabled)?"var(--bg-3)":plannerMode?"linear-gradient(135deg,var(--yellow-accent),#d97706)":"linear-gradient(135deg,var(--red-accent),#701818)",
+                  color:((!prompt.trim()&&attachedFiles.length===0)||inputDisabled)?"var(--text-muted)":"#fff",fontSize:"0.85rem",
+                  cursor:((!prompt.trim()&&attachedFiles.length===0)||inputDisabled)?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"
                 }}>&#10148;</button>
               )}
             </div>
@@ -1954,7 +2041,7 @@ export default function Studio() {
  
  {panelView==="preview" && <>
           {isMobilePortrait && (
-            <div style={{ padding:"10px 12px",background:"var(--bg-0)",borderBottom:`1px solid var(--border-subtle)`,display:"flex",alignItems:"center",gap:"8px",flexShrink:0 }}>
+            <div style={{ padding:"10px 12px",background:"var(--bg-0)",borderBottom:`1px solid ${plannerMode ? "rgba(245,158,11,0.15)" : "var(--border-subtle)"}`,display:"flex",alignItems:"center",gap:"8px",flexShrink:0 }}>
               <div style={{ flex:1,textAlign:"center",minWidth:0 }}>
                 <span style={{ fontSize:"0.72rem",fontWeight:600,color:"var(--text-secondary)",fontFamily:"var(--font-mono)" }}>Preview</span>
               </div>
