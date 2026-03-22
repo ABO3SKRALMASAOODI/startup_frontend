@@ -148,7 +148,7 @@ function BotAvatar({ size = 30, variant = "builder" }) {
       onMouseLeave={() => setMouseX(0.5)}
       style={{ width:size,height:size,flexShrink:0,
         ...(isPlanner
-          ? { filter:"drop-shadow(0 0 3px rgba(245,158,11,0.85)) drop-shadow(0 0 8px rgba(217,119,6,0.55))", animation:"yellowPulse 2.4s ease-in-out infinite" }
+          ? {}
           : { filter:"drop-shadow(0 0 3px rgba(140,35,35,0.92)) drop-shadow(0 0 8px rgba(140,35,35,0.55))", animation:"redPulse 2.4s ease-in-out infinite" }
         )
       }}>
@@ -826,18 +826,100 @@ function PlannerSpecCard({ spec, summary, editsApplied, onApprove, onEdit, onRej
 // ── Planner Popup (shown on new conversation) ────────────────────────────────
 function PlannerPopup({ onYes, onSkip }) {
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-      <div style={{ background:"var(--bg-2)",border:"1px solid rgba(245,158,11,0.3)",borderRadius:"14px",padding:"24px 28px",maxWidth:"380px",width:"90%",boxShadow:"0 0 40px rgba(0,0,0,0.7), 0 0 30px rgba(245,158,11,0.1)",textAlign:"center",animation:"slideIn 0.15s ease" }}>
-      <div style={{ width:"48px",height:"48px",borderRadius:"12px",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px" }}>
-          <BotAvatarStatic size={32} variant="planner" />
+    <div style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+      <div style={{
+        background:"#0b0b0b",
+        border:"1px solid #1e1e1e",
+        borderRadius:"14px",
+        padding:"6px",
+        width:"280px",
+        boxShadow:"0 16px 48px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.025)",
+        animation:"slideIn 0.15s cubic-bezier(0.2,0,0,1) forwards",
+        position:"relative",
+      }}>
+        {/* X close button */}
+        <button onClick={onSkip} style={{
+          position:"absolute",top:"8px",right:"8px",
+          background:"none",border:"none",color:"#3a3a3a",
+          fontSize:"0.9rem",cursor:"pointer",padding:"2px 6px",
+          lineHeight:1,zIndex:1,borderRadius:"4px",
+          transition:"color 0.12s",
+        }}
+          onMouseEnter={e=>e.currentTarget.style.color="#888"}
+          onMouseLeave={e=>e.currentTarget.style.color="#3a3a3a"}
+        >×</button>
+
+        {/* Header */}
+        <div style={{
+          padding:"12px 14px 10px",
+          borderBottom:"1px solid #161616",
+          marginBottom:"6px",
+        }}>
+          <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px" }}>
+            <div style={{ width:"28px",height:"28px",flexShrink:0 }}>
+              <BotAvatarStatic size={28} variant="planner" />
+            </div>
+            <span style={{
+              fontSize:"0.78rem",fontWeight:700,
+              color:"#fff",
+              fontFamily:"'JetBrains Mono', monospace",
+              letterSpacing:"0.03em",
+            }}>Planner Mode</span>
+            <span style={{
+              fontSize:"0.52rem",fontWeight:800,
+              color:"var(--yellow-accent)",
+              background:"rgba(245,158,11,0.12)",
+              padding:"1px 5px",borderRadius:"4px",
+              border:"1px solid rgba(245,158,11,0.2)",
+              letterSpacing:"0.1em",
+              fontFamily:"'JetBrains Mono', monospace",
+            }}>BETA</span>
+          </div>
+          <div style={{ fontSize:"0.64rem",color:"#4a4a4a",lineHeight:1.4 }}>
+            Asks targeted questions to build a detailed spec before the AI starts coding. Produces higher quality results.
+          </div>
         </div>
-        <h3 style={{ margin:"0 0 8px",fontSize:"1rem",color:"var(--text-primary)",fontWeight:700,fontFamily:"var(--font-sans)" }}>Start with the Planner?</h3>
-        <p style={{ margin:"0 0 6px",fontSize:"0.8rem",color:"var(--text-secondary)",lineHeight:1.5 }}>The Planner asks targeted questions to build a detailed spec before the AI starts coding. This produces <span style={{ color:"var(--yellow-accent)",fontWeight:600 }}>significantly better results</span>.</p>
-        <p style={{ margin:"0 0 16px",fontSize:"0.68rem",color:"var(--text-muted)",lineHeight:1.4 }}>You can quit the planner at any time.</p>
-        <div style={{ display:"flex",gap:"8px" }}>
-          <button onClick={onSkip} style={{ flex:1,padding:"10px",background:"var(--bg-3)",border:"1px solid var(--border-default)",borderRadius:"8px",color:"var(--text-secondary)",fontSize:"0.82rem",cursor:"pointer",fontFamily:"var(--font-sans)" }}>Skip</button>
-          <button onClick={onYes} style={{ flex:1.3,padding:"10px",background:"linear-gradient(135deg,rgba(245,158,11,0.2),rgba(217,119,6,0.15))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:"8px",color:"var(--yellow-accent)",fontSize:"0.82rem",fontWeight:700,cursor:"pointer",fontFamily:"var(--font-mono)",boxShadow:"0 0 20px rgba(245,158,11,0.1)" }}>Yes, plan first</button>
-        </div>
+
+        {/* Options */}
+        <button onClick={onYes}
+          onMouseEnter={e=>{e.currentTarget.style.background="rgba(245,158,11,0.08)";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="linear-gradient(135deg,rgba(245,158,11,0.04),transparent)";}}
+          style={{
+            display:"flex",alignItems:"center",gap:"10px",
+            width:"100%",padding:"10px 12px",
+            background:"linear-gradient(135deg,rgba(245,158,11,0.04),transparent)",
+            border:"1px solid rgba(245,158,11,0.15)",
+            borderRadius:"10px",cursor:"pointer",textAlign:"left",
+            marginBottom:"4px",outline:"none",transition:"all 0.13s ease",
+          }}>
+          <div style={{ width:"20px",height:"20px",borderRadius:"6px",background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="var(--yellow-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </div>
+          <div>
+            <div style={{ fontSize:"0.75rem",fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono', monospace" }}>Yes, plan first</div>
+            <div style={{ fontSize:"0.6rem",color:"#4a4a4a",marginTop:"1px" }}>Recommended for complex apps</div>
+          </div>
+        </button>
+
+        <button onClick={onSkip}
+          onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.04)";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}
+          style={{
+            display:"flex",alignItems:"center",gap:"10px",
+            width:"100%",padding:"10px 12px",
+            background:"transparent",
+            border:"1px solid transparent",
+            borderRadius:"10px",cursor:"pointer",textAlign:"left",
+            outline:"none",transition:"all 0.13s ease",
+          }}>
+          <div style={{ width:"20px",height:"20px",borderRadius:"6px",background:"var(--bg-3)",border:"1px solid var(--border-subtle)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 8h8" stroke="#4a4a56" strokeWidth="2" strokeLinecap="round"/></svg>
+          </div>
+          <div>
+            <div style={{ fontSize:"0.75rem",fontWeight:700,color:"#888",fontFamily:"'JetBrains Mono', monospace" }}>Skip, build now</div>
+            <div style={{ fontSize:"0.6rem",color:"#3a3a3a",marginTop:"1px" }}>Go straight to the builder</div>
+          </div>
+        </button>
       </div>
     </div>
   );
@@ -1198,7 +1280,7 @@ export default function Studio() {
   const [progress, setProgress] = useState([]);
   const [thinkingText, setThinkingText] = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showStopModal, setShowStopModal] = useState(false);
+  const [showQuitPlannerModal, setShowQuitPlannerModal] = useState(false);
   const cancelledRef = useRef(false);
   const [previewError, setPreviewError] = useState(false);
   const [codeChanged, setCodeChanged] = useState(false);
@@ -1255,7 +1337,13 @@ export default function Studio() {
   useEffect(() => { fetchProjects().then(jobs => setProjects(jobs)).catch(()=>{}); }, []);
 
   const prevMsgCount = useRef(0);
-  useEffect(() => { if (messages.length > prevMsgCount.current || plannerMessages.length > 0) bottomRef.current?.scrollIntoView({ behavior:"smooth" }); prevMsgCount.current = messages.length; }, [messages, plannerMessages, plannerQuestions, plannerSpec, plannerTextReply, plannerState]);
+  const prevPlannerMsgCount = useRef(0);
+  useEffect(() => {
+    const shouldScroll = messages.length > prevMsgCount.current || plannerMessages.length > prevPlannerMsgCount.current;
+    if (shouldScroll) bottomRef.current?.scrollIntoView({ behavior:"smooth" });
+    prevMsgCount.current = messages.length;
+    prevPlannerMsgCount.current = plannerMessages.length;
+  }, [messages, plannerMessages]);
 
   useEffect(() => { getCredits().then(d => { setCredits(d.balance); if (d.plan_limit) setPlanLimit(d.plan_limit); }).catch(()=>{}); setUserPlan(localStorage.getItem("user_plan")||"free"); }, []);
 
@@ -1450,10 +1538,32 @@ export default function Studio() {
     }, 2500);
   };
  
-  const handlePlannerAnswer = async (answerText) => { if (!currentJobId) return; setPlannerQuestions(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { answer: answerText }); };
-  const handlePlannerApprove = async () => { if (!currentJobId) return; setPlannerSpec(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { decision: "approve" }); };
-  const handlePlannerEdit = async (editText) => { if (!currentJobId) return; setPlannerSpec(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { decision: "edit", detail: editText }); };
-  const handlePlannerReject = async (feedback) => { if (!currentJobId) return; setPlannerSpec(null); setPlannerState("thinking"); await sendPlannerAnswer(currentJobId, { decision: "reject", detail: feedback || "No specific feedback" }); };
+  const handlePlannerAnswer = async (answerText) => {
+    if (!currentJobId) return;
+    setPlannerQuestions(null);
+    setPlannerState("thinking");
+    // Show user's answer as a chat message
+    setPlannerMessages(prev => [...prev, { role: "user", content: answerText }]);
+    await sendPlannerAnswer(currentJobId, { answer: answerText });
+  };
+  const handlePlannerApprove = async () => {
+    if (!currentJobId) return;
+    setPlannerSpec(null); setPlannerState("thinking");
+    setPlannerMessages(prev => [...prev, { role: "user", content: "✓ Approved the spec" }]);
+    await sendPlannerAnswer(currentJobId, { decision: "approve" });
+  };
+  const handlePlannerEdit = async (editText) => {
+    if (!currentJobId) return;
+    setPlannerSpec(null); setPlannerState("thinking");
+    setPlannerMessages(prev => [...prev, { role: "user", content: `Edit request: ${editText}` }]);
+    await sendPlannerAnswer(currentJobId, { decision: "edit", detail: editText });
+  };
+  const handlePlannerReject = async (feedback) => {
+    if (!currentJobId) return;
+    setPlannerSpec(null); setPlannerState("thinking");
+    setPlannerMessages(prev => [...prev, { role: "user", content: `Rejected: ${feedback || "No specific feedback"}` }]);
+    await sendPlannerAnswer(currentJobId, { decision: "reject", detail: feedback || "No specific feedback" });
+  };
   const handlePlannerContinue = async (text) => {
     if (!currentJobId || !text.trim()) return;
     setPlannerTextReply(null);
@@ -1758,7 +1868,7 @@ export default function Studio() {
       <GlobalStyles />
       {showNameModal && <NameModal onDone={name => { localStorage.setItem("user_name",name); localStorage.removeItem("show_name_modal"); setShowNameModal(false); }} />}
       <ConfirmModal open={showLogoutModal} title="Log out?" description="You'll need to sign in again." confirmLabel="Log out" onConfirm={confirmLogout} onCancel={()=>setShowLogoutModal(false)} />
-      <ConfirmModal open={showStopModal} title="Stop building?" description="The AI agent is still working." warning="Credits used so far will still be charged." confirmLabel="Stop" onConfirm={confirmStop} onCancel={()=>setShowStopModal(false)} />
+      <ConfirmModal open={showQuitPlannerModal} title="Quit Planner?" description="The planning session will be discarded and the spec will not be saved." warning="You can continue answering questions and the final plan will be handed to the builder agent automatically." confirmLabel="Quit" onConfirm={() => { setShowQuitPlannerModal(false); handleQuitPlanner(); }} onCancel={() => setShowQuitPlannerModal(false)} />
       {showPlannerPopup && <PlannerPopup onYes={handlePlannerPopupYes} onSkip={handlePlannerPopupSkip} />}
       {imagePreview && (
         <div onClick={()=>setImagePreview(null)} style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out" }}>
@@ -1802,7 +1912,7 @@ export default function Studio() {
             )}
           </div>
           {plannerMode && (
-            <button onClick={handleQuitPlanner} style={{ background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:"6px",color:"var(--yellow-accent)",cursor:"pointer",padding:"3px 10px",flexShrink:0,fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}
+            <button onClick={() => setShowQuitPlannerModal(true)} style={{ background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:"6px",color:"var(--yellow-accent)",cursor:"pointer",padding:"3px 10px",flexShrink:0,fontSize:"0.6rem",fontFamily:"var(--font-mono)",fontWeight:600 }}
               onMouseEnter={e=>{e.currentTarget.style.background="rgba(245,158,11,0.2)";}} onMouseLeave={e=>{e.currentTarget.style.background="rgba(245,158,11,0.1)";}}
             >Quit Planner</button>
           )}
