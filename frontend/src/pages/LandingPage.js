@@ -529,7 +529,7 @@ function LandingPage() {
       margin: "0 auto",
       }}
       >
-      {Array.from({ length: 25 }, (_, i) => i + 88).map((num, index) => (
+      {Array.from({ length: 37 }, (_, i) => i + 88).map((num, index) => (
       <RobotCard key={num} num={num} index={index} />
       ))}
       </div>
