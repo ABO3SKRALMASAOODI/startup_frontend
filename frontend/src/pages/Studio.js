@@ -1439,7 +1439,7 @@ export default function Studio() {
   }, []); // eslint-disable-line
 
   const mergeServerMessages = useCallback((serverMsgs) => {
-    const mapped = (serverMsgs||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used,attachments:m.attachments||undefined }));
+    const mapped = (serverMsgs||[]).map(m=>({ role:m.role,content:m.text,tokens_used:m.tokens_used,credits_used:m.credits_used,attachments:m.attachments||undefined,source:m.source||undefined }));
     setMessages(prev => {
       return mapped.map((msg, i) => {
         const existing = prev[i];
@@ -1548,14 +1548,6 @@ export default function Studio() {
         setPlannerState(st);
 
         if (st === "waiting_questions") {
-          // Add the questions as a planner message so they persist in the chat
-          const questionsText = (d.context ? `*${d.context}*\n\n` : "") + (d.questions||[]).map((q,i) => `**${i+1}.** ${q}`).join("\n");
-          setPlannerMessages(prev => {
-            // Avoid duplicating if questions haven't changed
-            const lastPlanner = [...prev].reverse().find(m => m.role === "planner");
-            if (lastPlanner && lastPlanner.content === questionsText) return prev;
-            return [...prev, { role: "planner", content: questionsText }];
-          });
           setPlannerQuestions({ context: d.context, questions: d.questions });
           setPlannerSpec(null); setPlannerTextReply(null);
         } else if (st === "waiting_spec" || st === "waiting_edit") {
@@ -2078,7 +2070,7 @@ export default function Studio() {
             </div>
           )}
           {/* Planner intro card — shown at top of planner conversation */}
-          {plannerMode && plannerMessages.length <= 1 && (
+          {plannerMode && (
             <div style={{ animation:"fadeIn 0.3s ease forwards",marginBottom:"4px" }}>
               <div style={{
                 background:"rgba(245,158,11,0.03)",
