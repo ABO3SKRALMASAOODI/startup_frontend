@@ -124,7 +124,7 @@ function useIsMobile() {
 
 // ── Bot avatar ───────────────────────────────────────────────────────────────
 function BotAvatar({ size = 30 }) {
-  const { RiveComponent, rive } = useRive({ src:"/hustler-robot106.riv", autoplay:true, stateMachines:["State Machine 1"] });
+  const { RiveComponent, rive } = useRive({ src:"/hustler-robot112.riv", autoplay:true, stateMachines:["State Machine 1"] });
   const ref = useRef(null);
 
   const setMouseX = useCallback((val) => {
@@ -150,7 +150,7 @@ function BotAvatar({ size = 30 }) {
 }
 
 function BotAvatarStatic({ size = 56 }) {
-  const { RiveComponent } = useRive({ src:"/hustler-robot105.riv", autoplay:true, stateMachines:["State Machine 1"] });
+  const { RiveComponent } = useRive({ src:"/hustler-robot99.riv", autoplay:true, stateMachines:["State Machine 1"] });
   return <div style={{ width:size,height:size }}><RiveComponent style={{ width:"100%",height:"100%" }} /></div>;
 }
 
