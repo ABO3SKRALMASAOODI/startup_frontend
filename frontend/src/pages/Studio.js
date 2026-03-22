@@ -1039,15 +1039,59 @@ function Sidebar({ open, onClose, userEmail, credits, planLimit, projects, curre
 function ConfirmModal({ open, title, description, warning, confirmLabel, onConfirm, onCancel }) {
   if (!open) return null;
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-      <div style={{ background:"var(--bg-2)",border:`1px solid var(--border-default)`,borderRadius:"14px",padding:"24px 28px",maxWidth:"360px",width:"90%",boxShadow:"0 0 40px rgba(0,0,0,0.7)",textAlign:"center",animation:"slideIn 0.15s ease" }}>
-        <h3 style={{ margin:"0 0 8px",fontSize:"1rem",color:"var(--text-primary)",fontWeight:700,fontFamily:"var(--font-sans)" }}>{title}</h3>
-        <p style={{ margin:"0 0 8px",fontSize:"0.8rem",color:"var(--text-secondary)",lineHeight:1.5 }}>{description}</p>
-        {warning && <p style={{ margin:"0 0 16px",fontSize:"0.72rem",color:"var(--yellow-accent)",lineHeight:1.5 }}>{warning}</p>}
-        <div style={{ display:"flex",gap:"8px" }}>
-          <button onClick={onCancel} style={{ flex:1,padding:"9px",background:"var(--bg-3)",border:`1px solid var(--border-default)`,borderRadius:"8px",color:"var(--text-secondary)",fontSize:"0.82rem",cursor:"pointer",fontFamily:"var(--font-sans)" }}>Cancel</button>
-          <button onClick={onConfirm} style={{ flex:1,padding:"9px",background:"linear-gradient(135deg,var(--red-accent),#701818)",border:"none",borderRadius:"8px",color:"#fff",fontSize:"0.82rem",fontWeight:600,cursor:"pointer",fontFamily:"var(--font-sans)" }}>{confirmLabel}</button>
+    <div style={{ position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+      <div style={{
+        background:"#0b0b0b",border:"1px solid #1e1e1e",borderRadius:"14px",
+        padding:"6px",width:"300px",
+        boxShadow:"0 16px 48px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.025)",
+        animation:"slideIn 0.15s cubic-bezier(0.2,0,0,1) forwards",
+        position:"relative",
+      }}>
+        <button onClick={onCancel} style={{
+          position:"absolute",top:"8px",right:"8px",background:"none",border:"none",
+          color:"#3a3a3a",fontSize:"0.9rem",cursor:"pointer",padding:"2px 6px",lineHeight:1,zIndex:1,borderRadius:"4px",transition:"color 0.12s",
+        }}
+          onMouseEnter={e=>e.currentTarget.style.color="#888"}
+          onMouseLeave={e=>e.currentTarget.style.color="#3a3a3a"}
+        >×</button>
+
+        <div style={{ padding:"14px 14px 10px",borderBottom:"1px solid #161616",marginBottom:"6px" }}>
+          <div style={{ fontSize:"0.78rem",fontWeight:700,color:"#fff",fontFamily:"'JetBrains Mono', monospace",marginBottom:"6px" }}>{title}</div>
+          <div style={{ fontSize:"0.64rem",color:"var(--text-tertiary)",lineHeight:1.5 }}>{description}</div>
+          {warning && <div style={{ fontSize:"0.62rem",color:"var(--yellow-accent)",lineHeight:1.5,marginTop:"6px" }}>{warning}</div>}
         </div>
+
+        <button onClick={onCancel}
+          onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.04)";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}
+          style={{
+            display:"flex",alignItems:"center",gap:"10px",width:"100%",padding:"10px 12px",
+            background:"transparent",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"10px",
+            cursor:"pointer",textAlign:"left",marginBottom:"4px",outline:"none",transition:"all 0.13s ease",
+          }}>
+          <div style={{ width:"20px",height:"20px",borderRadius:"6px",background:"var(--bg-3)",border:"1px solid var(--border-subtle)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M11 5L5 11M5 5l6 6" stroke="var(--text-tertiary)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </div>
+          <div>
+            <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--text-secondary)",fontFamily:"'JetBrains Mono', monospace" }}>Cancel</div>
+          </div>
+        </button>
+
+        <button onClick={onConfirm}
+          onMouseEnter={e=>{e.currentTarget.style.background="rgba(160,32,32,0.08)";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}
+          style={{
+            display:"flex",alignItems:"center",gap:"10px",width:"100%",padding:"10px 12px",
+            background:"transparent",border:"1px solid transparent",borderRadius:"10px",
+            cursor:"pointer",textAlign:"left",outline:"none",transition:"all 0.13s ease",
+          }}>
+          <div style={{ width:"20px",height:"20px",borderRadius:"6px",background:"rgba(160,32,32,0.1)",border:"1px solid rgba(160,32,32,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="var(--red-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </div>
+          <div>
+            <div style={{ fontSize:"0.75rem",fontWeight:700,color:"var(--red-accent)",fontFamily:"'JetBrains Mono', monospace" }}>{confirmLabel}</div>
+          </div>
+        </button>
       </div>
     </div>
   );
@@ -1262,7 +1306,7 @@ function SpecAttachmentChip({ specText }) {
       background:"rgba(30,10,10,0.95)",
       border:"1px solid rgba(120,30,30,0.4)",
       boxShadow:"0 1px 8px rgba(0,0,0,0.4)",
-      cursor:"pointer",transition:"all 0.15s",
+      width:"100%",boxSizing:"border-box",
     }}
       onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(160,40,40,0.6)"}
       onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(120,30,30,0.4)"}
@@ -1609,11 +1653,14 @@ export default function Studio() {
  
   const handlePlannerAnswer = async (answerText) => {
     if (!currentJobId) return;
-    // Save the questions as a planner message before removing the card
+    // Save questions as a structured card message (rendered as static card, not text)
     if (plannerQuestions) {
-      const qText = (plannerQuestions.context ? `*${plannerQuestions.context}*\n\n` : "") +
-        (plannerQuestions.questions || []).map((q, i) => `**${i+1}.** ${q}`).join("\n");
-      setPlannerMessages(prev => [...prev, { role: "planner", content: qText }]);
+      setPlannerMessages(prev => [...prev, {
+        role: "planner",
+        type: "questions",
+        context: plannerQuestions.context,
+        questions: plannerQuestions.questions,
+      }]);
     }
     setPlannerQuestions(null);
     setPlannerState("thinking");
@@ -1628,7 +1675,7 @@ export default function Studio() {
   const handlePlannerApprove = async () => {
     if (!currentJobId) return;
     if (plannerSpec) {
-      setPlannerMessages(prev => [...prev, { role: "planner", content: `📋 **Proposed Spec:** ${plannerSpec.summary || "Specification ready for review"}` }]);
+      setPlannerMessages(prev => [...prev, { role: "planner", type: "spec_summary", content: plannerSpec.summary || "Specification ready for review" }]);
     }
     setPlannerSpec(null); setPlannerState("thinking");
     setPlannerMessages(prev => [...prev, { role: "user", content: "✓ Approved the spec" }]);
@@ -2196,7 +2243,7 @@ export default function Studio() {
                 const specText = (msg.content || msg.text || "");
                 return (
                   <div key={i} className="msg-row" style={{ display:"flex",flexDirection:"row-reverse",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
-                    <div style={{ maxWidth:"85%",minWidth:0,display:"flex",flexDirection:"column",alignItems:"flex-end" }}>
+                    <div style={{ maxWidth:"70%",minWidth:"200px",display:"flex",flexDirection:"column",alignItems:"flex-end" }}>
                       <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:"rgba(140,35,35,0.55)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>You</span>
                       <SpecAttachmentChip specText={specText} />
                     </div>
@@ -2308,21 +2355,68 @@ export default function Studio() {
             </div>
           )}
           {/* Planner conversations messages */}
-          {plannerMode && plannerMessages.map((msg, i) => (
-            <div key={`planner-${i}`} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
-              {msg.role==="planner" && <BotAvatar size={28} variant="planner" />}
-              <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",overflow:"hidden" }}>
-                <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(245,158,11,0.5)":"rgba(245,158,11,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>{msg.role==="user"?"You":"Planner"}</span>
-                <div style={{ padding:"10px 14px",borderRadius:msg.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:msg.role==="user"?"rgba(40,30,5,0.95)":"rgba(245,158,11,0.03)",border:msg.role==="user"?"1px solid rgba(245,158,11,0.3)":"1px solid rgba(245,158,11,0.12)",boxShadow:"0 1px 8px rgba(0,0,0,0.3)",minWidth:0,overflow:"hidden" }}>
-                  <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
-                  <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop:msg.role==="planner"?"1px solid rgba(245,158,11,0.08)":"none" }}>
-                    <CopyButton text={msg.content||""} label="Copy" size="sm" />
-                    {msg.role==="planner"&&msg.credits_used!==undefined ? <CostDots credits={msg.credits_used} /> : <div />}
+          {plannerMode && plannerMessages.map((msg, i) => {
+            // Structured question card (static, non-interactive)
+            if (msg.type === "questions") {
+              return (
+                <div key={`planner-${i}`} className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
+                  <BotAvatar size={28} variant="planner" />
+                  <div style={{ maxWidth:"80%",minWidth:0 }}>
+                    <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:"rgba(245,158,11,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px",display:"block" }}>Planner</span>
+                    <div style={{ padding:"14px 16px",borderRadius:"14px 14px 14px 4px",background:"rgba(245,158,11,0.04)",border:"1px solid rgba(245,158,11,0.18)",boxShadow:"0 1px 8px rgba(0,0,0,0.3)" }}>
+                      <div style={{ display:"flex",alignItems:"center",gap:"6px",marginBottom:"8px" }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink:0 }}>
+                          <path d="M2 2h12v12H2z" stroke="var(--yellow-accent)" strokeWidth="1.5" strokeLinejoin="round" />
+                          <path d="M5 6h6M5 8.5h4" stroke="var(--yellow-accent)" strokeWidth="1" strokeLinecap="round" />
+                        </svg>
+                        <span style={{ fontSize:"0.68rem",fontWeight:700,color:"var(--yellow-accent)",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Questions</span>
+                      </div>
+                      {msg.context && <p style={{ fontSize:"0.72rem",color:"var(--text-secondary)",lineHeight:1.5,margin:"0 0 8px",fontStyle:"italic" }}>{msg.context}</p>}
+                      {(msg.questions||[]).map((q, qi) => (
+                        <div key={qi} style={{ fontSize:"0.72rem",color:"var(--text-secondary)",lineHeight:1.5,marginBottom:"4px" }}>
+                          <span style={{ color:"var(--yellow-accent)",fontWeight:700,marginRight:"4px" }}>{qi+1}.</span>{q}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            // Spec summary (static, shows spec was proposed)
+            if (msg.type === "spec_summary") {
+              return (
+                <div key={`planner-${i}`} className="msg-row" style={{ display:"flex",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
+                  <BotAvatar size={28} variant="planner" />
+                  <div style={{ maxWidth:"80%",minWidth:0 }}>
+                    <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:"rgba(245,158,11,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px",display:"block" }}>Planner</span>
+                    <div style={{ padding:"12px 16px",borderRadius:"14px 14px 14px 4px",background:"rgba(245,158,11,0.04)",border:"1px solid rgba(245,158,11,0.18)",boxShadow:"0 1px 8px rgba(0,0,0,0.3)" }}>
+                      <div style={{ display:"flex",alignItems:"center",gap:"6px",marginBottom:"6px" }}>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 2h12v12H2z" stroke="var(--yellow-accent)" strokeWidth="1.5"/><path d="M5 5h6M5 8h6M5 11h4" stroke="var(--yellow-accent)" strokeWidth="1" strokeLinecap="round"/></svg>
+                        <span style={{ fontSize:"0.68rem",fontWeight:700,color:"var(--yellow-accent)",fontFamily:"var(--font-mono)" }}>Spec Proposed</span>
+                      </div>
+                      <div style={{ fontSize:"0.72rem",color:"var(--text-secondary)",lineHeight:1.5 }}>{msg.content}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            // Regular text message
+            return (
+              <div key={`planner-${i}`} className="msg-row" style={{ display:"flex",flexDirection:msg.role==="user"?"row-reverse":"row",alignItems:"flex-end",gap:"8px",minWidth:0 }}>
+                {msg.role==="planner" && <BotAvatar size={28} variant="planner" />}
+                <div style={{ maxWidth:"80%",minWidth:0,display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",overflow:"hidden" }}>
+                  <span style={{ fontSize:"0.6rem",fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",color:msg.role==="user"?"rgba(245,158,11,0.5)":"rgba(245,158,11,0.75)",fontFamily:"var(--font-mono)",marginBottom:"3px" }}>{msg.role==="user"?"You":"Planner"}</span>
+                  <div style={{ padding:"10px 14px",borderRadius:msg.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:msg.role==="user"?"rgba(40,30,5,0.95)":"rgba(245,158,11,0.03)",border:msg.role==="user"?"1px solid rgba(245,158,11,0.3)":"1px solid rgba(245,158,11,0.12)",boxShadow:"0 1px 8px rgba(0,0,0,0.3)",minWidth:0,overflow:"hidden" }}>
+                    <div style={{ color:"var(--text-primary)",fontSize:"0.82rem",lineHeight:1.65 }} dangerouslySetInnerHTML={{ __html:marked.parse(msg.content||"") }} className="msg-content" />
+                    <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"6px",paddingTop:"4px",borderTop:msg.role==="planner"?"1px solid rgba(245,158,11,0.08)":"none" }}>
+                      <CopyButton text={msg.content||""} label="Copy" size="sm" />
+                      <div />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {plannerMode && (
             <>
               {(plannerState === "waiting_questions" && plannerQuestions) && (
